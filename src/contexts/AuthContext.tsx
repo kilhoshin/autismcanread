@@ -47,10 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           console.log('👤 Session user:', session.user.email)
           setUser(session.user)
-          
-          // TODO: Re-enable after fixing Vercel deployment
-          // await ensureUserRecord(session.user)
-          
           const { data: profileData } = await getUserProfile(session.user.id)
           setProfile(profileData)
         }
@@ -68,10 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔄 Auth state change:', event, session?.user?.email)
       if (session?.user) {
         setUser(session.user)
-        
-        // TODO: Re-enable after fixing Vercel deployment
-        // await ensureUserRecord(session.user)
-        
         const { data: profileData } = await getUserProfile(session.user.id)
         setProfile(profileData)
       } else {
@@ -86,51 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  // Function to ensure user record exists
-  const ensureUserRecord = async (user: any) => {
-    try {
-      console.log('🔍 Checking if user record exists...')
-      
-      // Check if user record exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single()
-
-      if (checkError && checkError.code === 'PGRST116') {
-        // User doesn't exist, create via API
-        console.log('🔧 Creating missing user record via API...')
-        
-        try {
-          const response = await fetch('/api/create-user-safe', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: user.id,
-              email: user.email,
-              fullName: user.user_metadata?.full_name || ''
-            })
-          })
-          
-          const result = await response.json()
-          if (result.success) {
-            console.log('✅ User record created successfully via API')
-          } else {
-            console.error('❌ Failed to create user via API:', result.error)
-          }
-        } catch (apiError) {
-          console.error('❌ API call failed:', apiError)
-        }
-      } else if (existingUser) {
-        console.log('✅ User record already exists')
-      }
-    } catch (error) {
-      console.error('❌ Error in ensureUserRecord:', error)
-    }
-  }
-
-  const handleSignOut = async () => {
+  const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     if (!error) {
       setUser(null)
@@ -162,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     profile,
     loading,
-    signOut: handleSignOut,
+    signOut,
     refreshProfile: handleRefreshProfile,
   }
 

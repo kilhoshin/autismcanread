@@ -104,7 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Set a timeout to prevent infinite loading (increased for production)
+    // Set a shorter initial timeout for faster UX
+    const quickTimeout = setTimeout(() => {
+      console.warn('⚠️ Quick auth timeout after 5 seconds - continuing without full auth')
+      setLoading(false)
+    }, 5000) // 5 second quick timeout
+
+    // Set a longer timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
       console.warn('⚠️ Auth loading timeout after 30 seconds - setting loading to false')
       console.warn('⚠️ Current state - User:', !!user, 'Profile:', !!profile)
@@ -114,12 +120,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const getSession = async () => {
       console.log('🔄 Getting session...')
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // Clear quick timeout since we got a response
+        clearTimeout(quickTimeout)
+        
+        if (error) {
+          console.error('❌ Session error:', error)
+          // If there's an error getting session, clear any stored auth data
+          await supabase.auth.signOut()
+          setLoading(false)
+          return
+        }
+        
         if (session?.user) {
           console.log('👤 Session user:', session.user.email)
+          
+          // Quick validation: check if session is expired
+          const now = Math.floor(Date.now() / 1000)
+          if (session.expires_at && session.expires_at < now) {
+            console.warn('⚠️ Session expired, signing out')
+            await supabase.auth.signOut()
+            setLoading(false)
+            return
+          }
+          
           setUser(session.user)
           
-          // Ensure user record exists and get profile
+          // Ensure user record exists and get profile (in background)
           console.log('🔄 Ensuring user record exists...')
           const profileData = await ensureUserRecord(session.user)
           if (profileData) {
@@ -134,7 +162,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('❌ Error getting session:', error)
+        // Clear any problematic auth state
+        await supabase.auth.signOut()
       } finally {
+        clearTimeout(quickTimeout)
         clearTimeout(loadingTimeout)
         setLoading(false)
         console.log('✅ Auth initialization complete')
@@ -145,6 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 Auth state change:', event, session?.user?.email)
+      
+      // Clear timeouts on auth state change
+      clearTimeout(quickTimeout)
+      clearTimeout(loadingTimeout)
+      
       if (session?.user) {
         setUser(session.user)
         
@@ -168,6 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       subscription.unsubscribe()
+      clearTimeout(quickTimeout)
       clearTimeout(loadingTimeout)
     }
   }, [])

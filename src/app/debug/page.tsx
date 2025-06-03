@@ -42,6 +42,35 @@ export default function DebugPage() {
     }
   }
 
+  const clearAuth = async () => {
+    setIsLoading(true)
+    try {
+      // Clear client-side storage
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // Call server-side clear
+      const response = await fetch('/api/clear-auth', {
+        method: 'POST'
+      })
+      
+      if (response.ok) {
+        setMessage('✅ Auth cleared successfully - please refresh the page')
+        // Wait a moment then refresh
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      } else {
+        setMessage('❌ Failed to clear auth')
+      }
+    } catch (error) {
+      console.error('Error clearing auth:', error)
+      setMessage('❌ Error clearing auth')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const updateSubscription = async (status: 'free' | 'premium') => {
     if (!user) return
     
@@ -303,6 +332,14 @@ export default function DebugPage() {
               className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
             >
               🌎 Get Environment Info
+            </button>
+
+            <button
+              onClick={clearAuth}
+              disabled={isLoading}
+              className="px-4 py-2 bg-red-800 text-white rounded hover:bg-red-900 disabled:opacity-50"
+            >
+              🚫 Clear Auth & Reload
             </button>
           </div>
 

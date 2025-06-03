@@ -3,13 +3,30 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { supabase } from '@/utils/supabase'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-05-28.basil',
-})
+// Check if Stripe is properly configured
+if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_...') {
+  console.warn('Stripe not configured - webhooks will not work')
+}
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_...' 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-05-28.basil',
+    })
+  : null
+
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET !== 'whsec_...' 
+  ? process.env.STRIPE_WEBHOOK_SECRET 
+  : null
 
 export async function POST(request: NextRequest) {
+  // Return early if Stripe is not configured
+  if (!stripe || !endpointSecret) {
+    return NextResponse.json(
+      { error: 'Webhook system not configured' },
+      { status: 503 }
+    )
+  }
+
   const body = await request.text()
   const headersList = await headers()
   const sig = headersList.get('stripe-signature')

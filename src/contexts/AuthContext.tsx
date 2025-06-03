@@ -47,8 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           console.log('👤 Session user:', session.user.email)
           setUser(session.user)
-          const { data: profileData } = await getUserProfile(session.user.id)
-          setProfile(profileData)
+          try {
+            const { data: profileData } = await getUserProfile(session.user.id)
+            setProfile(profileData)
+          } catch (profileError) {
+            console.error('❌ Error loading profile:', profileError)
+            setProfile(null)
+          }
         }
       } catch (error) {
         console.error('❌ Error getting session:', error)
@@ -64,8 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔄 Auth state change:', event, session?.user?.email)
       if (session?.user) {
         setUser(session.user)
-        const { data: profileData } = await getUserProfile(session.user.id)
-        setProfile(profileData)
+        try {
+          const { data: profileData } = await getUserProfile(session.user.id)
+          setProfile(profileData)
+        } catch (profileError) {
+          console.error('❌ Error loading profile:', profileError)
+          setProfile(null)
+        }
       } else {
         setUser(null)
         setProfile(null)

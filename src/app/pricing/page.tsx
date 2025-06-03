@@ -196,7 +196,21 @@ export default function Pricing() {
             </ul>
             
             <button 
-              onClick={() => handleSubscribe('price_premium_monthly_id_here')}
+              onClick={() => {
+                const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
+                console.log('🔍 Debug - Premium Price ID from env:', premiumPriceId);
+                console.log('🔍 Debug - All NEXT_PUBLIC env vars:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')));
+                
+                if (premiumPriceId) {
+                  console.log('✅ Calling handleSubscribe with Price ID:', premiumPriceId);
+                  handleSubscribe(premiumPriceId);
+                } else {
+                  console.error('❌ Stripe Premium Price ID is not configured in environment variables.');
+                  console.error('Available env vars:', process.env);
+                  // Optionally, display a user-friendly message, e.g., using a toast notification or alert
+                  alert('The subscription service is temporarily unavailable. Please check back later.');
+                }
+              }}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
             >
               Start Premium

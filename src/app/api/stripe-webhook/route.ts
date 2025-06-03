@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import Stripe from 'stripe'
-import { supabase } from '@/utils/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 // Check if Stripe is properly configured
 if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY === 'sk_test_...') {
@@ -17,6 +17,18 @@ const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !=
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET !== 'whsec_...' 
   ? process.env.STRIPE_WEBHOOK_SECRET 
   : null
+
+// Create admin client with service role key for webhook operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 export async function POST(request: NextRequest) {
   console.log('🔔 Webhook received at:', new Date().toISOString())
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
           console.log('💳 Processing subscription for user:', session.metadata.userId)
           
           // Update user subscription status to premium
-          const { error } = await supabase
+          const { error } = await supabaseAdmin
             .from('users')
             .update({ 
               subscription_status: 'premium',
@@ -98,7 +110,7 @@ export async function POST(request: NextRequest) {
 
           console.log(`🔄 Updating user ${subscription.metadata.userId} to status: ${status}`)
 
-          const { error } = await supabase
+          const { error } = await supabaseAdmin
             .from('users')
             .update({ 
               subscription_status: status,
@@ -123,7 +135,7 @@ export async function POST(request: NextRequest) {
         if (deletedSub.metadata?.userId) {
           console.log(`🗑️ Setting user ${deletedSub.metadata.userId} to free status`)
           
-          const { error } = await supabase
+          const { error } = await supabaseAdmin
             .from('users')
             .update({ 
               subscription_status: 'free',

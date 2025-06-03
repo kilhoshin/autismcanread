@@ -288,34 +288,36 @@ export default function Dashboard() {
   }
 
   // Manual subscription update for debugging
-  const updateSubscriptionManually = async (status: 'free' | 'premium') => {
-    if (!user?.id) return
+  const handleManualSubscriptionUpdate = async (newStatus: 'free' | 'premium') => {
+    if (!user) return
     
-    setIsUpdatingSubscription(true)
     try {
       const response = await fetch('/api/update-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          subscriptionStatus: status
+          subscriptionStatus: newStatus
         })
       })
       
       if (response.ok) {
-        // Refresh user status
-        const premiumStatus = await canDownloadPDF(user.id)
-        setIsPremium(premiumStatus)
+        console.log('✅ Manual subscription update successful')
+        
+        // Force profile refresh
         await refreshProfile()
-        alert(`Subscription updated to ${status}!`)
+        
+        // Wait a bit and refresh again to ensure state is updated
+        setTimeout(async () => {
+          await refreshProfile()
+          // Force a complete page reload as last resort
+          window.location.reload()
+        }, 1000)
       } else {
-        alert('Failed to update subscription')
+        console.error('❌ Manual subscription update failed')
       }
     } catch (error) {
-      console.error('Error updating subscription:', error)
-      alert('Error updating subscription')
-    } finally {
-      setIsUpdatingSubscription(false)
+      console.error('❌ Error in manual subscription update:', error)
     }
   }
 
@@ -342,14 +344,14 @@ export default function Dashboard() {
                   </span>
                   <div className="flex space-x-1">
                     <button
-                      onClick={() => updateSubscriptionManually('premium')}
+                      onClick={() => handleManualSubscriptionUpdate('premium')}
                       disabled={isUpdatingSubscription}
                       className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
                     >
                       Set Premium
                     </button>
                     <button
-                      onClick={() => updateSubscriptionManually('free')}
+                      onClick={() => handleManualSubscriptionUpdate('free')}
                       disabled={isUpdatingSubscription}
                       className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 disabled:opacity-50"
                     >
@@ -384,7 +386,42 @@ export default function Dashboard() {
             <p className="text-gray-600">Create customized reading worksheets for children</p>
           </div>
 
-          {/* Topic Selection */}
+          {/* Debug Info */}
+          <div className="bg-gray-100 p-4 rounded-lg mb-6">
+            <h3 className="font-semibold mb-2">🔍 Debug Info:</h3>
+            <p><strong>User ID:</strong> {user?.id}</p>
+            <p><strong>User Email:</strong> {user?.email}</p>
+            <p><strong>Profile Subscription:</strong> {profile?.subscription_status || 'undefined'}</p>
+            <p><strong>Is Premium (state):</strong> {isPremium ? 'true' : 'false'}</p>
+            <p><strong>Profile Object:</strong> {JSON.stringify(profile, null, 2)}</p>
+            
+            <div className="mt-4 space-x-2">
+              <button
+                onClick={async () => {
+                  const response = await fetch('/api/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      userId: user?.id,
+                      email: user?.email,
+                      fullName: user?.user_metadata?.full_name
+                    })
+                  })
+                  const result = await response.json()
+                  alert(JSON.stringify(result, null, 2))
+                  if (result.success) {
+                    await refreshProfile()
+                    window.location.reload()
+                  }
+                }}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+              >
+                🔧 Create User Record
+              </button>
+            </div>
+          </div>
+
+          {/* Subscription Status */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">📚 Choose Story Topics</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">

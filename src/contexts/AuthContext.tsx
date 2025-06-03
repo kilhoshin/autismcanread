@@ -34,58 +34,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      console.log('🔄 Getting session...')
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        console.log('👤 Session user:', session?.user?.email)
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          const { data: profileData } = await getUserProfile(session.user.id)
-          setProfile(profileData)
-        }
-      } catch (error) {
-        console.error('Error getting session:', error)
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     // Set a timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
       console.warn('⚠️ Auth loading timeout - setting loading to false')
       setLoading(false)
     }, 5000) // 5 second timeout
 
-    getSession().then(() => {
-      clearTimeout(loadingTimeout)
-    })
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Auth state change:', event, session?.user?.email)
-        setUser(session?.user ?? null)
-        
+    const getSession = async () => {
+      console.log('🔄 Getting session...')
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
+          console.log('👤 Session user:', session.user.email)
+          setUser(session.user)
+          
+          // Ensure user record exists in database
+          await ensureUserRecord(session.user)
+          
           const { data: profileData } = await getUserProfile(session.user.id)
           setProfile(profileData)
-        } else {
-          setProfile(null)
         }
-        
-        // Don't set loading false here - only in initial getSession
+      } catch (error) {
+        console.error('❌ Error getting session:', error)
+      } finally {
+        clearTimeout(loadingTimeout)
+        setLoading(false)
       }
-    )
+    }
+
+    getSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state change:', event, session?.user?.email)
+      if (session?.user) {
+        setUser(session.user)
+        
+        // Ensure user record exists in database
+        await ensureUserRecord(session.user)
+        
+        const { data: profileData } = await getUserProfile(session.user.id)
+        setProfile(profileData)
+      } else {
+        setUser(null)
+        setProfile(null)
+      }
+    })
 
     return () => {
       subscription.unsubscribe()
       clearTimeout(loadingTimeout)
     }
   }, [])
+
+  // Function to ensure user record exists
+  const ensureUserRecord = async (user: any) => {
+    try {
+      console.log('🔍 Checking if user record exists...')
+      
+      // Check if user record exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // User doesn't exist, create via API
+        console.log('🔧 Creating missing user record via API...')
+        
+        try {
+          const response = await fetch('/api/create-user-safe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              email: user.email,
+              fullName: user.user_metadata?.full_name || ''
+            })
+          })
+          
+          const result = await response.json()
+          if (result.success) {
+            console.log('✅ User record created successfully via API')
+          } else {
+            console.error('❌ Failed to create user via API:', result.error)
+          }
+        } catch (apiError) {
+          console.error('❌ API call failed:', apiError)
+        }
+      } else if (existingUser) {
+        console.log('✅ User record already exists')
+      }
+    } catch (error) {
+      console.error('❌ Error in ensureUserRecord:', error)
+    }
+  }
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut()
@@ -96,9 +139,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const handleRefreshProfile = async () => {
+    console.log('🔄 Refreshing user profile...')
     if (user) {
-      const { data: profileData } = await getUserProfile(user.id)
-      setProfile(profileData)
+      try {
+        const { data: profileData, error } = await getUserProfile(user.id)
+        if (error) {
+          console.error('❌ Error refreshing profile:', error)
+        } else {
+          console.log('✅ Profile refreshed:', profileData)
+          setProfile(profileData)
+          
+          // Force a re-render by updating a timestamp
+          setProfile(prev => ({ ...profileData, _refreshed: Date.now() }))
+        }
+      } catch (error) {
+        console.error('❌ Exception refreshing profile:', error)
+      }
     }
   }
 

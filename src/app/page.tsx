@@ -11,19 +11,6 @@ export default function Home() {
   const router = useRouter()
   const { user, loading } = useAuth()
 
-  const handleDemoAccess = () => {
-    // 데모 사용자 설정
-    const demoUser = {
-      email: 'demo@example.com',
-      readingLevel: 3,
-      writingLevel: 2,
-      isDemoUser: true
-    }
-    
-    localStorage.setItem('currentUser', JSON.stringify(demoUser))
-    router.push('/dashboard')
-  }
-
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
@@ -114,15 +101,6 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             ) : (
-              <button
-                onClick={handleDemoAccess}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-lg flex items-center"
-              >
-                <FileText className="w-6 h-6 mr-2" />
-                Try it for Free
-              </button>
-            )}
-            {!user && (
               <Link
                 href="/register"
                 className="bg-white border-2 border-blue-300 hover:border-blue-500 text-blue-600 hover:text-blue-700 px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center"
@@ -256,12 +234,12 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             ) : (
-              <button
-                onClick={handleDemoAccess}
+              <Link
+                href="/register"
                 className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg transition-colors"
               >
-                Try it for Free
-              </button>
+                Sign Up Now
+              </Link>
             )}
           </div>
         </div>

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Book, ArrowLeft, Download, RefreshCw, CheckCircle, Edit3, Lightbulb, ArrowRight } from 'lucide-react'
+import { Book, ArrowLeft, Download, RefreshCw, CheckCircle, Edit3, Lightbulb, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface BlankItem {
   id: number
@@ -35,6 +36,8 @@ export default function SentenceCompletionActivity() {
     { id: 'custom', title: '직접 입력', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
   ]
 
+  const { profile } = useAuth()
+
   const generateStory = async () => {
     try {
       const response = await fetch('/api/generate-story', {
@@ -44,8 +47,8 @@ export default function SentenceCompletionActivity() {
         },
         body: JSON.stringify({
           activityType: 'sentence-completion',
-          readingLevel: 3,
-          writingLevel: 3,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
           topic: selectedTopic
         })
       })

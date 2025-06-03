@@ -139,24 +139,6 @@ export default function Login() {
             </p>
           </div>
         </div>
-
-        {/* Demo Access */}
-        <div className="mt-6 text-center">
-          <Link 
-            href="/dashboard"
-            className="text-sm text-gray-500 hover:text-gray-700"
-            onClick={() => {
-              localStorage.setItem('currentUser', JSON.stringify({
-                email: 'demo@example.com',
-                readingLevel: 3,
-                writingLevel: 2,
-                isDemoUser: true
-              }))
-            }}
-          >
-            Continue with Demo Account
-          </Link>
-        </div>
       </div>
     </div>
   )

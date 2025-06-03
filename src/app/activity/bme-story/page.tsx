@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Book, ArrowLeft, Wand2, Download, RefreshCw, CheckCircle } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface StoryContent {
   story: string
@@ -34,6 +35,8 @@ export default function BMEStoryActivity() {
     { id: 'custom', title: '직접 입력', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
   ]
 
+  const { profile } = useAuth()
+
   const generateStory = async () => {
     setIsGenerating(true)
     const topic = selectedTopic === 'custom' ? customTopic : topics.find(t => t.id === selectedTopic)?.title
@@ -44,8 +47,8 @@ export default function BMEStoryActivity() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activityType: 'bme-story',
-          readingLevel: 3, // TODO: 사용자 레벨에서 가져오기
-          writingLevel: 2,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
           topic
         })
       })

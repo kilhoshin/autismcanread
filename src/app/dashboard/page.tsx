@@ -145,8 +145,8 @@ export default function Dashboard() {
           topics: selectedTopics.length > 0 ? selectedTopics : [customTopic],
           activities: selectedActivities,
           count: worksheetCount, // Generate the actual number of worksheets for preview
-          readingLevel: 3,
-          writingLevel: 2
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3
         }),
       })
 
@@ -228,8 +228,8 @@ export default function Dashboard() {
             topics: selectedTopics,
             activities: selectedActivities,
             count: worksheetCount,
-            readingLevel: 3,
-            writingLevel: 2,
+            readingLevel: profile?.reading_level || 3,
+            writingLevel: profile?.writing_level || 3,
             usePreviewData: true,
             previewStoryData: previewData.stories,
             userId: user?.id // Add userId for tracking
@@ -259,8 +259,8 @@ export default function Dashboard() {
             topics: selectedTopics,
             activities: selectedActivities,
             count: worksheetCount,
-            readingLevel: 3,
-            writingLevel: 2
+            readingLevel: profile?.reading_level || 3,
+            writingLevel: profile?.writing_level || 3
           })
         })
 

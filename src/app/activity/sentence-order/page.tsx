@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Book, ArrowLeft, Download, RefreshCw, CheckCircle, ArrowUpDown, GripVertical } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Sentence {
   id: number
@@ -17,6 +18,7 @@ interface StoryContent {
 }
 
 export default function SentenceOrderActivity() {
+  const { profile } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedTopic, setSelectedTopic] = useState('')
   const [storyContent, setStoryContent] = useState<StoryContent | null>(null)
@@ -42,8 +44,8 @@ export default function SentenceOrderActivity() {
         },
         body: JSON.stringify({
           activityType: 'sentence-order',
-          readingLevel: 3, // TODO: 사용자 설정에서 가져오기
-          writingLevel: 3, // TODO: 사용자 설정에서 가져오기
+          readingLevel: profile?.reading_level || 3, 
+          writingLevel: profile?.writing_level || 3, 
           topic: selectedTopic
         })
       })

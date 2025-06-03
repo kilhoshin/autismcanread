@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Book, ArrowLeft, Download, RefreshCw, CheckCircle, FileText, Lightbulb } from 'lucide-react'
+import { ArrowLeft, Download, RotateCcw, CheckCircle, FileText, Edit3 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Book, Lightbulb } from 'lucide-react'
 
 interface StoryContent {
   story: string
@@ -11,6 +13,7 @@ interface StoryContent {
 }
 
 export default function ThreeLineSummaryActivity() {
+  const { profile } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedTopic, setSelectedTopic] = useState('')
   const [storyContent, setStoryContent] = useState<StoryContent | null>(null)
@@ -36,8 +39,8 @@ export default function ThreeLineSummaryActivity() {
         },
         body: JSON.stringify({
           activityType: 'three-line-summary',
-          readingLevel: 3,
-          writingLevel: 3,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
           topic: selectedTopic
         })
       })
@@ -282,7 +285,7 @@ export default function ThreeLineSummaryActivity() {
                       onClick={resetSummary}
                       className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold flex items-center"
                     >
-                      <RefreshCw className="w-5 h-5 mr-2" />
+                      <RotateCcw className="w-5 h-5 mr-2" />
                       다시 작성
                     </button>
                   </>
@@ -370,7 +373,7 @@ export default function ThreeLineSummaryActivity() {
                 }}
                 className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
-                <RefreshCw className="w-5 h-5 mr-2" />
+                <RotateCcw className="w-5 h-5 mr-2" />
                 다시하기
               </button>
               <Link

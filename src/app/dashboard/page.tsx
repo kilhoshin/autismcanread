@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { canDownloadPDF, canGenerateWorksheets, incrementMonthlyUsage } from '@/utils/supabase'
 
 export default function Dashboard() {
-  const { user, profile, signOut, loading } = useAuth()
+  const { user, profile, signOut, loading, refreshProfile } = useAuth()
   const router = useRouter()
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [selectedActivities, setSelectedActivities] = useState<string[]>([])
@@ -306,6 +306,7 @@ export default function Dashboard() {
         // Refresh user status
         const premiumStatus = await canDownloadPDF(user.id)
         setIsPremium(premiumStatus)
+        await refreshProfile()
         alert(`Subscription updated to ${status}!`)
       } else {
         alert('Failed to update subscription')

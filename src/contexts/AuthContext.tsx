@@ -9,6 +9,7 @@ interface AuthContextType {
   profile: UserProfile | null
   loading: boolean
   signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 })
 
 export const useAuth = () => {
@@ -40,11 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('👤 Session user:', session?.user?.email)
         setUser(session?.user ?? null)
         
-        // Temporarily disable profile lookup to avoid RLS issues
-        // if (session?.user) {
-        //   const { data: profileData } = await getUserProfile(session.user.id)
-        //   setProfile(profileData)
-        // }
+        if (session?.user) {
+          const { data: profileData } = await getUserProfile(session.user.id)
+          setProfile(profileData)
+        }
       } catch (error) {
         console.error('Error getting session:', error)
         setUser(null)
@@ -69,13 +70,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('🔄 Auth state change:', event, session?.user?.email)
         setUser(session?.user ?? null)
         
-        // Temporarily disable profile lookup to avoid RLS issues
-        // if (session?.user) {
-        //   const { data: profileData } = await getUserProfile(session.user.id)
-        //   setProfile(profileData)
-        // } else {
-        //   setProfile(null)
-        // }
+        if (session?.user) {
+          const { data: profileData } = await getUserProfile(session.user.id)
+          setProfile(profileData)
+        } else {
+          setProfile(null)
+        }
         
         // Don't set loading false here - only in initial getSession
       }
@@ -95,11 +95,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const handleRefreshProfile = async () => {
+    if (user) {
+      const { data: profileData } = await getUserProfile(user.id)
+      setProfile(profileData)
+    }
+  }
+
   const value = {
     user,
     profile,
     loading,
     signOut: handleSignOut,
+    refreshProfile: handleRefreshProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

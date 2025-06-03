@@ -215,33 +215,10 @@ export const checkMonthlyUsage = async (userId: string) => {
       return { monthlyGenerated: 0, lastMonth: null, lastYear: null }
     }
     
-    // If user doesn't exist in users table, create them
+    // If user doesn't exist in users table, return default values
+    // The user record should be created by AuthContext automatically
     if (!data) {
-      console.log('User not found in users table, creating user record...')
-      
-      // Get user email from Auth
-      const { data: authUser } = await supabase.auth.getUser()
-      const userEmail = authUser?.user?.email || 'unknown@example.com'
-      
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
-          id: userId,
-          email: userEmail,
-          subscription_status: 'free',
-          monthly_worksheets_generated: 0,
-          last_generation_month: null,
-          last_generation_year: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-      
-      if (insertError) {
-        console.error('Failed to create user record:', insertError.message)
-      } else {
-        console.log('Successfully created user record with email:', userEmail)
-      }
-      
+      console.log('⚠️ User not found in users table, returning default usage')
       return { monthlyGenerated: 0, lastMonth: null, lastYear: null }
     }
     

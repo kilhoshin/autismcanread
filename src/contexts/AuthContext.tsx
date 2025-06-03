@@ -28,6 +28,51 @@ export const useAuth = () => {
   return context
 }
 
+// Helper function to create user record if it doesn't exist
+const ensureUserRecord = async (user: User): Promise<UserProfile | null> => {
+  try {
+    console.log('🔍 Checking/creating user record for:', user.email)
+    
+    // First try to get existing profile
+    const { data: existingProfile } = await getUserProfile(user.id)
+    
+    if (existingProfile) {
+      console.log('✅ User record exists:', existingProfile.email)
+      return existingProfile
+    }
+    
+    // User record doesn't exist, create it via API
+    console.log('🔄 Creating user record via API...')
+    const response = await fetch('/api/create-user-safe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        fullName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      }),
+    })
+    
+    if (!response.ok) {
+      console.error('❌ Failed to create user record via API')
+      return null
+    }
+    
+    const result = await response.json()
+    console.log('✅ User record creation result:', result)
+    
+    // Now fetch the created profile
+    const { data: newProfile } = await getUserProfile(user.id)
+    return newProfile
+    
+  } catch (error) {
+    console.error('❌ Error ensuring user record:', error)
+    return null
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -38,7 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadingTimeout = setTimeout(() => {
       console.warn('⚠️ Auth loading timeout - setting loading to false')
       setLoading(false)
-    }, 5000) // 5 second timeout
+    }, 10000) // 10 second timeout (increased from 5)
 
     const getSession = async () => {
       console.log('🔄 Getting session...')
@@ -47,13 +92,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           console.log('👤 Session user:', session.user.email)
           setUser(session.user)
-          try {
-            const { data: profileData } = await getUserProfile(session.user.id)
-            setProfile(profileData)
-          } catch (profileError) {
-            console.error('❌ Error loading profile:', profileError)
-            setProfile(null)
-          }
+          
+          // Ensure user record exists and get profile
+          const profileData = await ensureUserRecord(session.user)
+          setProfile(profileData)
         }
       } catch (error) {
         console.error('❌ Error getting session:', error)
@@ -69,17 +111,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('🔄 Auth state change:', event, session?.user?.email)
       if (session?.user) {
         setUser(session.user)
-        try {
-          const { data: profileData } = await getUserProfile(session.user.id)
-          setProfile(profileData)
-        } catch (profileError) {
-          console.error('❌ Error loading profile:', profileError)
-          setProfile(null)
-        }
+        
+        // Ensure user record exists and get profile
+        const profileData = await ensureUserRecord(session.user)
+        setProfile(profileData)
       } else {
         setUser(null)
         setProfile(null)
       }
+      setLoading(false)
     })
 
     return () => {
@@ -100,15 +140,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('🔄 Refreshing user profile...')
     if (user) {
       try {
-        const { data: profileData, error } = await getUserProfile(user.id)
-        if (error) {
-          console.error('❌ Error refreshing profile:', error)
-        } else {
+        // Ensure user record exists and get fresh profile
+        const profileData = await ensureUserRecord(user)
+        if (profileData) {
           console.log('✅ Profile refreshed:', profileData)
           setProfile(profileData)
-          
-          // Force a re-render by updating a timestamp
-          setProfile(prev => ({ ...profileData, _refreshed: Date.now() }))
+        } else {
+          console.error('❌ Failed to refresh profile')
         }
       } catch (error) {
         console.error('❌ Exception refreshing profile:', error)

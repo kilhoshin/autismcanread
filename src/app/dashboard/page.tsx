@@ -398,7 +398,7 @@ export default function Dashboard() {
             <div className="mt-4 space-x-2">
               <button
                 onClick={async () => {
-                  const response = await fetch('/api/create-user', {
+                  const response = await fetch('/api/create-user-safe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

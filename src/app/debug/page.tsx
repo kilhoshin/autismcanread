@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 export default function DebugPage() {
   const { user, profile, refreshProfile } = useAuth()
   const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [envInfo, setEnvInfo] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [testResults, setTestResults] = useState<any>({})
@@ -21,6 +22,21 @@ export default function DebugPage() {
     } catch (error) {
       console.error('Error fetching debug info:', error)
       setMessage('❌ Error fetching debug info')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchEnvInfo = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/debug-env')
+      const data = await response.json()
+      setEnvInfo(data)
+      setMessage('✅ Environment info loaded')
+    } catch (error) {
+      console.error('Error fetching env info:', error)
+      setMessage('❌ Error fetching environment info')
     } finally {
       setIsLoading(false)
     }
@@ -148,14 +164,55 @@ export default function DebugPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-          <h1 className="text-2xl font-bold text-center mb-4">Debug Page</h1>
-          <p className="text-center text-gray-600 mb-6">Please login to access debug tools</p>
-          <div className="text-center">
-            <a href="/login" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-              Go to Login
-            </a>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">🐛 Production Debug Dashboard</h1>
+            
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h2 className="text-xl font-semibold mb-3">⚠️ Not Logged In</h2>
+              <p className="mb-4">You are not currently logged in. Some features require authentication.</p>
+              
+              <div className="flex flex-wrap gap-3">
+                <a href="/login" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                  🔐 Go to Login
+                </a>
+                <button
+                  onClick={fetchEnvInfo}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                >
+                  {isLoading ? 'Loading...' : '🌎 Check Environment'}
+                </button>
+              </div>
+            </div>
+
+            {/* Environment Info (available without login) */}
+            {envInfo && (
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold mb-3">🌎 Environment Information</h2>
+                <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96">
+                  {JSON.stringify(envInfo, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Message Display */}
+            {message && (
+              <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-sm">{message}</p>
+              </div>
+            )}
+
+            {/* Basic Navigation */}
+            <div className="flex flex-wrap gap-3 pt-4 border-t">
+              <a href="/" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                🏠 Home
+              </a>
+              <a href="/pricing" className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                💰 Pricing
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -239,6 +296,14 @@ export default function DebugPage() {
             >
               🔄 Refresh Profile
             </button>
+
+            <button
+              onClick={fetchEnvInfo}
+              disabled={isLoading}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              🌎 Get Environment Info
+            </button>
           </div>
 
           {/* Test Results */}
@@ -266,6 +331,16 @@ export default function DebugPage() {
               <h2 className="text-xl font-semibold mb-3">🔍 Debug Information</h2>
               <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96">
                 {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          {/* Environment Info Display */}
+          {envInfo && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-3">🌎 Environment Information</h2>
+              <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96">
+                {JSON.stringify(envInfo, null, 2)}
               </pre>
             </div>
           )}

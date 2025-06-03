@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [isPremium, setIsPremium] = useState(false)
   const [checkingPremium, setCheckingPremium] = useState(true)
   const [monthlyUsage, setMonthlyUsage] = useState(0)
+  const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false)
 
   // Check premium status and monthly usage on mount
   useEffect(() => {
@@ -286,6 +287,37 @@ export default function Dashboard() {
     }
   }
 
+  // Manual subscription update for debugging
+  const updateSubscriptionManually = async (status: 'free' | 'premium') => {
+    if (!user?.id) return
+    
+    setIsUpdatingSubscription(true)
+    try {
+      const response = await fetch('/api/update-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          subscriptionStatus: status
+        })
+      })
+      
+      if (response.ok) {
+        // Refresh user status
+        const premiumStatus = await canDownloadPDF(user.id)
+        setIsPremium(premiumStatus)
+        alert(`Subscription updated to ${status}!`)
+      } else {
+        alert('Failed to update subscription')
+      }
+    } catch (error) {
+      console.error('Error updating subscription:', error)
+      alert('Error updating subscription')
+    } finally {
+      setIsUpdatingSubscription(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -299,6 +331,33 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Debug: Show subscription status */}
+              <div className="bg-yellow-100 border border-yellow-300 rounded-lg px-3 py-1 text-sm">
+                <div className="flex items-center space-x-3">
+                  <span className="font-medium text-yellow-800">
+                    Debug: {isPremium ? '👑 Premium' : '🆓 Free'} | 
+                    Profile: {profile?.subscription_status || 'undefined'} | 
+                    User ID: {user?.id?.slice(0, 8)}...
+                  </span>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => updateSubscriptionManually('premium')}
+                      disabled={isUpdatingSubscription}
+                      className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
+                    >
+                      Set Premium
+                    </button>
+                    <button
+                      onClick={() => updateSubscriptionManually('free')}
+                      disabled={isUpdatingSubscription}
+                      className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 disabled:opacity-50"
+                    >
+                      Set Free
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex items-center space-x-2">
                 <User className="w-5 h-5 text-gray-600" />
                 <span className="text-gray-700 font-medium">

@@ -156,11 +156,8 @@ export const getUserWorksheetHistory = async (userId: string) => {
 // Subscription Helper Functions
 export const checkUserSubscription = async (userId: string) => {
   try {
-    // TEMPORARY: Development mode - treat all users as free until columns are added
-    console.log('Development mode: treating all users as free')
-    return 'free'
+    console.log('🔍 Checking subscription status for user:', userId)
     
-    /* Uncomment after running database migration:
     const { data, error } = await supabase
       .from('users')
       .select('subscription_status')
@@ -168,19 +165,19 @@ export const checkUserSubscription = async (userId: string) => {
       .single()
     
     if (error) {
-      console.error('Error checking subscription:', error.message || error)
+      console.error('❌ Error checking subscription:', error.message || error)
       return 'free' // Default to free on error
     }
     
     if (!data) {
-      console.log('No user data found, defaulting to free subscription')
+      console.log('⚠️ No user data found, defaulting to free subscription')
       return 'free'
     }
     
+    console.log('✅ User subscription status:', data.subscription_status || 'free')
     return data.subscription_status || 'free'
-    */
   } catch (error) {
-    console.error('Exception in checkUserSubscription:', error)
+    console.error('❌ Exception in checkUserSubscription:', error)
     return 'free'
   }
 }

@@ -34,15 +34,22 @@ const ensureUserRecord = async (user: User): Promise<UserProfile | null> => {
     console.log('🔍 Checking/creating user record for:', user.email)
     
     // First try to get existing profile
-    const { data: existingProfile } = await getUserProfile(user.id)
+    console.log('🔍 Attempting to fetch existing profile...')
+    const { data: existingProfile, error: profileError } = await getUserProfile(user.id)
+    
+    if (profileError) {
+      console.error('❌ Error fetching profile:', profileError)
+    }
     
     if (existingProfile) {
-      console.log('✅ User record exists:', existingProfile.email)
+      console.log('✅ User record exists:', existingProfile.email, 'Subscription:', existingProfile.subscription_status)
       return existingProfile
     }
     
     // User record doesn't exist, create it via API
-    console.log('🔄 Creating user record via API...')
+    console.log('🔄 User record not found, creating via API...')
+    console.log('🔄 API URL will be:', '/api/create-user-safe')
+    
     const response = await fetch('/api/create-user-safe', {
       method: 'POST',
       headers: {
@@ -55,8 +62,12 @@ const ensureUserRecord = async (user: User): Promise<UserProfile | null> => {
       }),
     })
     
+    console.log('🔍 API Response status:', response.status, response.statusText)
+    
     if (!response.ok) {
       console.error('❌ Failed to create user record via API')
+      const errorText = await response.text()
+      console.error('❌ API Error response:', errorText)
       return null
     }
     
@@ -64,11 +75,25 @@ const ensureUserRecord = async (user: User): Promise<UserProfile | null> => {
     console.log('✅ User record creation result:', result)
     
     // Now fetch the created profile
-    const { data: newProfile } = await getUserProfile(user.id)
-    return newProfile
+    console.log('🔄 Fetching newly created profile...')
+    const { data: newProfile, error: newProfileError } = await getUserProfile(user.id)
+    
+    if (newProfileError) {
+      console.error('❌ Error fetching newly created profile:', newProfileError)
+      return null
+    }
+    
+    if (newProfile) {
+      console.log('✅ Successfully fetched newly created profile:', newProfile.email)
+      return newProfile
+    } else {
+      console.error('❌ Newly created profile not found')
+      return null
+    }
     
   } catch (error) {
     console.error('❌ Error ensuring user record:', error)
+    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error')
     return null
   }
 }
@@ -79,11 +104,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Set a timeout to prevent infinite loading
+    // Set a timeout to prevent infinite loading (increased for production)
     const loadingTimeout = setTimeout(() => {
-      console.warn('⚠️ Auth loading timeout - setting loading to false')
+      console.warn('⚠️ Auth loading timeout after 30 seconds - setting loading to false')
+      console.warn('⚠️ Current state - User:', !!user, 'Profile:', !!profile)
       setLoading(false)
-    }, 10000) // 10 second timeout (increased from 5)
+    }, 30000) // 30 second timeout (increased from 10)
 
     const getSession = async () => {
       console.log('🔄 Getting session...')
@@ -94,14 +120,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session.user)
           
           // Ensure user record exists and get profile
+          console.log('🔄 Ensuring user record exists...')
           const profileData = await ensureUserRecord(session.user)
-          setProfile(profileData)
+          if (profileData) {
+            console.log('✅ Profile loaded successfully:', profileData.email)
+            setProfile(profileData)
+          } else {
+            console.error('❌ Failed to load or create profile')
+            setProfile(null)
+          }
+        } else {
+          console.log('👤 No session found')
         }
       } catch (error) {
         console.error('❌ Error getting session:', error)
       } finally {
         clearTimeout(loadingTimeout)
         setLoading(false)
+        console.log('✅ Auth initialization complete')
       }
     }
 
@@ -113,9 +149,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session.user)
         
         // Ensure user record exists and get profile
+        console.log('🔄 Auth state change - ensuring user record exists...')
         const profileData = await ensureUserRecord(session.user)
-        setProfile(profileData)
+        if (profileData) {
+          console.log('✅ Profile loaded from auth change:', profileData.email)
+          setProfile(profileData)
+        } else {
+          console.error('❌ Failed to load or create profile from auth change')
+          setProfile(null)
+        }
       } else {
+        console.log('👤 Auth state change - no user')
         setUser(null)
         setProfile(null)
       }

@@ -48,8 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('👤 Session user:', session.user.email)
           setUser(session.user)
           
-          // Ensure user record exists in database
-          await ensureUserRecord(session.user)
+          // TODO: Re-enable after fixing Vercel deployment
+          // await ensureUserRecord(session.user)
           
           const { data: profileData } = await getUserProfile(session.user.id)
           setProfile(profileData)
@@ -69,8 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (session?.user) {
         setUser(session.user)
         
-        // Ensure user record exists in database
-        await ensureUserRecord(session.user)
+        // TODO: Re-enable after fixing Vercel deployment
+        // await ensureUserRecord(session.user)
         
         const { data: profileData } = await getUserProfile(session.user.id)
         setProfile(profileData)

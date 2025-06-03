@@ -19,8 +19,11 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET !== 'whsec_...'
   : null
 
 export async function POST(request: NextRequest) {
+  console.log('🔔 Webhook received at:', new Date().toISOString())
+  
   // Return early if Stripe is not configured
   if (!stripe || !endpointSecret) {
+    console.error('❌ Stripe or webhook secret not configured')
     return NextResponse.json(
       { error: 'Webhook system not configured' },
       { status: 503 }
@@ -31,12 +34,18 @@ export async function POST(request: NextRequest) {
   const headersList = await headers()
   const sig = headersList.get('stripe-signature')
 
+  console.log('🔍 Webhook body length:', body.length)
+  console.log('🔍 Stripe signature present:', !!sig)
+
   let event: Stripe.Event
 
   try {
     event = stripe.webhooks.constructEvent(body, sig!, endpointSecret)
+    console.log('✅ Webhook signature verified successfully')
+    console.log('📋 Event type:', event.type)
+    console.log('📋 Event ID:', event.id)
   } catch (err: any) {
-    console.error(`Webhook signature verification failed:`, err.message)
+    console.error(`❌ Webhook signature verification failed:`, err.message)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -44,9 +53,14 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session
-        console.log('Checkout session completed:', session.id)
+        console.log('🛒 Checkout session completed:', session.id)
+        console.log('🛒 Session mode:', session.mode)
+        console.log('🛒 Session metadata:', session.metadata)
+        console.log('🛒 Customer ID:', session.customer)
         
         if (session.mode === 'subscription' && session.metadata?.userId) {
+          console.log('💳 Processing subscription for user:', session.metadata.userId)
+          
           // Update user subscription status to premium
           const { error } = await supabase
             .from('users')
@@ -58,16 +72,20 @@ export async function POST(request: NextRequest) {
             .eq('id', session.metadata.userId)
 
           if (error) {
-            console.error('Error updating user subscription:', error)
+            console.error('❌ Error updating user subscription:', error)
           } else {
-            console.log(`Updated subscription for user ${session.metadata.userId}`)
+            console.log(`✅ Updated subscription for user ${session.metadata.userId} to PREMIUM`)
           }
+        } else {
+          console.log('⚠️ Skipping subscription update - not a subscription or no userId in metadata')
         }
         break
 
       case 'customer.subscription.updated':
         const subscription = event.data.object as Stripe.Subscription
-        console.log('Subscription updated:', subscription.id)
+        console.log('🔄 Subscription updated:', subscription.id)
+        console.log('🔄 Subscription status:', subscription.status)
+        console.log('🔄 Subscription metadata:', subscription.metadata)
         
         // Handle subscription status changes
         if (subscription.metadata?.userId) {
@@ -78,6 +96,8 @@ export async function POST(request: NextRequest) {
             status = 'free'
           }
 
+          console.log(`🔄 Updating user ${subscription.metadata.userId} to status: ${status}`)
+
           const { error } = await supabase
             .from('users')
             .update({ 
@@ -87,16 +107,22 @@ export async function POST(request: NextRequest) {
             .eq('id', subscription.metadata.userId)
 
           if (error) {
-            console.error('Error updating subscription status:', error)
+            console.error('❌ Error updating subscription status:', error)
+          } else {
+            console.log(`✅ Successfully updated subscription status to ${status}`)
           }
+        } else {
+          console.log('⚠️ No userId in subscription metadata')
         }
         break
 
       case 'customer.subscription.deleted':
         const deletedSub = event.data.object as Stripe.Subscription
-        console.log('Subscription deleted:', deletedSub.id)
+        console.log('🗑️ Subscription deleted:', deletedSub.id)
         
         if (deletedSub.metadata?.userId) {
+          console.log(`🗑️ Setting user ${deletedSub.metadata.userId} to free status`)
+          
           const { error } = await supabase
             .from('users')
             .update({ 
@@ -106,18 +132,21 @@ export async function POST(request: NextRequest) {
             .eq('id', deletedSub.metadata.userId)
 
           if (error) {
-            console.error('Error updating subscription to free:', error)
+            console.error('❌ Error updating subscription to free:', error)
+          } else {
+            console.log('✅ Successfully updated subscription to free')
           }
         }
         break
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        console.log(`❓ Unhandled event type: ${event.type}`)
     }
 
+    console.log('✅ Webhook processed successfully')
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('Webhook handler error:', error)
+    console.error('❌ Webhook handler error:', error)
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }

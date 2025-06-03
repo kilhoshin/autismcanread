@@ -14,8 +14,11 @@ const stripe = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !=
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🛒 Creating checkout session at:', new Date().toISOString())
+    
     // Return early if Stripe is not configured
     if (!stripe) {
+      console.error('❌ Stripe not configured')
       return NextResponse.json(
         { error: 'Payment system not configured' },
         { status: 503 }
@@ -23,8 +26,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { priceId, userId } = await request.json()
+    
+    console.log('🔍 Checkout session request data:')
+    console.log('  - Price ID:', priceId)
+    console.log('  - User ID:', userId)
 
     if (!priceId || !userId) {
+      console.error('❌ Missing required data - priceId:', !!priceId, 'userId:', !!userId)
       return NextResponse.json(
         { error: 'Price ID and User ID are required' },
         { status: 400 }
@@ -32,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionData: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [
@@ -48,11 +56,20 @@ export async function POST(request: NextRequest) {
       },
       customer_email: undefined, // Will be filled by Stripe
       allow_promotion_codes: true,
-    })
+    }
+    
+    console.log('🔍 Creating Stripe session with metadata:', sessionData.metadata)
+    
+    const session = await stripe.checkout.sessions.create(sessionData)
+    
+    console.log('✅ Checkout session created successfully:')
+    console.log('  - Session ID:', session.id)
+    console.log('  - Session URL:', session.url)
+    console.log('  - Session metadata:', session.metadata)
 
     return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error('Error creating checkout session:', error)
+    console.error('❌ Error creating checkout session:', error)
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

@@ -11,6 +11,9 @@ export default function SubscriptionPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [successType, setSuccessType] = useState<'cancel' | 'reactivate'>('cancel')
   const [subscriptionData, setSubscriptionData] = useState<any>(null)
 
   useEffect(() => {
@@ -47,8 +50,10 @@ export default function SubscriptionPage() {
       })
 
       if (response.ok) {
-        alert('구독이 취소되었습니다. 현재 결제 기간이 끝날 때까지 Premium 기능을 계속 이용하실 수 있습니다.')
+        setSuccessMessage('구독이 취소되었습니다. 현재 결제 기간이 끝날 때까지 Premium 기능을 계속 이용하실 수 있습니다.')
+        setSuccessType('cancel')
         setShowCancelModal(false)
+        setShowSuccessModal(true)
         fetchSubscriptionData()
         
         // Refresh user profile context to update subscription status immediately
@@ -78,7 +83,9 @@ export default function SubscriptionPage() {
       const data = await response.json()
 
       if (response.ok) {
-        alert(`구독이 재활성화되었습니다! ${new Date(data.periodEnd).toLocaleDateString('ko-KR')}까지 Premium 기능을 이용하실 수 있습니다.`)
+        setSuccessMessage(`구독이 재활성화되었습니다! ${new Date(data.periodEnd).toLocaleDateString('ko-KR')}까지 Premium 기능을 이용하실 수 있습니다.`)
+        setSuccessType('reactivate')
+        setShowSuccessModal(true)
         fetchSubscriptionData()
         
         // Refresh user profile context to update subscription status immediately
@@ -293,6 +300,30 @@ export default function SubscriptionPage() {
                 >
                   {loading ? '처리 중...' : '구독 취소'}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">{successType === 'cancel' ? '구독 취소 성공' : '구독 재활성화 성공'}</h3>
+              <p className="text-gray-600 mb-6">{successMessage}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  닫기
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
+                >
+                  대시보드로 이동
+                </Link>
               </div>
             </div>
           </div>

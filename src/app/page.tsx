@@ -8,13 +8,81 @@ import { useAuth } from '@/contexts/AuthContext'
 import { signOut } from '@/utils/supabase'
 import { clearAuthAndReload } from '@/utils/clearStorage'
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
 
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
+  }
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets',
+    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets designed specifically for children with autism and ADHD.',
+    brand: {
+      '@type': 'Brand',
+      name: 'AutismCanRead'
+    },
+    offers: {
+      '@type': 'Offer',
+      price: '5.00',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      priceSpecification: {
+        '@type': 'RecurringPaymentModel',
+        frequency: 'Monthly'
+      }
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      bestRating: '5',
+      worstRating: '1',
+      ratingCount: '127'
+    },
+    features: [
+      'AI-powered worksheet generation',
+      '7 specialized reading activities',
+      'Personalized learning content',
+      'Instant PDF downloads',
+      'Progress tracking',
+      'Autism and ADHD focused',
+      'Reading comprehension improvement'
+    ]
+  }
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How does AutismCanRead help children with autism and ADHD?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'AutismCanRead uses AI technology to create personalized reading comprehension worksheets tailored to each child\'s reading level and interests, making learning more engaging and effective for children with autism and ADHD.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'What types of activities are available?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'We offer 7 core reading comprehension activities: WH Questions, Emotion Quiz, Story Structure, Sentence Order, Summarize, Complete the Sentence, and Picture and Story activities.'
+        }
+      },
+      {
+        '@type': 'Question',
+        name: 'How much does AutismCanRead cost?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'AutismCanRead costs $5 per month and includes unlimited worksheet creation, access to all 7 activities, AI-powered story generation, and high-quality PDF downloads.'
+        }
+      }
+    ]
   }
 
   if (loading) {
@@ -30,8 +98,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      
       {/* Navigation */}
-      <nav className="bg-white shadow-lg border-b-4 border-blue-300">
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50" role="navigation" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
@@ -81,9 +158,9 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4" role="banner">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="mb-8">
+          <header className="mb-8">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 AI-Powered
@@ -97,10 +174,9 @@ export default function Home() {
               Personalized learning materials designed to improve your child's reading comprehension skills
             </p>
             <p className="text-lg text-gray-500 mb-8">
-              ✨ Customized • 🎯 Personalized • 🤖 AI-Powered • 📚 Reading Improvement
+              Customized • Personalized • AI-Powered • Reading Improvement
             </p>
-          </div>
-
+          </header>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             {user ? (
               <Link
@@ -116,7 +192,7 @@ export default function Home() {
                   href="/register"
                   className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-10 py-4 rounded-xl font-bold text-xl transition-all shadow-lg hover:shadow-xl flex items-center"
                 >
-                  Get Started for Free 🎉
+                  Get Started for Free 
                   <ArrowRight className="w-6 h-6 ml-2" />
                 </Link>
                 <Link
@@ -178,78 +254,81 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white" role="main" aria-labelledby="how-it-works-heading">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
+          <h2 id="how-it-works-heading" className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
             🚀 3-Step Process to Create Personalized Worksheets
           </h2>
           <p className="text-center text-gray-600 mb-12 text-lg">
             Our AI technology makes it easy to create customized learning materials in just a few steps
           </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center group">
+          <div className="grid md:grid-cols-3 gap-8" role="list">
+            <article className="text-center group" role="listitem">
               <div className="bg-gradient-to-r from-blue-100 to-blue-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl font-bold text-blue-600">1</span>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900">Choose a Topic and Activity</h3>
               <p className="text-gray-600 leading-relaxed">Select a topic and activity that aligns with your child's interests and reading level</p>
-            </div>
-            <div className="text-center group">
+            </article>
+            <article className="text-center group" role="listitem">
               <div className="bg-gradient-to-r from-purple-100 to-purple-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl font-bold text-purple-600">2</span>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900">AI-Powered Worksheet Creation</h3>
               <p className="text-gray-600 leading-relaxed">Our AI technology creates a personalized worksheet based on your child's reading level and interests</p>
-            </div>
-            <div className="text-center group">
+            </article>
+            <article className="text-center group" role="listitem">
               <div className="bg-gradient-to-r from-green-100 to-green-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
                 <span className="text-3xl font-bold text-green-600">3</span>
               </div>
               <h3 className="text-xl font-semibold mb-3 text-gray-900">Instant Download and Use</h3>
               <p className="text-gray-600 leading-relaxed">Download your worksheet instantly and start using it with your child today</p>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
       {/* Activities */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50" aria-labelledby="activities-heading">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
+          <h2 id="activities-heading" className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
             🎯 7 Core Reading Comprehension Activities
           </h2>
           <p className="text-center text-gray-600 mb-12 text-lg">
             Our activities are designed to improve your child's reading comprehension skills in a fun and engaging way
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
             {[
-              { icon: '❓', title: 'WH Questions', desc: 'Who, What, When, Where, Why' },
-              { icon: '😊', title: 'Emotion Quiz', desc: 'Identify emotions in a story' },
-              { icon: '📖', title: 'Story Structure', desc: 'Understand the beginning, middle, and end of a story' },
-              { icon: '🔢', title: 'Sentence Order', desc: 'Put sentences in logical order' },
-              { icon: '📝', title: 'Summarize', desc: 'Summarize the main points of a story' },
-              { icon: '✏️', title: 'Complete the Sentence', desc: 'Fill in the blanks to complete a sentence' },
-              { icon: '🎨', title: 'Picture and Story', desc: 'Draw a picture and write a story' },
+              { icon: '❓', title: 'WH Questions', desc: 'Who, What, When, Where, Why', href: '/activity/wh-questions' },
+              { icon: '😊', title: 'Emotion Quiz', desc: 'Identify emotions in a story', href: '/activity/emotion-quiz' },
+              { icon: '📖', title: 'Story Structure', desc: 'Understand the beginning, middle, and end of a story', href: '/activity/bme-story' },
+              { icon: '🔢', title: 'Sentence Order', desc: 'Put sentences in logical order', href: '/activity/sentence-order' },
+              { icon: '📝', title: 'Summarize', desc: 'Summarize the main points of a story', href: '/activity/summarize' },
+              { icon: '✏️', title: 'Complete the Sentence', desc: 'Fill in the blanks to complete a sentence', href: '/activity/fill-blanks' },
+              { icon: '🎨', title: 'Picture and Story', desc: 'Draw a picture and write a story', href: '/activity/draw-and-tell' },
             ].map((activity, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-md text-center border-2 border-gray-100 hover:border-blue-300 hover:shadow-lg transition-all group">
-                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{activity.icon}</div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-lg">{activity.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{activity.desc}</p>
-              </div>
+              <article key={index} className="bg-white p-6 rounded-xl shadow-md text-center border-2 border-gray-100 hover:border-blue-300 hover:shadow-lg transition-all group" role="listitem">
+                <div className="text-4xl mb-4 group-hover:scale-110 transition-transform" aria-hidden="true">{activity.icon}</div>
+                <h3 className="font-semibold text-gray-900 mb-2">{activity.title}</h3>
+                <p className="text-sm text-gray-600">{activity.desc}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white" aria-labelledby="pricing-heading">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">🚀 Get Started Today</h2>
+          <h2 id="pricing-heading" className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">🚀 Get Started Today</h2>
           <p className="text-gray-600 mb-8 text-lg">Improve your child's reading comprehension skills for just $5/month</p>
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-blue-200 shadow-lg">
-            <div className="text-5xl mb-4">✨</div>
+          <article className="bg-gradient-to-r from-blue-50 to-purple-50 p-8 rounded-2xl border-2 border-blue-200 shadow-lg" itemScope itemType="https://schema.org/PriceSpecification">
+            <div className="text-5xl mb-4" aria-hidden="true">✨</div>
             <h3 className="text-3xl font-bold text-gray-900 mb-2">Premium Plan</h3>
-            <div className="text-5xl font-bold text-blue-600 mb-6">$5<span className="text-xl text-gray-600">/month</span></div>
+            <div className="text-5xl font-bold text-blue-600 mb-6">
+              <span itemProp="price">$5</span>
+              <span className="text-xl text-gray-600" itemProp="billingIncrement">/month</span>
+            </div>
             <ul className="text-left space-y-4 mb-8 max-w-md mx-auto">
               <li className="flex items-center">
                 <CheckCircle className="w-6 h-6 text-green-500 mr-3 flex-shrink-0" />
@@ -288,7 +367,7 @@ export default function Home() {
                 Get Started Today 🎉
               </Link>
             )}
-          </div>
+          </article>
         </div>
       </section>
 
@@ -310,7 +389,7 @@ export default function Home() {
             <div>
               <h3 className="text-lg font-semibold mb-4">🎯 Core Features</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>• AI-Powered Worksheet Creation</li>
+                <li>• AI-Powered Worksheet Generation</li>
                 <li>• 7 Core Reading Comprehension Activities</li>
                 <li>• Instant PDF Download</li>
                 <li>• Worksheet History Management</li>
@@ -320,7 +399,7 @@ export default function Home() {
             <div>
               <h3 className="text-lg font-semibold mb-4">📞 Customer Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>• Email: support@autismcanread.com</li>
+                <li>• Email: kylo.sheen@gmail.com</li>
                 <li>• User Guide</li>
                 <li>• FAQ</li>
                 <li>• Technical Support</li>

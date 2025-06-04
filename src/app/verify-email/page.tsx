@@ -120,8 +120,8 @@ export default function VerifyEmail() {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
             Having trouble? Contact us at{' '}
-            <a href="mailto:support@autismcanread.com" className="text-blue-600 hover:text-blue-700">
-              support@autismcanread.com
+            <a href="mailto:kylo.sheen@gmail.com" className="text-blue-600 hover:text-blue-700">
+              kylo.sheen@gmail.com
             </a>
           </p>
         </div>

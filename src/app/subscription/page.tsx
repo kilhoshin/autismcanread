@@ -7,7 +7,7 @@ import { Crown, Calendar, AlertTriangle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SubscriptionPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -50,6 +50,12 @@ export default function SubscriptionPage() {
         alert('구독이 취소되었습니다. 현재 결제 기간이 끝날 때까지 Premium 기능을 계속 이용하실 수 있습니다.')
         setShowCancelModal(false)
         fetchSubscriptionData()
+        
+        // Refresh user profile context to update subscription status immediately
+        if (refreshProfile) {
+          console.log('🔄 Refreshing profile context after subscription cancellation')
+          await refreshProfile()
+        }
       } else {
         throw new Error('구독 취소에 실패했습니다.')
       }

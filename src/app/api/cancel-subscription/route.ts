@@ -45,11 +45,17 @@ export async function POST(request: NextRequest) {
     // 2. Cancel the subscription via Stripe API
     // 3. Let the webhook handle the status update
 
-    // Update subscription status to cancelled
+    // For testing, set period end to next month to simulate remaining billing period
+    const nextMonth = new Date()
+    nextMonth.setMonth(nextMonth.getMonth() + 1)
+    const periodEnd = nextMonth.toISOString()
+
+    // Update subscription status to cancelled but maintain period end
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
         subscription_status: 'cancelled',
+        subscription_period_end: periodEnd,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)

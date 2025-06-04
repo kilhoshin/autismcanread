@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
         .from('users')
         .update({ 
           subscription_status: 'active',
-          stripe_customer_id: session.customer as string,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id)

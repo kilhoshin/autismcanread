@@ -21,32 +21,87 @@ export default function Dashboard() {
   const [isPremium, setIsPremium] = useState(false)
   const [checkingPremium, setCheckingPremium] = useState(true)
   const [monthlyUsage, setMonthlyUsage] = useState(0)
+  const [subscriptionError, setSubscriptionError] = useState(false)
   const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false)
 
   // Check premium status and monthly usage on mount
   useEffect(() => {
     const checkUserStatus = async () => {
       if (user?.id) {
+        console.log('🔍 Checking user status for:', user.email)
+        setCheckingPremium(true)
+        
+        try {
+          console.log('📊 Checking premium status...')
+          const premiumStatus = await canDownloadPDF(user.id)
+          console.log('📊 Premium status:', premiumStatus)
+          setIsPremium(premiumStatus)
+          
+          // Always check monthly usage (for both free and premium users)
+          console.log('📊 Checking monthly usage...')
+          const usageInfo = await canGenerateWorksheets(user.id, 0)
+          console.log('📊 Monthly usage:', usageInfo.currentCount)
+          setMonthlyUsage(usageInfo.currentCount)
+          
+          // Clear error state on successful load
+          setSubscriptionError(false)
+          
+        } catch (error) {
+          console.error('❌ Error checking user status:', error)
+          // Set safe defaults on error
+          setIsPremium(false)
+          setMonthlyUsage(0)
+          setSubscriptionError(true)
+          
+          // Retry after 2 seconds
+          console.log('🔄 Retrying user status check in 2 seconds...')
+          setTimeout(() => {
+            checkUserStatus()
+          }, 2000)
+          return // Don't set checkingPremium to false if retrying
+        }
+      } else {
+        console.log('❌ No user ID found for status check')
+        setIsPremium(false)
+        setMonthlyUsage(0)
+      }
+      
+      console.log('✅ User status check complete')
+      setCheckingPremium(false)
+    }
+    
+    // Add a small delay to ensure user data is available
+    if (user?.id) {
+      checkUserStatus()
+    } else if (user === null) {
+      // User explicitly null (not logged in)
+      setCheckingPremium(false)
+    }
+    // If user is undefined, keep checking
+  }, [user?.id])
+
+  // Refresh status when profile changes (subscription updated)
+  useEffect(() => {
+    if (profile?.subscription_status && user?.id) {
+      console.log('🔄 Profile subscription changed:', profile.subscription_status)
+      const checkUserStatus = async () => {
         try {
           const premiumStatus = await canDownloadPDF(user.id)
           setIsPremium(premiumStatus)
           
-          // Check monthly usage for free users
-          if (!premiumStatus) {
-            const usageInfo = await canGenerateWorksheets(user.id, 0)
-            setMonthlyUsage(usageInfo.currentCount)
-          }
+          const usageInfo = await canGenerateWorksheets(user.id, 0)
+          setMonthlyUsage(usageInfo.currentCount)
+          
+          // Clear error state on successful load
+          setSubscriptionError(false)
         } catch (error) {
-          console.error('Error checking user status:', error)
-          setIsPremium(false)
-          setMonthlyUsage(0)
+          console.error('Error refreshing user status:', error)
+          setSubscriptionError(true)
         }
       }
-      setCheckingPremium(false)
+      checkUserStatus()
     }
-    
-    checkUserStatus()
-  }, [user?.id])
+  }, [profile?.subscription_status, user?.id])
 
   // Show loading only while auth is loading
   if (loading) {
@@ -550,7 +605,30 @@ export default function Dashboard() {
           </div>
 
           {/* Premium Features Banner */}
-          {!checkingPremium && !isPremium && (
+          {checkingPremium ? (
+            <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-3"></div>
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-800">Loading Subscription Status...</h3>
+                  <p className="text-blue-700 text-sm">
+                    Checking your plan and monthly usage...
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : subscriptionError ? (
+            <div className="mt-6 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center">
+                <div>
+                  <h3 className="text-lg font-semibold text-red-800">Error Checking Subscription Status</h3>
+                  <p className="text-red-700 text-sm">
+                    An error occurred while checking your subscription status. Please try again or contact support.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : !isPremium ? (
             <div className="mt-6 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -570,16 +648,15 @@ export default function Dashboard() {
                 </Link>
               </div>
             </div>
-          )}
-
-          {!checkingPremium && isPremium && (
+          ) : (
             <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center">
                 <Crown className="w-6 h-6 text-green-600 mr-3" />
                 <div>
                   <h3 className="text-lg font-semibold text-green-800">Premium Active</h3>
                   <p className="text-green-700 text-sm">
-                    You have access to all features including unlimited PDF downloads.
+                    You have access to all features including unlimited PDF downloads. 
+                    {monthlyUsage > 0 && ` You've generated ${monthlyUsage} worksheets this month.`}
                   </p>
                 </div>
               </div>

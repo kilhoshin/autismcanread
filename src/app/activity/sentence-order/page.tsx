@@ -27,12 +27,12 @@ export default function SentenceOrderActivity() {
   const [isComplete, setIsComplete] = useState(false)
 
   const topics = [
-    { id: 'cooking', title: '요리하기', emoji: '👩‍🍳', color: 'bg-orange-100 border-orange-300' },
-    { id: 'morning-routine', title: '아침 준비하기', emoji: '🌅', color: 'bg-yellow-100 border-yellow-300' },
-    { id: 'cleaning-room', title: '방 정리하기', emoji: '🧹', color: 'bg-blue-100 border-blue-300' },
-    { id: 'plant-care', title: '식물 기르기', emoji: '🌱', color: 'bg-green-100 border-green-300' },
-    { id: 'homework', title: '숙제하기', emoji: '📝', color: 'bg-purple-100 border-purple-300' },
-    { id: 'custom', title: '직접 입력', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
+    { id: 'cooking', title: 'Cooking', emoji: '👩‍🍳', color: 'bg-orange-100 border-orange-300' },
+    { id: 'morning', title: 'Morning Routine', emoji: '🌅', color: 'bg-blue-100 border-blue-300' },
+    { id: 'cleaning', title: 'Cleaning', emoji: '🧹', color: 'bg-green-100 border-green-300' },
+    { id: 'plants', title: 'Plant Care', emoji: '🌱', color: 'bg-emerald-100 border-emerald-300' },
+    { id: 'homework', title: 'Homework', emoji: '📝', color: 'bg-purple-100 border-purple-300' },
+    { id: 'friendship', title: 'Friendship', emoji: '👫', color: 'bg-pink-100 border-pink-300' }
   ]
 
   const generateStory = async () => {
@@ -53,41 +53,41 @@ export default function SentenceOrderActivity() {
       if (response.ok) {
         const data = await response.json()
         setStoryContent(data.content)
-        // 문장들을 섞어서 초기 순서 설정
+        // Shuffle sentences to set initial order
         const shuffled = [...data.content.sentences].sort(() => Math.random() - 0.5)
         setUserOrder(shuffled)
         setCurrentStep(3)
       } else {
-        console.error('AI 스토리 생성 실패')
-        // 실패 시 샘플 데이터 사용
+        console.error('AI story generation failed')
+        // Use sample data on failure
         useSampleData()
       }
     } catch (error) {
-      console.error('AI API 호출 오류:', error)
-      // 오류 시 샘플 데이터 사용
+      console.error('AI API call error:', error)
+      // Use sample data on error
       useSampleData()
     }
   }
 
   const useSampleData = () => {
-    // 샘플 데이터 (AI API 실패 시 대체용)
+    // Sample data (used when AI API fails)
     const sampleStory = {
-      title: '라면 끓이기',
-      story: `민수는 배가 고파서 라면을 끓이기로 했습니다. 
-      먼저 냄비에 물을 넣고 끓였어요. 
-      물이 끓으면 라면과 스프를 넣었습니다. 
-      3분 동안 끓인 후 맛있게 먹었어요.`,
+      title: 'Cooking Ramen',
+      story: `Min-soo was hungry, so he decided to cook ramen. 
+      First, he boiled water in a pot. 
+      After the water boiled, he added ramen and seasoning. 
+      He waited for 3 minutes and then ate it.`,
       sentences: [
-        { id: 1, text: '맛있게 라면을 먹었어요.', correctOrder: 4 },
-        { id: 2, text: '냄비에 물을 넣고 끓였어요.', correctOrder: 1 },
-        { id: 3, text: '라면과 스프를 넣었습니다.', correctOrder: 3 },
-        { id: 4, text: '3분 동안 끓였어요.', correctOrder: 4 },
-        { id: 5, text: '물이 끓을 때까지 기다렸어요.', correctOrder: 2 }
+        { id: 1, text: 'He ate the ramen.', correctOrder: 4 },
+        { id: 2, text: 'He boiled water in a pot.', correctOrder: 1 },
+        { id: 3, text: 'He added ramen and seasoning.', correctOrder: 3 },
+        { id: 4, text: 'He waited for 3 minutes.', correctOrder: 4 },
+        { id: 5, text: 'He waited for the water to boil.', correctOrder: 2 }
       ]
     }
     
     setStoryContent(sampleStory)
-    // 문장들을 섞어서 초기 순서 설정
+    // Shuffle sentences to set initial order
     const shuffled = [...sampleStory.sentences].sort(() => Math.random() - 0.5)
     setUserOrder(shuffled)
     setCurrentStep(3)
@@ -111,9 +111,9 @@ export default function SentenceOrderActivity() {
     const newOrder = [...userOrder]
     const draggedSentence = newOrder[draggedItem]
     
-    // 드래그된 아이템 제거
+    // Remove dragged item
     newOrder.splice(draggedItem, 1)
-    // 새 위치에 삽입
+    // Insert at new location
     newOrder.splice(dropIndex, 0, draggedSentence)
     
     setUserOrder(newOrder)
@@ -179,21 +179,21 @@ export default function SentenceOrderActivity() {
       if (response.ok) {
         const data = await response.json()
         if (data.success && data.pdfData) {
-          // PDF 다운로드
+          // Download PDF
           const link = document.createElement('a')
           link.href = data.pdfData
-          link.download = `문장순서맞추기_${new Date().toLocaleDateString('ko-KR')}.pdf`
+          link.download = `Sentence Order Activity_${new Date().toLocaleDateString('en-US')}.pdf`
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
         }
       } else {
-        console.error('PDF 생성 실패')
-        alert('PDF 생성에 실패했습니다. 다시 시도해주세요.')
+        console.error('PDF creation failed')
+        alert('Failed to create PDF. Please try again.')
       }
     } catch (error) {
-      console.error('PDF 다운로드 오류:', error)
-      alert('PDF 다운로드 중 오류가 발생했습니다.')
+      console.error('PDF download error:', error)
+      alert('An error occurred while downloading the PDF.')
     }
   }
 
@@ -208,24 +208,24 @@ export default function SentenceOrderActivity() {
                 <ArrowUpDown className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">문장 순서 바꾸기</h1>
-                <p className="text-sm text-gray-600">올바른 순서로 문장 배열하기</p>
+                <h1 className="text-2xl font-bold text-gray-900">Sentence Order Activity</h1>
+                <p className="text-sm text-gray-600">Arrange sentences in the correct order</p>
               </div>
             </Link>
             <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              대시보드로 돌아가기
+              Back to Dashboard
             </Link>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Step 1: 주제 선택 */}
+        {/* Step 1: Choose a topic */}
         {currentStep === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-green-100">
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
-              🔄 어떤 순서 이야기를 연습할까요?
+              🔄 Which topic would you like to practice?
             </h2>
             
             <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -245,14 +245,14 @@ export default function SentenceOrderActivity() {
               ))}
             </div>
 
-            {/* 활동 설명 */}
+            {/* Activity explanation */}
             <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-green-800 mb-3">🎯 활동 방법</h3>
+              <h3 className="text-xl font-bold text-green-800 mb-3">🎯 How to play</h3>
               <div className="space-y-2 text-green-700">
-                <p>• 이야기를 읽고 순서가 섞인 문장들을 확인해요</p>
-                <p>• 드래그하거나 버튼을 눌러서 올바른 순서로 배열해요</p>
-                <p>• 시간 순서와 논리적 흐름을 생각해보세요</p>
-                <p>• 완성되면 정답을 확인할 수 있어요</p>
+                <p>• Read the story and check the mixed-up sentences</p>
+                <p>• Drag or click to arrange the sentences in the correct order</p>
+                <p>• Think about the time sequence and logical flow</p>
+                <p>• Check your answer when you're done</p>
               </div>
             </div>
 
@@ -262,55 +262,55 @@ export default function SentenceOrderActivity() {
                 disabled={!selectedTopic}
                 className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
               >
-                순서 이야기 만들기 ✨
+                Create a story ✨
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: 스토리 생성 */}
+        {/* Step 2: Generate story */}
         {currentStep === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-green-100 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">AI가 순서 이야기를 만들고 있어요!</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">AI is generating a story for you!</h2>
             <button
               onClick={generateStory}
               className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all"
             >
-              이야기 생성하기
+              Generate story
             </button>
           </div>
         )}
 
-        {/* Step 3: 문장 순서 맞추기 */}
+        {/* Step 3: Arrange sentences */}
         {currentStep === 3 && storyContent && (
           <div className="space-y-8">
-            {/* 원래 이야기 */}
+            {/* Original story */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-green-100">
               <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">
-                📖 이야기를 읽고 문장 순서를 맞춰보세요
+                📖 Read the story and arrange the sentences
               </h2>
               <div className="bg-gray-50 p-6 rounded-xl text-lg leading-relaxed text-gray-800 mb-4">
                 {storyContent.story}
               </div>
               <p className="text-center text-gray-600">
-                위 이야기의 문장들이 아래에 섞여있어요. 올바른 순서로 배열해보세요!
+                The sentences below are mixed up. Arrange them in the correct order!
               </p>
             </div>
 
-            {/* 문장 순서 맞추기 */}
+            {/* Arrange sentences */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-green-100">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">🔄 문장 순서 맞추기</h3>
+                <h3 className="text-2xl font-bold text-gray-900">🔄 Arrange sentences</h3>
                 <button
                   onClick={resetOrder}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  다시 섞기
+                  Shuffle again
                 </button>
               </div>
 
-              {/* 순서가 섞인 문장들 */}
+              {/* Mixed-up sentences */}
               <div className="space-y-3 mb-8">
                 {userOrder.map((sentence, index) => (
                   <div
@@ -327,22 +327,22 @@ export default function SentenceOrderActivity() {
                         : 'bg-white border-gray-200 hover:border-green-300'
                     }`}
                   >
-                    {/* 순서 번호 */}
+                    {/* Sentence number */}
                     <div className="flex-shrink-0 w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg mr-4">
                       {index + 1}
                     </div>
 
-                    {/* 드래그 핸들 */}
+                    {/* Drag handle */}
                     <div className="flex-shrink-0 mr-4 text-gray-400">
                       <GripVertical className="w-6 h-6" />
                     </div>
 
-                    {/* 문장 텍스트 */}
+                    {/* Sentence text */}
                     <div className="flex-1 text-lg text-gray-800">
                       {sentence.text}
                     </div>
 
-                    {/* 이동 버튼들 */}
+                    {/* Move buttons */}
                     <div className="flex-shrink-0 flex flex-col space-y-1 ml-4">
                       <button
                         onClick={() => moveUp(index)}
@@ -360,7 +360,7 @@ export default function SentenceOrderActivity() {
                       </button>
                     </div>
 
-                    {/* 정답 표시 */}
+                    {/* Correct answer indicator */}
                     {isComplete && (
                       <div className="flex-shrink-0 ml-4">
                         {sentence.correctOrder === index + 1 ? (
@@ -374,14 +374,14 @@ export default function SentenceOrderActivity() {
                 ))}
               </div>
 
-              {/* 정답 확인 버튼 */}
+              {/* Check answer button */}
               {!isComplete ? (
                 <div className="text-center">
                   <button
                     onClick={checkAnswer}
                     className="bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all"
                   >
-                    정답 확인하기 ✅
+                    Check answer ✅
                   </button>
                 </div>
               ) : (
@@ -394,12 +394,12 @@ export default function SentenceOrderActivity() {
                   <h4 className={`text-2xl font-bold mb-2 ${
                     isCorrectOrder ? 'text-green-800' : 'text-red-800'
                   }`}>
-                    {isCorrectOrder ? '완벽해요!' : '다시 한번 도전해보세요!'}
+                    {isCorrectOrder ? 'Great job!' : 'Try again!'}
                   </h4>
                   <p className="text-lg text-gray-700 mb-6">
                     {isCorrectOrder 
-                      ? '모든 문장의 순서를 올바르게 맞췄어요!' 
-                      : '빨간색 문장들의 위치를 다시 확인해보세요.'
+                      ? 'You arranged all the sentences correctly!' 
+                      : 'Check the red sentences and try again.'
                     }
                   </p>
 
@@ -410,14 +410,14 @@ export default function SentenceOrderActivity() {
                           onClick={() => setCurrentStep(4)}
                           className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
                         >
-                          완료하기 🎊
+                          Finish 🎊
                         </button>
                         <button
                           onClick={downloadPDF}
                           className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center"
                         >
                           <Download className="w-5 h-5 mr-2" />
-                          PDF 다운로드
+                          Download PDF
                         </button>
                       </>
                     ) : (
@@ -425,7 +425,7 @@ export default function SentenceOrderActivity() {
                         onClick={() => setIsComplete(false)}
                         className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold"
                       >
-                        다시 시도하기
+                        Try again
                       </button>
                     )}
                   </div>
@@ -435,15 +435,15 @@ export default function SentenceOrderActivity() {
           </div>
         )}
 
-        {/* Step 4: 완료 */}
+        {/* Step 4: Finish */}
         {currentStep === 4 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-green-100 text-center">
             <div className="mb-8">
               <div className="bg-green-100 p-6 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 문장 순서 맞추기를 완료했어요!</h2>
-              <p className="text-xl text-gray-600">논리적 사고력과 순서 파악 능력이 늘었어요!</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 You completed the sentence order activity!</h2>
+              <p className="text-xl text-gray-600">Your logical thinking and sequencing skills have improved!</p>
             </div>
 
             <div className="flex justify-center space-x-4">
@@ -452,7 +452,7 @@ export default function SentenceOrderActivity() {
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center"
               >
                 <Download className="w-5 h-5 mr-2" />
-                PDF 다운로드
+                Download PDF
               </button>
               <button
                 onClick={() => {
@@ -465,13 +465,13 @@ export default function SentenceOrderActivity() {
                 className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
                 <RefreshCw className="w-5 h-5 mr-2" />
-                다시하기
+                Play again
               </button>
               <Link
                 href="/dashboard"
                 className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
-                대시보드로
+                Back to Dashboard
               </Link>
             </div>
           </div>

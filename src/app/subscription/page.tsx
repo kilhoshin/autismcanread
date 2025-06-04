@@ -50,7 +50,7 @@ export default function SubscriptionPage() {
       })
 
       if (response.ok) {
-        setSuccessMessage('구독이 취소되었습니다. 현재 결제 기간이 끝날 때까지 Premium 기능을 계속 이용하실 수 있습니다.')
+        setSuccessMessage('Your subscription has been cancelled. You can continue using Premium features until the end of your current billing period.')
         setSuccessType('cancel')
         setShowCancelModal(false)
         setShowSuccessModal(true)
@@ -58,15 +58,15 @@ export default function SubscriptionPage() {
         
         // Refresh user profile context to update subscription status immediately
         if (refreshProfile) {
-          console.log('🔄 Refreshing profile context after subscription cancellation')
+          console.log('Refreshing profile context after subscription cancellation')
           await refreshProfile()
         }
       } else {
-        throw new Error('구독 취소에 실패했습니다.')
+        throw new Error('Failed to cancel subscription.')
       }
     } catch (error) {
       console.error('Cancel subscription error:', error)
-      alert('구독 취소 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      alert('An error occurred while cancelling your subscription. Please try again later.')
     }
     setLoading(false)
   }
@@ -83,27 +83,27 @@ export default function SubscriptionPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccessMessage(`구독이 재활성화되었습니다! ${new Date(data.periodEnd).toLocaleDateString('ko-KR')}까지 Premium 기능을 이용하실 수 있습니다.`)
+        setSuccessMessage(`Your subscription has been reactivated! You can use Premium features until ${new Date(data.periodEnd).toLocaleDateString('en-US')}.`)
         setSuccessType('reactivate')
         setShowSuccessModal(true)
         fetchSubscriptionData()
         
         // Refresh user profile context to update subscription status immediately
         if (refreshProfile) {
-          console.log('🔄 Refreshing profile context after subscription reactivation')
+          console.log('Refreshing profile context after subscription reactivation')
           await refreshProfile()
         }
       } else {
         if (data.error.includes('expired')) {
-          alert('구독 기간이 만료되어 재활성화할 수 없습니다. 새로운 구독을 구매해주세요.')
+          alert('Your subscription period has expired. Please purchase a new subscription.')
           router.push('/pricing')
         } else {
-          throw new Error(data.error || '구독 재활성화에 실패했습니다.')
+          throw new Error(data.error || 'Failed to reactivate subscription.')
         }
       }
     } catch (error) {
       console.error('Reactivate subscription error:', error)
-      alert('구독 재활성화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      alert('An error occurred while reactivating your subscription. Please try again later.')
     }
     setLoading(false)
   }
@@ -119,7 +119,7 @@ export default function SubscriptionPage() {
   const isPremium = subscriptionData.status === 'premium'
   const isCancelled = subscriptionData.status === 'cancelled'
   const hasActiveAccess = isPremium || isCancelled // Both premium and cancelled users have access until period ends
-  const nextBillingDate = new Date(subscriptionData.next_billing_date).toLocaleDateString('ko-KR')
+  const nextBillingDate = new Date(subscriptionData.next_billing_date).toLocaleDateString('en-US')
   const isExpired = isCancelled && new Date(subscriptionData.next_billing_date) < new Date()
 
   return (
@@ -132,9 +132,9 @@ export default function SubscriptionPage() {
             className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            대시보드로 돌아가기
+            Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">구독 관리</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Subscription Management</h1>
         </div>
 
         {/* Current Plan */}
@@ -144,14 +144,14 @@ export default function SubscriptionPage() {
               <Crown className={`w-6 h-6 mr-3 ${hasActiveAccess ? 'text-yellow-500' : 'text-gray-400'}`} />
               <div>
                 <h2 className="text-xl font-semibold">
-                  {hasActiveAccess ? (isCancelled ? 'Premium 플랜 (취소됨)' : 'Premium 플랜') : 'Free 플랜'}
+                  {hasActiveAccess ? (isCancelled ? 'Premium Plan (Cancelled)' : 'Premium Plan') : 'Free Plan'}
                 </h2>
                 <p className="text-gray-600">
-                  {hasActiveAccess ? '무제한 워크시트 생성 및 PDF 다운로드' : '월 3개 워크시트 제한'}
+                  {hasActiveAccess ? 'Unlimited worksheet creation and PDF downloads' : 'Limited to 3 worksheets per month'}
                 </p>
                 {isCancelled && (
                   <p className="text-orange-600 text-sm mt-1">
-                    구독이 취소되었지만 {nextBillingDate}까지 Premium 기능을 계속 이용하실 수 있습니다.
+                    Your subscription has been cancelled, but you can continue using Premium features until {nextBillingDate}.
                   </p>
                 )}
               </div>
@@ -160,7 +160,7 @@ export default function SubscriptionPage() {
               {hasActiveAccess && (
                 <>
                   <p className="text-2xl font-bold text-green-600">${subscriptionData.amount}</p>
-                  <p className="text-sm text-gray-500">월간 구독</p>
+                  <p className="text-sm text-gray-500">Monthly subscription</p>
                 </>
               )}
             </div>
@@ -172,16 +172,16 @@ export default function SubscriptionPage() {
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-blue-500 mr-3" />
                   <div>
-                    <p className="font-medium">{isCancelled ? '서비스 종료일' : '다음 결제일'}</p>
+                    <p className="font-medium">{isCancelled ? 'Service End Date' : 'Next Billing Date'}</p>
                     <p className="text-sm text-gray-600">{nextBillingDate}</p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Crown className="w-5 h-5 text-yellow-500 mr-3" />
                   <div>
-                    <p className="font-medium">가입일</p>
+                    <p className="font-medium">Subscription Start Date</p>
                     <p className="text-sm text-gray-600">
-                      {new Date(subscriptionData.created_at).toLocaleDateString('ko-KR')}
+                      {new Date(subscriptionData.created_at).toLocaleDateString('en-US')}
                     </p>
                   </div>
                 </div>
@@ -193,17 +193,16 @@ export default function SubscriptionPage() {
         {/* Subscription Actions */}
         {isPremium ? (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">구독 관리</h3>
+            <h3 className="text-lg font-semibold mb-4">Subscription Management</h3>
             
             {/* Important Notice */}
             <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
               <div className="flex">
                 <AlertTriangle className="w-5 h-5 text-blue-400 mr-3 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-blue-800">구독 취소 안내</h4>
+                  <h4 className="font-medium text-blue-800">Cancellation Notice</h4>
                   <p className="text-blue-700 text-sm mt-1">
-                    구독을 취소하더라도 현재 결제 기간({nextBillingDate}까지)이 끝날 때까지 
-                    Premium 기능을 계속 이용하실 수 있습니다. 이미 결제하신 5달러는 환불되지 않습니다.
+                    If you cancel your subscription, you will still be able to use Premium features until the end of your current billing period ({nextBillingDate}). Your $5 payment will not be refunded.
                   </p>
                 </div>
               </div>
@@ -213,22 +212,21 @@ export default function SubscriptionPage() {
               onClick={() => setShowCancelModal(true)}
               className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
             >
-              구독 취소
+              Cancel Subscription
             </button>
           </div>
         ) : isCancelled ? (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">취소된 구독</h3>
+            <h3 className="text-lg font-semibold mb-4">Cancelled Subscription</h3>
             
             {/* Cancelled Subscription Notice */}
             <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
               <div className="flex">
                 <AlertTriangle className="w-5 h-5 text-orange-400 mr-3 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-orange-800">구독 취소됨</h4>
+                  <h4 className="font-medium text-orange-800">Subscription Cancelled</h4>
                   <p className="text-orange-700 text-sm mt-1">
-                    구독이 취소되었습니다. {nextBillingDate}까지 Premium 기능을 계속 이용하실 수 있으며, 
-                    그 이후에는 Free 플랜으로 전환됩니다.
+                    Your subscription has been cancelled. You can continue using Premium features until {nextBillingDate}, after which you will be downgraded to the Free plan.
                   </p>
                 </div>
               </div>
@@ -237,13 +235,13 @@ export default function SubscriptionPage() {
             {isExpired ? (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
-                  구독 기간이 만료되었습니다. 새로운 구독을 구매하시려면 아래 링크를 클릭해주세요.
+                  Your subscription period has expired. To purchase a new subscription, please click the link below.
                 </p>
                 <Link
                   href="/pricing"
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
                 >
-                  새로운 구독 구매하기
+                  Purchase a New Subscription
                 </Link>
               </div>
             ) : (
@@ -253,25 +251,25 @@ export default function SubscriptionPage() {
                   disabled={loading}
                   className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block mr-4"
                 >
-                  {loading ? '처리 중...' : '다시 구독하기'}
+                  {loading ? 'Processing...' : 'Reactivate Subscription'}
                 </button>
                 <p className="text-sm text-gray-600">
-                  Premium 기능이 필요하시면 언제든지 다시 구독하실 수 있습니다.
+                  You can reactivate your subscription at any time to regain access to Premium features.
                 </p>
               </div>
             )}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Premium으로 업그레이드</h3>
+            <h3 className="text-lg font-semibold mb-4">Upgrade to Premium</h3>
             <p className="text-gray-600 mb-4">
-              Premium 플랜으로 업그레이드하여 무제한 워크시트 생성과 PDF 다운로드를 이용하세요.
+              Upgrade to the Premium plan to unlock unlimited worksheet creation and PDF downloads.
             </p>
             <Link
               href="/pricing"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
             >
-              Premium 구독하기
+              Upgrade to Premium
             </Link>
           </div>
         )}
@@ -280,25 +278,25 @@ export default function SubscriptionPage() {
         {showCancelModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">구독 취소 확인</h3>
+              <h3 className="text-lg font-semibold mb-4">Cancel Subscription Confirmation</h3>
               <p className="text-gray-600 mb-6">
-                정말로 Premium 구독을 취소하시겠습니까?<br />
+                Are you sure you want to cancel your Premium subscription?<br />
                 <br />
-                <strong>취소 후에도 {nextBillingDate}까지는 Premium 기능을 계속 이용하실 수 있습니다.</strong>
+                <strong>You will still be able to use Premium features until the end of your current billing period ({nextBillingDate}).</strong>
               </p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowCancelModal(false)}
                   className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
                   onClick={handleCancelSubscription}
                   disabled={loading}
                   className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  {loading ? '처리 중...' : '구독 취소'}
+                  {loading ? 'Processing...' : 'Cancel Subscription'}
                 </button>
               </div>
             </div>
@@ -309,20 +307,20 @@ export default function SubscriptionPage() {
         {showSuccessModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">{successType === 'cancel' ? '구독 취소 성공' : '구독 재활성화 성공'}</h3>
+              <h3 className="text-lg font-semibold mb-4">{successType === 'cancel' ? 'Subscription Cancelled Successfully' : 'Subscription Reactivated Successfully'}</h3>
               <p className="text-gray-600 mb-6">{successMessage}</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSuccessModal(false)}
                   className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
                 >
-                  닫기
+                  Close
                 </button>
                 <Link
                   href="/dashboard"
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center"
                 >
-                  대시보드로 이동
+                  Go to Dashboard
                 </Link>
               </div>
             </div>

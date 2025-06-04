@@ -23,12 +23,12 @@ export default function DrawAndTellActivity() {
   const [brushSize, setBrushSize] = useState(3)
 
   const topics = [
-    { id: 'family', title: '우리 가족', emoji: '👨‍👩‍👧‍👦', color: 'bg-pink-100 border-pink-300' },
-    { id: 'pet', title: '내 애완동물', emoji: '🐕', color: 'bg-yellow-100 border-yellow-300' },
-    { id: 'friend', title: '내 친구', emoji: '👫', color: 'bg-blue-100 border-blue-300' },
-    { id: 'school', title: '학교 생활', emoji: '🏫', color: 'bg-green-100 border-green-300' },
-    { id: 'dream', title: '내 꿈', emoji: '🌟', color: 'bg-purple-100 border-purple-300' },
-    { id: 'custom', title: '직접 입력', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
+    { id: 'family', title: 'My Family', emoji: '👨‍👩‍👧‍👦', color: 'bg-pink-100 border-pink-300' },
+    { id: 'pet', title: 'My Pet', emoji: '🐕', color: 'bg-yellow-100 border-yellow-300' },
+    { id: 'friend', title: 'My Friend', emoji: '👫', color: 'bg-blue-100 border-blue-300' },
+    { id: 'school', title: 'School Life', emoji: '🏫', color: 'bg-green-100 border-green-300' },
+    { id: 'dream', title: 'My Dream', emoji: '🌟', color: 'bg-purple-100 border-purple-300' },
+    { id: 'custom', title: 'Custom Topic', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
   ]
 
   const colors = [
@@ -85,7 +85,7 @@ export default function DrawAndTellActivity() {
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    // 흰색 배경 설정
+    // Set white background
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
   }
@@ -95,7 +95,7 @@ export default function DrawAndTellActivity() {
     if (!canvas) return
 
     const imageData = canvas.toDataURL('image/png')
-    console.log('그림 저장됨:', imageData.substring(0, 50) + '...')
+    console.log('Drawing saved:', imageData.substring(0, 50) + '...')
     setCurrentStep(3)
   }
 
@@ -108,9 +108,9 @@ export default function DrawAndTellActivity() {
 
   const toggleRecording = () => {
     setIsRecording(!isRecording)
-    // 실제 음성 녹음 기능은 나중에 구현
+    // Voice recording feature will be implemented later
     if (!isRecording) {
-      alert('음성 녹음 기능은 개발 중입니다. 텍스트로 이야기를 작성해주세요.')
+      alert('Voice recording feature is under development. Please write your story in text.')
     }
   }
 
@@ -142,18 +142,18 @@ export default function DrawAndTellActivity() {
         if (data.success && data.pdfData) {
           const link = document.createElement('a')
           link.href = data.pdfData
-          link.download = `그림그리고말하기_${new Date().toLocaleDateString('ko-KR')}.pdf`
+          link.download = `DrawAndTell_${new Date().toLocaleDateString('en-US')}.pdf`
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
         }
       } else {
-        console.error('PDF 생성 실패')
-        alert('PDF 생성에 실패했습니다. 다시 시도해주세요.')
+        console.error('PDF creation failed')
+        alert('Failed to create PDF. Please try again.')
       }
     } catch (error) {
-      console.error('PDF 다운로드 오류:', error)
-      alert('PDF 다운로드 중 오류가 발생했습니다.')
+      console.error('PDF download error:', error)
+      alert('An error occurred while downloading the PDF.')
     }
   }
 
@@ -178,24 +178,24 @@ export default function DrawAndTellActivity() {
                 <Palette className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">그림 그리고 말하기</h1>
-                <p className="text-sm text-gray-600">그림을 그리고 이야기 만들기</p>
+                <h1 className="text-2xl font-bold text-gray-900">Draw and Tell</h1>
+                <p className="text-sm text-gray-600">Draw pictures and create stories</p>
               </div>
             </Link>
             <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              대시보드로 돌아가기
+              Back to Dashboard
             </Link>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Step 1: 주제 선택 */}
+        {/* Step 1: Topic Selection */}
         {currentStep === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-orange-100">
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
-              🎨 무엇을 그려볼까요?
+              🎨 What would you like to draw?
             </h2>
             
             <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -215,30 +215,30 @@ export default function DrawAndTellActivity() {
               ))}
             </div>
 
-            {/* 커스텀 주제 입력 */}
+            {/* Custom Topic Input */}
             {selectedTopic === 'custom' && (
               <div className="mb-8">
                 <label className="block text-lg font-semibold text-gray-700 mb-2">
-                  그리고 싶은 주제를 입력해주세요:
+                  Please enter your custom topic:
                 </label>
                 <input
                   type="text"
                   value={customTopic}
                   onChange={(e) => setCustomTopic(e.target.value)}
-                  placeholder="예: 내가 좋아하는 음식, 가고 싶은 여행지..."
+                  placeholder="e.g. My favorite food, My dream vacation..."
                   className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg focus:border-orange-400 focus:outline-none"
                 />
               </div>
             )}
 
-            {/* 활동 설명 */}
+            {/* Activity Description */}
             <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-orange-800 mb-3">🎯 활동 방법</h3>
+              <h3 className="text-xl font-bold text-orange-800 mb-3">🎯 Activity Instructions</h3>
               <div className="space-y-2 text-orange-700">
-                <p>• 선택한 주제에 대한 그림을 자유롭게 그려보세요</p>
-                <p>• 다양한 색깔과 붓 크기를 사용할 수 있어요</p>
-                <p>• 그린 그림에 대한 이야기를 만들어보세요</p>
-                <p>• 창의적으로 표현하는 것이 중요해요</p>
+                <p>• Draw a picture related to your chosen topic</p>
+                <p>• Use different colors and brush sizes to create your artwork</p>
+                <p>• Create a story based on your drawing</p>
+                <p>• Be creative and have fun!</p>
               </div>
             </div>
 
@@ -246,7 +246,7 @@ export default function DrawAndTellActivity() {
               <button
                 onClick={() => {
                   setCurrentStep(2)
-                  // 캔버스 초기화
+                  // Initialize canvas
                   setTimeout(() => {
                     const canvas = canvasRef.current
                     if (canvas) {
@@ -259,26 +259,26 @@ export default function DrawAndTellActivity() {
                   }, 100)
                 }}
                 disabled={!selectedTopic || (selectedTopic === 'custom' && !customTopic.trim())}
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all disabled:opacity-50"
               >
-                그림 그리러 가기 🎨
+                Start Drawing 🎨
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: 그림 그리기 */}
+        {/* Step 2: Drawing */}
         {currentStep === 2 && (
           <div className="space-y-8">
-            {/* 그리기 도구 */}
+            {/* Drawing Tools */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border-4 border-orange-100">
               <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">
-                🎨 {selectedTopic === 'custom' ? customTopic : topics.find(t => t.id === selectedTopic)?.title}를 그려보세요
+                🎨 Draw your picture
               </h2>
 
-              {/* 색상 선택 */}
+              {/* Color Selection */}
               <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-3">색상 선택:</h3>
+                <h3 className="text-lg font-semibold mb-3">Select a color:</h3>
                 <div className="flex flex-wrap gap-2">
                   {colors.map((color) => (
                     <button
@@ -293,9 +293,9 @@ export default function DrawAndTellActivity() {
                 </div>
               </div>
 
-              {/* 붓 크기 */}
+              {/* Brush Size */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">붓 크기:</h3>
+                <h3 className="text-lg font-semibold mb-3">Brush size:</h3>
                 <div className="flex items-center space-x-4">
                   <input
                     type="range"
@@ -310,24 +310,24 @@ export default function DrawAndTellActivity() {
               </div>
             </div>
 
-            {/* 캔버스 */}
+            {/* Canvas */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border-4 border-orange-100">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">그림 그리기</h3>
+                <h3 className="text-xl font-bold text-gray-900">Draw your picture</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={clearCanvas}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    지우기
+                    Clear
                   </button>
                   <button
                     onClick={saveDrawing}
                     className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center"
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    완료
+                    Save
                   </button>
                 </div>
               </div>
@@ -346,22 +346,22 @@ export default function DrawAndTellActivity() {
               </div>
 
               <p className="text-sm text-gray-600 mt-2 text-center">
-                마우스를 이용해 그림을 그려보세요. 완료 버튼을 누르면 다음 단계로 넘어갑니다.
+                Use your mouse to draw your picture. Click the save button to proceed to the next step.
               </p>
             </div>
           </div>
         )}
 
-        {/* Step 3: 이야기 작성 */}
+        {/* Step 3: Story Creation */}
         {currentStep === 3 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-orange-100">
             <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">
-              📝 그림에 대한 이야기를 만들어보세요
+              📝 Create a story based on your drawing
             </h2>
 
-            {/* 그린 그림 미리보기 */}
+            {/* Drawing Preview */}
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3">내가 그린 그림:</h3>
+              <h3 className="text-lg font-semibold mb-3">Your drawing:</h3>
               <div className="border-2 border-gray-300 rounded-xl overflow-hidden w-fit mx-auto">
                 <canvas
                   width={300}
@@ -380,10 +380,10 @@ export default function DrawAndTellActivity() {
               </div>
             </div>
 
-            {/* 이야기 작성 */}
+            {/* Story Creation */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">이야기 작성:</h3>
+                <h3 className="text-lg font-semibold">Create your story:</h3>
                 <button
                   onClick={toggleRecording}
                   className={`flex items-center px-4 py-2 rounded-lg font-semibold ${
@@ -393,14 +393,14 @@ export default function DrawAndTellActivity() {
                   }`}
                 >
                   {isRecording ? <MicOff className="w-4 h-4 mr-2" /> : <Mic className="w-4 h-4 mr-2" />}
-                  {isRecording ? '녹음 중지' : '음성 입력'}
+                  {isRecording ? 'Stop Recording' : 'Start Recording'}
                 </button>
               </div>
 
               <textarea
                 value={userStory}
                 onChange={(e) => setUserStory(e.target.value)}
-                placeholder="그림에 대한 이야기를 자유롭게 써보세요..."
+                placeholder="Write a story based on your drawing..."
                 className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg resize-none focus:border-orange-400 focus:outline-none"
                 rows={8}
               />
@@ -411,32 +411,32 @@ export default function DrawAndTellActivity() {
                   disabled={!userStory.trim()}
                   className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all disabled:opacity-50"
                 >
-                  이야기 완성하기 ✨
+                  Submit Your Story ✨
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 4: 완료 */}
+        {/* Step 4: Completion */}
         {currentStep === 4 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-orange-100 text-center">
             <div className="mb-8">
               <div className="bg-orange-100 p-6 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-orange-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 그림 그리고 말하기를 완료했어요!</h2>
-              <p className="text-xl text-gray-600">창의력과 표현력이 늘었어요!</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 Congratulations! You have completed the activity!</h2>
+              <p className="text-xl text-gray-600">You have improved your creativity and storytelling skills!</p>
             </div>
 
-            {/* 완성작 보기 */}
+            {/* Completed Work */}
             <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-orange-800 mb-4">🎨 완성작</h3>
+              <h3 className="text-xl font-bold text-orange-800 mb-4">🎨 Your Completed Work</h3>
               
               <div className="grid md:grid-cols-2 gap-6">
-                {/* 그림 */}
+                {/* Drawing */}
                 <div>
-                  <h4 className="text-lg font-semibold mb-3">내가 그린 그림:</h4>
+                  <h4 className="text-lg font-semibold mb-3">Your drawing:</h4>
                   <div className="border-2 border-gray-300 rounded-xl overflow-hidden">
                     <canvas
                       width={250}
@@ -455,9 +455,9 @@ export default function DrawAndTellActivity() {
                   </div>
                 </div>
 
-                {/* 이야기 */}
+                {/* Story */}
                 <div className="text-left">
-                  <h4 className="text-lg font-semibold mb-3">내가 만든 이야기:</h4>
+                  <h4 className="text-lg font-semibold mb-3">Your story:</h4>
                   <div className="bg-white p-4 rounded-lg border border-gray-200 text-gray-800 leading-relaxed">
                     {userStory}
                   </div>
@@ -471,20 +471,20 @@ export default function DrawAndTellActivity() {
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center"
               >
                 <Download className="w-5 h-5 mr-2" />
-                PDF 다운로드
+                Download PDF
               </button>
               <button
                 onClick={resetActivity}
                 className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
                 <RefreshCw className="w-5 h-5 mr-2" />
-                다시하기
+                Restart
               </button>
               <Link
                 href="/dashboard"
                 className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
-                대시보드로
+                Back to Dashboard
               </Link>
             </div>
           </div>

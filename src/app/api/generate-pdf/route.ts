@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import jsPDF from 'jspdf'
 import { canDownloadPDF } from '@/utils/supabase'
 
-// 한글 폰트 설정을 위한 인터페이스
+// Font configuration for Korean text support (requires Korean font files in production)
 interface PDFFont {
   addFont(): void
 }
@@ -22,33 +22,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // PDF 생성
+    // PDF creation
     const pdf = new jsPDF('p', 'mm', 'a4')
     
-    // 한글 지원을 위한 폰트 설정 (실제 운영에서는 한글 폰트 파일이 필요)
+    // Font configuration for Korean text support (requires Korean font files in production)
     pdf.setFont('helvetica', 'normal')
     
     let yPosition = 20
 
-    // 헤더
+    // Header
     pdf.setFontSize(20)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('읽기친구 - 학습 활동 결과', 20, yPosition)
+    pdf.text('Reading Friends - Learning Activity Results', 20, yPosition)
     yPosition += 15
 
-    // 활동 제목
+    // Activity title
     pdf.setFontSize(16)
-    pdf.setTextColor(220, 53, 69) // 빨간색
-    pdf.text(activityTitle || '학습 활동', 20, yPosition)
+    pdf.setTextColor(220, 53, 69) // Red
+    pdf.text(activityTitle || 'Learning Activity', 20, yPosition)
     yPosition += 10
 
-    // 날짜
+    // Date
     pdf.setFontSize(12)
     pdf.setTextColor(100, 100, 100)
-    pdf.text(`날짜: ${new Date().toLocaleDateString('ko-KR')}`, 20, yPosition)
+    pdf.text(`Date: ${new Date().toLocaleDateString('ko-KR')}`, 20, yPosition)
     yPosition += 20
 
-    // 활동별 내용 생성
+    // Generate activity-specific content
     switch (activityType) {
       case 'bme-story':
         yPosition = generateBMEPDF(pdf, storyContent, userAnswers, yPosition)
@@ -75,13 +75,13 @@ export async function POST(request: NextRequest) {
         yPosition = generateGenericPDF(pdf, storyContent, userAnswers, yPosition)
     }
 
-    // 격려 메시지
+    // Encouragement message
     yPosition += 10
     pdf.setFontSize(14)
-    pdf.setTextColor(40, 167, 69) // 녹색
-    pdf.text('잘했어요! 계속 열심히 공부해요! 🌟', 20, yPosition)
+    pdf.setTextColor(40, 167, 69) // Green
+    pdf.text('Great job! Keep up the good work! 🌟', 20, yPosition)
 
-    // PDF를 Base64로 변환
+    // Convert PDF to Base64
     const pdfBase64 = pdf.output('datauristring')
 
     return NextResponse.json({
@@ -100,10 +100,10 @@ export async function POST(request: NextRequest) {
 }
 
 function generateBMEPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 이야기 섹션
+  // Story section
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('📖 이야기', 20, yPosition)
+  pdf.text('📖 Story', 20, yPosition)
   yPosition += 10
 
   if (storyContent?.story) {
@@ -114,16 +114,16 @@ function generateBMEPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositi
     yPosition += storyLines.length * 5 + 10
   }
 
-  // B-M-E 분석
+  // B-M-E analysis
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('🔍 B-M-E 분석 결과', 20, yPosition)
+  pdf.text('🔍 B-M-E Analysis Results', 20, yPosition)
   yPosition += 15
 
   // Beginning
   pdf.setFontSize(12)
   pdf.setTextColor(220, 53, 69)
-  pdf.text('📚 Beginning (시작):', 20, yPosition)
+  pdf.text('📚 Beginning (Start):', 20, yPosition)
   yPosition += 8
   if (userAnswers?.beginning) {
     pdf.setFontSize(10)
@@ -136,7 +136,7 @@ function generateBMEPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositi
   // Middle
   pdf.setFontSize(12)
   pdf.setTextColor(255, 193, 7)
-  pdf.text('📖 Middle (중간):', 20, yPosition)
+  pdf.text('📖 Middle (Middle):', 20, yPosition)
   yPosition += 8
   if (userAnswers?.middle) {
     pdf.setFontSize(10)
@@ -149,7 +149,7 @@ function generateBMEPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositi
   // End
   pdf.setFontSize(12)
   pdf.setTextColor(40, 167, 69)
-  pdf.text('📚 End (끝):', 20, yPosition)
+  pdf.text('📚 End (End):', 20, yPosition)
   yPosition += 8
   if (userAnswers?.end) {
     pdf.setFontSize(10)
@@ -163,16 +163,16 @@ function generateBMEPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositi
 }
 
 function generateWHPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // WH 질문 활동용 PDF 생성
+  // WH questions activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('❓ WH 질문 활동 결과', 20, yPosition)
+  pdf.text('❓ WH Questions Activity Results', 20, yPosition)
   yPosition += 15
 
   if (storyContent?.story) {
     pdf.setFontSize(12)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('📖 이야기:', 20, yPosition)
+    pdf.text('📖 Story:', 20, yPosition)
     yPosition += 8
     
     pdf.setFontSize(10)
@@ -182,7 +182,7 @@ function generateWHPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositio
     yPosition += storyLines.length * 5 + 15
   }
 
-  // 질문과 답변들
+  // Questions and answers
   const whTypes = ['WHO', 'WHAT', 'WHEN', 'WHERE', 'WHY', 'HOW']
   whTypes.forEach((type) => {
     if (userAnswers?.[type.toLowerCase()]) {
@@ -203,21 +203,21 @@ function generateWHPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPositio
 }
 
 function generateEmotionPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 감정 예측 퀴즈용 PDF 생성
+  // Emotion prediction quiz PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('😊 감정 예측 퀴즈 결과', 20, yPosition)
+  pdf.text('😊 Emotion Prediction Quiz Results', 20, yPosition)
   yPosition += 15
 
-  // 구현 내용...
+  // Implementation...
   return yPosition
 }
 
 function generateSentenceOrderPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 문장 순서 맞추기 활동용 PDF 생성
+  // Sentence order activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('📚 문장 순서 맞추기 활동 결과', 20, yPosition)
+  pdf.text('📚 Sentence Order Activity Results', 20, yPosition)
   yPosition += 15
 
   if (storyContent) {
@@ -232,7 +232,7 @@ function generateSentenceOrderPDF(pdf: jsPDF, storyContent: any, userAnswers: an
   if (userAnswers) {
     pdf.setFontSize(12)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('📝 사용자 답변:', 20, yPosition)
+    pdf.text('📝 User Answers:', 20, yPosition)
     yPosition += 8
 
     userAnswers.forEach((sentence: any, index: number) => {
@@ -247,17 +247,17 @@ function generateSentenceOrderPDF(pdf: jsPDF, storyContent: any, userAnswers: an
 }
 
 function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 세줄 요약하기 활동용 PDF 생성
+  // Three-line summary activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('📝 세줄 요약하기 활동 결과', 20, yPosition)
+  pdf.text('📝 Three-Line Summary Activity Results', 20, yPosition)
   yPosition += 15
 
-  // 원본 이야기
+  // Original story
   if (storyContent) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text('원본 이야기:', 20, yPosition)
+    pdf.text('Original Story:', 20, yPosition)
     yPosition += 10
 
     pdf.setFontSize(10)
@@ -267,11 +267,11 @@ function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers:
     yPosition += storyLines.length * 5 + 15
   }
 
-  // 사용자 요약
+  // User summary
   if (userAnswers && userAnswers.userSummary) {
     pdf.setFontSize(12)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('사용자 요약:', 20, yPosition)
+    pdf.text('User Summary:', 20, yPosition)
     yPosition += 10
 
     userAnswers.userSummary.forEach((line: string, index: number) => {
@@ -286,11 +286,11 @@ function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers:
     yPosition += 10
   }
 
-  // 요약 가이드 (참고용)
+  // Summary guide (reference)
   if (userAnswers && userAnswers.summaryGuide) {
     pdf.setFontSize(12)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('참고 가이드:', 20, yPosition)
+    pdf.text('Summary Guide (Reference):', 20, yPosition)
     yPosition += 10
 
     userAnswers.summaryGuide.forEach((guide: string, index: number) => {
@@ -306,25 +306,25 @@ function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers:
 }
 
 function generateSentenceCompletionPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 문장 완성하기 활동용 PDF 생성
+  // Sentence completion activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('✏️ 문장 완성하기 활동 결과', 20, yPosition)
+  pdf.text('✏️ Sentence Completion Activity Results', 20, yPosition)
   yPosition += 15
 
-  // 점수 표시
+  // Score display
   if (userAnswers && userAnswers.score !== undefined) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text(`점수: ${userAnswers.score}점`, 20, yPosition)
+    pdf.text(`Score: ${userAnswers.score} points`, 20, yPosition)
     yPosition += 15
   }
 
-  // 원본 이야기
+  // Original story
   if (storyContent) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text('원본 이야기:', 20, yPosition)
+    pdf.text('Original Story:', 20, yPosition)
     yPosition += 10
 
     pdf.setFontSize(10)
@@ -334,40 +334,40 @@ function generateSentenceCompletionPDF(pdf: jsPDF, storyContent: any, userAnswer
     yPosition += storyLines.length * 5 + 15
   }
 
-  // 문제별 답안 확인
+  // Question-by-question answers
   if (userAnswers && userAnswers.blanks && userAnswers.userAnswers) {
     pdf.setFontSize(12)
     pdf.setTextColor(60, 60, 60)
-    pdf.text('답안 확인:', 20, yPosition)
+    pdf.text('Answer Key:', 20, yPosition)
     yPosition += 10
 
     userAnswers.blanks.forEach((blank: any, index: number) => {
-      const userAnswer = userAnswers.userAnswers[index] || '(미입력)'
+      const userAnswer = userAnswers.userAnswers[index] || '(Not answered)'
       const isCorrect = userAnswer.trim().toLowerCase() === blank.answer.toLowerCase()
 
-      // 문제 번호
+      // Question number
       pdf.setFontSize(10)
       pdf.setTextColor(40, 40, 40)
-      pdf.text(`문제 ${index + 1}:`, 25, yPosition)
+      pdf.text(`Question ${index + 1}:`, 25, yPosition)
       yPosition += 7
 
-      // 문제 문장
+      // Question sentence
       pdf.setFontSize(9)
       pdf.setTextColor(80, 80, 80)
       const questionLines = pdf.splitTextToSize(blank.withBlank, 165)
       pdf.text(questionLines, 25, yPosition)
       yPosition += questionLines.length * 4 + 3
 
-      // 답안
+      // Answer
       pdf.setFontSize(9)
       if (isCorrect) {
         pdf.setTextColor(34, 139, 34)
       } else {
         pdf.setTextColor(220, 20, 60)
       }
-      pdf.text(`내 답: ${userAnswer}`, 25, yPosition)
-      pdf.text(`정답: ${blank.answer}`, 100, yPosition)
-      pdf.text(isCorrect ? '✓ 정답' : '✗ 오답', 150, yPosition)
+      pdf.text(`Your answer: ${userAnswer}`, 25, yPosition)
+      pdf.text(`Correct answer: ${blank.answer}`, 100, yPosition)
+      pdf.text(isCorrect ? '✓ Correct' : '✗ Incorrect', 150, yPosition)
       yPosition += 10
     })
   }
@@ -376,44 +376,44 @@ function generateSentenceCompletionPDF(pdf: jsPDF, storyContent: any, userAnswer
 }
 
 function generateDrawAndTellPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 그림 그리고 말하기 활동용 PDF 생성
+  // Draw and tell activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('🎨 그림 그리고 말하기 활동 결과', 20, yPosition)
+  pdf.text('🎨 Draw and Tell Activity Results', 20, yPosition)
   yPosition += 15
 
-  // 주제
+  // Topic
   if (userAnswers && userAnswers.topic) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text(`주제: ${userAnswers.topic}`, 20, yPosition)
+    pdf.text(`Topic: ${userAnswers.topic}`, 20, yPosition)
     yPosition += 15
   }
 
-  // 그림 (이미지 데이터가 있는 경우)
+  // Drawing (if image data is available)
   if (userAnswers && userAnswers.imageData) {
     try {
       pdf.setFontSize(12)
       pdf.setTextColor(40, 40, 40)
-      pdf.text('그린 그림:', 20, yPosition)
+      pdf.text('Drawing:', 20, yPosition)
       yPosition += 10
 
-      // 이미지 추가 (실제 구현에서는 base64 이미지 처리)
+      // Add image (actual implementation would handle base64 image)
       pdf.addImage(userAnswers.imageData, 'PNG', 20, yPosition, 100, 67)
       yPosition += 75
     } catch (error) {
       pdf.setFontSize(10)
       pdf.setTextColor(120, 120, 120)
-      pdf.text('(그림을 PDF에 포함할 수 없습니다)', 20, yPosition)
+      pdf.text('(Unable to include drawing in PDF)', 20, yPosition)
       yPosition += 10
     }
   }
 
-  // 사용자 이야기
+  // User story
   if (userAnswers && userAnswers.story) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text('만든 이야기:', 20, yPosition)
+    pdf.text('User Story:', 20, yPosition)
     yPosition += 10
 
     pdf.setFontSize(10)
@@ -427,10 +427,10 @@ function generateDrawAndTellPDF(pdf: jsPDF, storyContent: any, userAnswers: any,
 }
 
 function generateGenericPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPosition: number): number {
-  // 일반적인 활동용 PDF 생성
+  // Generic activity PDF generation
   pdf.setFontSize(14)
   pdf.setTextColor(60, 60, 60)
-  pdf.text('📚 학습 활동 결과', 20, yPosition)
+  pdf.text('📚 Learning Activity Results', 20, yPosition)
   yPosition += 15
 
   if (storyContent) {
@@ -447,12 +447,12 @@ function generateGenericPDF(pdf: jsPDF, storyContent: any, userAnswers: any, yPo
 
 function getKoreanWH(type: string): string {
   const translations: { [key: string]: string } = {
-    'WHO': '누가',
-    'WHAT': '무엇을',
-    'WHEN': '언제',
-    'WHERE': '어디서',
-    'WHY': '왜',
-    'HOW': '어떻게'
+    'WHO': 'Who',
+    'WHAT': 'What',
+    'WHEN': 'When',
+    'WHERE': 'Where',
+    'WHY': 'Why',
+    'HOW': 'How'
   }
   return translations[type] || type
 }

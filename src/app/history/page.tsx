@@ -24,31 +24,31 @@ export default function History() {
 
   const getTopicLabel = (topicId: string) => {
     const topicMap: { [key: string]: string } = {
-      'cooking': '요리하기',
-      'morning': '아침 준비',
-      'cleaning': '방 정리',
-      'plants': '식물 기르기',
-      'homework': '숙제하기',
-      'friendship': '친구 사귀기'
+      'cooking': 'Cooking',
+      'morning': 'Morning Routine',
+      'cleaning': 'Cleaning',
+      'plants': 'Plant Care',
+      'homework': 'Homework',
+      'friendship': 'Friendship'
     }
     return topicMap[topicId] || topicId
   }
 
   const getActivityLabel = (activityId: string) => {
     const activityMap: { [key: string]: string } = {
-      'wh-questions': 'WH 질문',
-      'emotion-quiz': '감정 퀴즈',
-      'bme-story': 'BME 스토리',
-      'sentence-order': '문장 순서',
-      'three-line-summary': '세 줄 요약',
-      'sentence-completion': '문장 완성',
-      'draw-and-tell': '그림과 이야기'
+      'wh-questions': 'WH Questions',
+      'emotion-quiz': 'Emotion Quiz',
+      'bme-story': 'BME Story',
+      'sentence-order': 'Sentence Order',
+      'three-line-summary': 'Three Line Summary',
+      'sentence-completion': 'Sentence Completion',
+      'draw-and-tell': 'Draw and Tell'
     }
     return activityMap[activityId] || activityId
   }
 
   const handleDeleteRecord = (id: string) => {
-    if (confirm('이 워크시트 기록을 삭제하시겠습니까?')) {
+    if (confirm('Are you sure you want to delete this worksheet record?')) {
       const updatedHistory = history.filter(record => record.id !== id)
       setHistory(updatedHistory)
       localStorage.setItem('worksheetHistory', JSON.stringify(updatedHistory))
@@ -82,11 +82,11 @@ export default function History() {
         a.click()
         window.URL.revokeObjectURL(url)
       } else {
-        alert('워크시트 재생성에 실패했습니다.')
+        alert('Failed to regenerate worksheet.')
       }
     } catch (error) {
       console.error('Error regenerating worksheet:', error)
-      alert('워크시트 재생성 중 오류가 발생했습니다.')
+      alert('An error occurred while regenerating the worksheet.')
     }
   }
 
@@ -101,13 +101,13 @@ export default function History() {
                 <Book className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">읽기친구</h1>
-                <p className="text-sm text-gray-600">워크시트 기록</p>
+                <h1 className="text-2xl font-bold text-gray-900">Reading Friends</h1>
+                <p className="text-sm text-gray-600">Worksheet History</p>
               </div>
             </Link>
             <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              워크시트 생성으로 돌아가기
+              Back to Worksheet Generation
             </Link>
           </div>
         </div>
@@ -116,17 +116,17 @@ export default function History() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">📚 과거 워크시트 기록</h2>
-            <p className="text-gray-600">이전에 생성한 워크시트를 다시 다운로드하거나 같은 설정으로 새로 생성할 수 있습니다</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">📚 Past Worksheet Records</h2>
+            <p className="text-gray-600">You can download or regenerate previously created worksheets.</p>
           </div>
 
           {history.length === 0 ? (
             <div className="text-center py-16">
               <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-500 mb-2">아직 생성된 워크시트가 없습니다</h3>
-              <p className="text-gray-400 mb-6">첫 번째 워크시트를 만들어보세요!</p>
+              <h3 className="text-xl font-semibold text-gray-500 mb-2">No worksheets have been created yet.</h3>
+              <p className="text-gray-400 mb-6">Create your first worksheet!</p>
               <Link href="/dashboard" className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">
-                워크시트 생성하기
+                Create a Worksheet
               </Link>
             </div>
           ) : (
@@ -138,7 +138,7 @@ export default function History() {
                       <div className="flex items-center mb-3">
                         <Calendar className="w-5 h-5 text-gray-500 mr-2" />
                         <span className="text-gray-600">
-                          {new Date(record.date).toLocaleDateString('ko-KR', {
+                          {new Date(record.date).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -150,7 +150,7 @@ export default function History() {
                       
                       <div className="grid md:grid-cols-3 gap-4 mb-4">
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">📚 주제</h4>
+                          <h4 className="font-semibold text-gray-900 mb-2">📚 Topics</h4>
                           <div className="space-y-1">
                             {record.topics.map((topic, index) => (
                               <span key={index} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm mr-1 mb-1">
@@ -161,7 +161,7 @@ export default function History() {
                         </div>
                         
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">🎯 활동</h4>
+                          <h4 className="font-semibold text-gray-900 mb-2">🎯 Activities</h4>
                           <div className="space-y-1">
                             {record.activities.map((activity, index) => (
                               <span key={index} className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm mr-1 mb-1">
@@ -172,9 +172,9 @@ export default function History() {
                         </div>
                         
                         <div>
-                          <h4 className="font-semibold text-gray-900 mb-2">📊 개수</h4>
+                          <h4 className="font-semibold text-gray-900 mb-2">📊 Count</h4>
                           <span className="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded text-sm font-semibold">
-                            {record.count}개 워크시트
+                            {record.count} worksheets
                           </span>
                         </div>
                       </div>
@@ -186,7 +186,7 @@ export default function History() {
                         className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        재생성 & 다운로드
+                        Regenerate & Download
                       </button>
                       <button
                         onClick={() => handleDeleteRecord(record.id)}
@@ -204,7 +204,7 @@ export default function History() {
           {history.length > 0 && (
             <div className="mt-8 text-center">
               <p className="text-gray-500 text-sm">
-                총 {history.length}개의 워크시트 기록이 있습니다
+                You have {history.length} worksheet records.
               </p>
             </div>
           )}

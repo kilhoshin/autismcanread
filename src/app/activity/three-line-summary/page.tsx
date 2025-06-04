@@ -22,12 +22,12 @@ export default function ThreeLineSummaryActivity() {
   const [showGuide, setShowGuide] = useState(false)
 
   const topics = [
-    { id: 'school-day', title: '학교에서의 하루', emoji: '🏫', color: 'bg-blue-100 border-blue-300' },
-    { id: 'family-trip', title: '가족 여행', emoji: '✈️', color: 'bg-green-100 border-green-300' },
-    { id: 'pet-story', title: '애완동물 이야기', emoji: '🐕', color: 'bg-yellow-100 border-yellow-300' },
-    { id: 'birthday-party', title: '생일 파티', emoji: '🎂', color: 'bg-pink-100 border-pink-300' },
-    { id: 'nature-walk', title: '자연 산책', emoji: '🌳', color: 'bg-green-100 border-green-300' },
-    { id: 'custom', title: '직접 입력', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
+    { id: 'school-day', title: 'A Day at School', emoji: '🏫', color: 'bg-blue-100 border-blue-300' },
+    { id: 'family-trip', title: 'Family Trip', emoji: '✈️', color: 'bg-green-100 border-green-300' },
+    { id: 'pet-story', title: 'Pet Story', emoji: '🐕', color: 'bg-yellow-100 border-yellow-300' },
+    { id: 'birthday-party', title: 'Birthday Party', emoji: '🎂', color: 'bg-pink-100 border-pink-300' },
+    { id: 'nature-walk', title: 'Nature Walk', emoji: '🌳', color: 'bg-green-100 border-green-300' },
+    { id: 'custom', title: 'Custom Topic', emoji: '✏️', color: 'bg-gray-100 border-gray-300' }
   ]
 
   const generateStory = async () => {
@@ -50,23 +50,23 @@ export default function ThreeLineSummaryActivity() {
         setStoryContent(data.content)
         setCurrentStep(3)
       } else {
-        console.error('AI 스토리 생성 실패')
+        console.error('AI story generation failed')
         useSampleData()
       }
     } catch (error) {
-      console.error('AI API 호출 오류:', error)
+      console.error('AI API call error:', error)
       useSampleData()
     }
   }
 
   const useSampleData = () => {
     const sampleStory = {
-      title: '학교에서의 즐거운 하루',
-      story: `오늘은 민준이의 생일이었습니다. 아침에 엄마가 맛있는 미역국을 끓여주셨어요. 학교에 가니 친구들이 "생일 축하해!"라고 말해주었습니다. 점심시간에는 선생님이 케이크를 준비해주셨어요. 모든 친구들이 함께 생일 노래를 불러주었습니다. 민준이는 소원을 빌고 촛불을 껐어요. 친구들과 맛있는 케이크를 나눠 먹었습니다. 집에 돌아와서는 가족들과 함께 저녁을 먹고 선물을 받았어요. 민준이는 정말 행복한 하루를 보냈습니다.`,
+      title: 'A Fun Day at School',
+      story: `Today was Timmy's birthday. In the morning, his mom made him a delicious breakfast. When he got to school, his friends said "Happy birthday!" During lunch, the teacher brought out a cake. All the kids sang "Happy birthday" together. Timmy made a wish and blew out the candles. He shared the cake with his friends. When he got home, he had dinner with his family and got presents.`,
       summaryGuide: [
-        '민준이의 생일이었고 아침에 미역국을 먹었다',
-        '학교에서 친구들과 선생님이 생일을 축하해주고 케이크를 먹었다',
-        '집에서 가족과 함께 저녁을 먹고 선물을 받아서 행복했다'
+        'Timmy had a birthday breakfast with his mom',
+        'He celebrated his birthday with his friends at school and had cake',
+        'He had dinner with his family and got presents'
       ]
     }
     
@@ -111,18 +111,18 @@ export default function ThreeLineSummaryActivity() {
         if (data.success && data.pdfData) {
           const link = document.createElement('a')
           link.href = data.pdfData
-          link.download = `세줄요약하기_${new Date().toLocaleDateString('ko-KR')}.pdf`
+          link.download = `Three-Line-Summary_${new Date().toLocaleDateString('en-US')}.pdf`
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
         }
       } else {
-        console.error('PDF 생성 실패')
-        alert('PDF 생성에 실패했습니다. 다시 시도해주세요.')
+        console.error('PDF generation failed')
+        alert('Failed to generate PDF. Please try again.')
       }
     } catch (error) {
-      console.error('PDF 다운로드 오류:', error)
-      alert('PDF 다운로드 중 오류가 발생했습니다.')
+      console.error('PDF download error:', error)
+      alert('Error downloading PDF.')
     }
   }
 
@@ -137,24 +137,24 @@ export default function ThreeLineSummaryActivity() {
                 <FileText className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">세줄 요약하기</h1>
-                <p className="text-sm text-gray-600">이야기의 핵심 내용 정리하기</p>
+                <h1 className="text-2xl font-bold text-gray-900">Three-Line Summary</h1>
+                <p className="text-sm text-gray-600">Summarize the main points of a story</p>
               </div>
             </Link>
             <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5 mr-2" />
-              대시보드로 돌아가기
+              Back to Dashboard
             </Link>
           </div>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Step 1: 주제 선택 */}
+        {/* Step 1: Choose a topic */}
         {currentStep === 1 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-100">
             <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
-              📝 어떤 이야기를 요약해볼까요?
+              📝 What story would you like to summarize?
             </h2>
             
             <div className="grid md:grid-cols-3 gap-4 mb-8">
@@ -174,14 +174,14 @@ export default function ThreeLineSummaryActivity() {
               ))}
             </div>
 
-            {/* 활동 설명 */}
+            {/* Activity explanation */}
             <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
-              <h3 className="text-xl font-bold text-purple-800 mb-3">🎯 활동 방법</h3>
+              <h3 className="text-xl font-bold text-purple-800 mb-3">🎯 How to play</h3>
               <div className="space-y-2 text-purple-700">
-                <p>• 이야기를 읽고 내용을 파악해요</p>
-                <p>• 중요한 내용을 찾아서 3줄로 요약해요</p>
-                <p>• 시작, 중간, 끝의 핵심 내용을 각각 한 줄씩 써보세요</p>
-                <p>• 간단하고 명확하게 표현하는 것이 중요해요</p>
+                <p>• Read the story and understand the content</p>
+                <p>• Find the main points and summarize them in 3 lines</p>
+                <p>• Write one line for the beginning, middle, and end of the story</p>
+                <p>• Keep it simple and clear</p>
               </div>
             </div>
 
@@ -191,32 +191,32 @@ export default function ThreeLineSummaryActivity() {
                 disabled={!selectedTopic}
                 className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all transform hover:scale-105 shadow-lg disabled:opacity-50"
               >
-                요약할 이야기 만들기 ✨
+                Create a story to summarize ✨
               </button>
             </div>
           </div>
         )}
 
-        {/* Step 2: 스토리 생성 */}
+        {/* Step 2: Generate story */}
         {currentStep === 2 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-100 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8">AI가 요약할 이야기를 만들고 있어요!</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">AI is generating a story for you!</h2>
             <button
               onClick={generateStory}
               className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all"
             >
-              이야기 생성하기
+              Generate story
             </button>
           </div>
         )}
 
-        {/* Step 3: 이야기 읽고 요약하기 */}
+        {/* Step 3: Read and summarize */}
         {currentStep === 3 && storyContent && (
           <div className="space-y-8">
-            {/* 원래 이야기 */}
+            {/* Original story */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-100">
               <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">
-                📖 이야기를 읽고 3줄로 요약해보세요
+                📖 Read the story and summarize it in 3 lines
               </h2>
               <div className="bg-gray-50 p-6 rounded-xl text-lg leading-relaxed text-gray-800 mb-4">
                 {storyContent.story}
@@ -227,18 +227,18 @@ export default function ThreeLineSummaryActivity() {
                   className="flex items-center bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold"
                 >
                   <Lightbulb className="w-4 h-4 mr-2" />
-                  {showGuide ? '힌트 숨기기' : '힌트 보기'}
+                  {showGuide ? 'Hide hints' : 'Show hints'}
                 </button>
               </div>
               
-              {/* 요약 가이드 (힌트) */}
+              {/* Summary guide (hints) */}
               {showGuide && storyContent.summaryGuide && (
                 <div className="mt-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl p-6">
-                  <h4 className="text-lg font-bold text-yellow-800 mb-3">💡 요약 힌트</h4>
+                  <h4 className="text-lg font-bold text-yellow-800 mb-3">💡 Summary hints</h4>
                   <div className="space-y-2">
                     {storyContent.summaryGuide.map((guide, index) => (
                       <p key={index} className="text-yellow-700">
-                        <strong>{index + 1}줄:</strong> {guide}
+                        <strong>{index + 1} line:</strong> {guide}
                       </p>
                     ))}
                   </div>
@@ -246,9 +246,9 @@ export default function ThreeLineSummaryActivity() {
               )}
             </div>
 
-            {/* 요약 작성 */}
+            {/* Write summary */}
             <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-100">
-              <h3 className="text-2xl font-bold text-center mb-6 text-gray-900">✍️ 3줄 요약 작성하기</h3>
+              <h3 className="text-2xl font-bold text-center mb-6 text-gray-900">✍️ Write a 3-line summary</h3>
               
               <div className="space-y-6">
                 {[1, 2, 3].map((num) => (
@@ -257,12 +257,12 @@ export default function ThreeLineSummaryActivity() {
                       <div className="w-8 h-8 bg-purple-500 text-white rounded-full flex items-center justify-center mr-3 text-sm">
                         {num}
                       </div>
-                      {num}줄째 요약
+                      {num} line summary
                     </label>
                     <textarea
                       value={userSummary[num - 1]}
                       onChange={(e) => handleSummaryChange(num - 1, e.target.value)}
-                      placeholder={`${num}줄째 요약을 작성해주세요...`}
+                      placeholder={`${num} line summary...`}
                       className="w-full p-4 border-2 border-gray-200 rounded-xl text-lg resize-none focus:border-purple-400 focus:outline-none"
                       rows={2}
                       disabled={isComplete}
@@ -279,22 +279,22 @@ export default function ThreeLineSummaryActivity() {
                       disabled={userSummary.some(line => line.trim() === '')}
                       className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold text-xl transition-all disabled:opacity-50"
                     >
-                      요약 완료하기 ✅
+                      Complete summary ✅
                     </button>
                     <button
                       onClick={resetSummary}
                       className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-4 rounded-xl font-semibold flex items-center"
                     >
                       <RotateCcw className="w-5 h-5 mr-2" />
-                      다시 작성
+                      Reset
                     </button>
                   </>
                 ) : (
                   <div className="bg-green-100 border-2 border-green-300 rounded-xl p-6 text-center w-full">
                     <div className="text-6xl mb-4">🎉</div>
-                    <h4 className="text-2xl font-bold text-green-800 mb-2">요약을 완료했어요!</h4>
+                    <h4 className="text-2xl font-bold text-green-800 mb-2">You completed the summary!</h4>
                     <p className="text-lg text-gray-700 mb-6">
-                      이야기의 핵심 내용을 잘 정리했네요!
+                      You did a great job summarizing the story!
                     </p>
 
                     <div className="flex justify-center space-x-4">
@@ -302,20 +302,20 @@ export default function ThreeLineSummaryActivity() {
                         onClick={() => setCurrentStep(4)}
                         className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
                       >
-                        완료하기 🎊
+                        Finish 🎊
                       </button>
                       <button
                         onClick={downloadPDF}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center"
                       >
                         <Download className="w-5 h-5 mr-2" />
-                        PDF 다운로드
+                        Download PDF
                       </button>
                       <button
                         onClick={resetSummary}
                         className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold"
                       >
-                        다시 요약하기
+                        Try again
                       </button>
                     </div>
                   </div>
@@ -325,21 +325,21 @@ export default function ThreeLineSummaryActivity() {
           </div>
         )}
 
-        {/* Step 4: 완료 */}
+        {/* Step 4: Finish */}
         {currentStep === 4 && (
           <div className="bg-white rounded-2xl shadow-xl p-8 border-4 border-purple-100 text-center">
             <div className="mb-8">
               <div className="bg-purple-100 p-6 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-purple-600" />
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 세줄 요약하기를 완료했어요!</h2>
-              <p className="text-xl text-gray-600">읽기 이해력과 요약 능력이 늘었어요!</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">🎉 You finished the three-line summary activity!</h2>
+              <p className="text-xl text-gray-600">You improved your reading comprehension and summarization skills!</p>
             </div>
 
-            {/* 완성된 요약 보기 */}
+            {/* View completed summary */}
             {userSummary.some(line => line.trim() !== '') && (
               <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
-                <h3 className="text-xl font-bold text-purple-800 mb-4">📝 완성된 요약</h3>
+                <h3 className="text-xl font-bold text-purple-800 mb-4">📝 Completed summary</h3>
                 <div className="space-y-3 text-left">
                   {userSummary.map((line, index) => (
                     line.trim() && (
@@ -361,7 +361,7 @@ export default function ThreeLineSummaryActivity() {
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold flex items-center"
               >
                 <Download className="w-5 h-5 mr-2" />
-                PDF 다운로드
+                Download PDF
               </button>
               <button
                 onClick={() => {
@@ -374,13 +374,13 @@ export default function ThreeLineSummaryActivity() {
                 className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
                 <RotateCcw className="w-5 h-5 mr-2" />
-                다시하기
+                Try again
               </button>
               <Link
                 href="/dashboard"
                 className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold"
               >
-                대시보드로
+                Back to Dashboard
               </Link>
             </div>
           </div>

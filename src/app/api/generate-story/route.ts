@@ -66,80 +66,92 @@ interface Sentence {
 
 function generatePrompt(activityType: string, readingLevel: number, writingLevel: number, topic: string): string {
   const baseInstructions = `
-한국어로 ${readingLevel}학년 읽기 수준과 ${writingLevel}학년 쓰기 수준에 맞는 이야기를 만들어주세요.
-- 문장은 간단하고 명확하게 작성
-- 어휘는 해당 학년 수준에 적합하게
-- 자폐/ADHD 아동이 이해하기 쉽도록 구체적이고 명확한 표현 사용
-- 주제: ${topic}
+Create a story that is suitable for a ${readingLevel}th-grade reading level and a ${writingLevel}th-grade writing level.
+- Use simple and clear sentences
+- Use vocabulary that is suitable for the grade level
+- Use concrete and clear expressions that are easy for children with autism/ADHD to understand
+- Topic: ${topic}
 `
 
   switch (activityType) {
     case 'bme-story':
       return `${baseInstructions}
 
-B-M-E(Beginning-Middle-End) 구조가 명확한 이야기를 만들어주세요.
-시작-중간-끝 부분이 뚜렷하게 구분되도록 작성해주세요.
+Create a story with a clear beginning, middle, and end structure.
+Make sure the story has a clear start, middle, and end.
 
-응답 형식:
+Response format:
 STORY:
-[전체 이야기]
+[Entire story]
 
 BEGINNING:
-[시작 부분]
+[Beginning part]
 
 MIDDLE:
-[중간 부분]
+[Middle part]
 
 END:
-[끝 부분]`
+[End part]`
 
     case 'wh-questions':
       return `${baseInstructions}
 
-WH 질문(누가, 무엇을, 언제, 어디서, 왜, 어떻게)에 답할 수 있는 정보가 포함된 이야기를 만들어주세요.
+Create a story that includes information to answer WH questions (WHO, WHAT, WHEN, WHERE, WHY, HOW).
+Create a story that answers the following questions:
 
-응답 형식:
-STORY:
-[전체 이야기]
-
-QUESTIONS:
-WHO: [누가에 대한 질문]
-WHAT: [무엇을에 대한 질문]
-WHEN: [언제에 대한 질문]
-WHERE: [어디서에 대한 질문]
-WHY: [왜에 대한 질문]
-HOW: [어떻게에 대한 질문]
+WHO: [WHO question]
+WHAT: [WHAT question]
+WHEN: [WHEN question]  
+WHERE: [WHERE question]
+WHY: [WHY question]
 
 HINTS:
-WHO: [누가 질문의 힌트]
-WHAT: [무엇을 질문의 힌트]
-WHEN: [언제 질문의 힌트]
-WHERE: [어디서 질문의 힌트]
-WHY: [왜 질문의 힌트]
-HOW: [어떻게 질문의 힌트]`
+WHO: [WHO question hint]
+WHAT: [WHAT question hint]
+WHEN: [WHEN question hint]
+WHERE: [WHERE question hint]
+WHY: [WHY question hint]
+
+Response format:
+STORY:
+[Entire story]
+
+QUESTIONS:
+WHO: [WHO question]
+WHAT: [WHAT question]
+WHEN: [WHEN question]  
+WHERE: [WHERE question]
+WHY: [WHY question]
+
+HINTS:
+WHO: [WHO question hint]
+WHAT: [WHAT question hint]
+WHEN: [WHEN question hint]
+WHERE: [WHERE question hint]
+WHY: [WHY question hint]`
 
     case 'emotion-quiz':
       return `${baseInstructions}
 
-등장인물의 감정 변화가 있는 이야기를 만들어주세요.
-기쁨, 슬픔, 화남, 놀람, 두려움, 사랑 등의 감정이 포함되도록 해주세요.
+Create a story that includes a character's emotional changes.
+Include emotions such as happiness, sadness, anger, surprise, fear, and love.
 
-응답 형식:
+Response format:
 STORY:
-[전체 이야기]
+[Entire story]
 
 QUESTIONS:
-1. [첫 번째 상황]: [상황 설명]
-ANSWER: [올바른 감정]
-EXPLANATION: [설명]
+1. [First scenario]: [Scenario description]
+ANSWER: [Correct emotion]
+EXPLANATION: [Explanation]
 
-2. [두 번째 상황]: [상황 설명]
-ANSWER: [올바른 감정]
-EXPLANATION: [설명]
+2. [Second scenario]: [Scenario description]
+ANSWER: [Correct emotion]
+EXPLANATION: [Explanation]
 
-3. [세 번째 상황]: [상황 설명]
-ANSWER: [올바른 감정]
-EXPLANATION: [설명]`
+3. [Third scenario]: [Scenario description]
+ANSWER: [Correct emotion]
+EXPLANATION: [Explanation]`
 
     case 'sentence-order':
       return generateSentenceOrderPrompt(readingLevel, writingLevel, topic)
@@ -156,141 +168,151 @@ EXPLANATION: [설명]`
 
 function generateThreeLineSummaryPrompt(readingLevel: number, writingLevel: number, topic: string): string {
   return `
-자폐 및 ADHD 아동을 위한 독해 활동용 이야기를 만들어주세요.
+Create a story for a reading comprehension activity for children with autism/ADHD.
 
-요구사항:
-- 읽기 수준: ${readingLevel}학년 (1-5학년, 높을수록 어려움)
-- 쓰기 수준: ${writingLevel}학년
-- 주제: ${topic}
-- 이야기 길이: 8-12문장
-- 3줄 요약하기 활동에 적합한 명확한 구조 (시작-중간-끝)
+Requirements:
+- Reading level: ${readingLevel}th grade (1-5th grade, higher is more difficult)
+- Writing level: ${writingLevel}th grade
+- Topic: ${topic}
+- Story length: 8-12 sentences
+- Clear structure (beginning-middle-end)
 
-다음 JSON 형식으로 응답해주세요:
+Response format:
 {
-  "title": "이야기 제목",
-  "story": "전체 이야기 내용",
+  "title": "Story title",
+  "story": "Entire story content",
   "summaryGuide": [
-    "첫 번째 줄 요약 가이드",
-    "두 번째 줄 요약 가이드", 
-    "세 번째 줄 요약 가이드"
+    "First line summary guide",
+    "Second line summary guide", 
+    "Third line summary guide"
   ]
 }
 
-이야기는 아동이 이해하기 쉽고, 시작-중간-끝 구조가 명확해야 합니다.
-요약 가이드는 각 부분의 핵심 내용을 간단히 정리한 것입니다.`
+Create a story that is easy for children to understand and has a clear beginning-middle-end structure.
+The summary guide is a brief summary of each part.
+
+`
 }
 
 function generateSentenceCompletionPrompt(readingLevel: number, writingLevel: number, topic: string): string {
   return `
-자폐 및 ADHD 아동을 위한 문장 완성하기 활동용 이야기를 만들어주세요.
+Create a story for a sentence completion activity for children with autism/ADHD.
 
-요구사항:
-- 읽기 수준: ${readingLevel}학년 (1-5학년, 높을수록 어려움)
-- 쓰기 수준: ${writingLevel}학년
-- 주제: ${topic}
-- 이야기 길이: 6-8문장
-- 5개의 빈칸 문제 포함
+Requirements:
+- Reading level: ${readingLevel}th grade (1-5th grade, higher is more difficult)
+- Writing level: ${writingLevel}th grade
+- Topic: ${topic}
+- Story length: 6-8 sentences
+- 5 blank questions
 
-다음 JSON 형식으로 응답해주세요:
+Response format:
 {
-  "title": "이야기 제목",
-  "story": "빈칸이 없는 완전한 이야기",
+  "title": "Story title",
+  "story": "Complete story without blanks",
   "blanks": [
     {
       "id": 1,
-      "original": "원래 문장",
-      "withBlank": "빈칸이 있는 문장",
-      "answer": "정답 단어"
+      "original": "Original sentence",
+      "withBlank": "Sentence with blank",
+      "answer": "Correct answer"
     }
   ]
 }
 
-빈칸으로 만들 단어는 문맥상 중요하고 아동 수준에 맞는 어휘여야 합니다.
-빈칸은 ______ 형태로 표시하세요.`
+Choose words that are important in the context and suitable for the child's level.
+Use ______ to indicate the blank.
+
+`
 }
 
 function generateDrawAndTellPrompt(readingLevel: number, writingLevel: number, topic: string): string {
   return `
-자폐 및 ADHD 아동을 위한 그림 그리고 말하기 활동용 가이드를 만들어주세요.
+Create a guide for a drawing and storytelling activity for children with autism/ADHD.
 
-요구사항:
-- 읽기 수준: ${readingLevel}학년 (1-5학년, 높을수록 어려움)
-- 쓰기 수준: ${writingLevel}학년
-- 주제: ${topic}
-- 그리기와 이야기 만들기에 적합한 내용
+Requirements:
+- Reading level: ${readingLevel}th grade (1-5th grade, higher is more difficult)
+- Writing level: ${writingLevel}th grade
+- Topic: ${topic}
+- Content suitable for drawing and storytelling
 
-다음 JSON 형식으로 응답해주세요:
+Response format:
 {
-  "title": "활동 제목",
-  "story": "주제 설명 및 그리기 가이드",
+  "title": "Activity title",
+  "story": "Topic description and drawing guide",
   "drawingPrompts": [
-    "그릴 수 있는 요소 1",
-    "그릴 수 있는 요소 2",
-    "그릴 수 있는 요소 3"
+    "Element to draw 1",
+    "Element to draw 2",
+    "Element to draw 3"
   ],
   "storyPrompts": [
-    "이야기에 포함할 수 있는 내용 1",
-    "이야기에 포함할 수 있는 내용 2",
-    "이야기에 포함할 수 있는 내용 3"
+    "Content to include in the story 1",
+    "Content to include in the story 2",
+    "Content to include in the story 3"
   ]
 }
 
-아동이 자유롭게 창의적으로 표현할 수 있도록 구체적이면서도 유연한 가이드를 제공하세요.`
+Provide a guide that allows children to express their creativity freely.
+
+`
 }
 
 function generateSentenceOrderPrompt(readingLevel: number, writingLevel: number, topic: string): string {
   return `
-자폐 및 ADHD 아동을 위한 문장 순서 맞추기 활동용 이야기를 만들어주세요.
+Create a story for a sentence order activity for children with autism/ADHD.
 
-요구사항:
-- 읽기 수준: ${readingLevel}학년 (1-5학년, 높을수록 어려움)
-- 쓰기 수준: ${writingLevel}학년
-- 주제: ${topic}
-- 이야기 길이: 5-7문장
-- 순서가 명확한 사건이나 과정
+Requirements:
+- Reading level: ${readingLevel}th grade (1-5th grade, higher is more difficult)
+- Writing level: ${writingLevel}th grade
+- Topic: ${topic}
+- Story length: 5-7 sentences
+- Clear sequence of events
 
-다음 JSON 형식으로 응답해주세요:
+Response format:
 {
-  "title": "이야기 제목",
-  "story": "전체 이야기 내용",
+  "title": "Story title",
+  "story": "Entire story content",
   "sentences": [
     {
       "id": 1,
-      "text": "문장 내용",
+      "text": "Sentence content",
       "correctOrder": 1
     }
   ]
 }
 
-시간 순서나 논리적 순서가 명확하게 드러나는 이야기를 만드세요.`
+Create a story with a clear sequence of events.
+
+`
 }
 
 function generateWHQuestionsPrompt(readingLevel: number, writingLevel: number, topic: string): string {
-  const baseInstructions = `다음 조건에 맞는 이야기를 만들어주세요:
-- 자폐 및 ADHD 아동을 위한 읽기 이해력 향상 활동
-- 읽기 수준: ${readingLevel}학년 (1-5학년, 높을수록 어려움)
-- 쓰기 수준: ${writingLevel}학년
-- 주제: ${topic}
-- 이야기 길이: 8-12문장`
+  const baseInstructions = `Create a story that meets the following conditions:
+- Reading comprehension activity for children with autism/ADHD
+- Reading level: ${readingLevel}th grade (1-5th grade, higher is more difficult)
+- Writing level: ${writingLevel}th grade
+- Topic: ${topic}
+- Story length: 8-12 sentences`
 
   return `${baseInstructions}
 
-다음 JSON 형식으로 응답해주세요:
+Response format:
 {
-  "title": "이야기 제목",
-  "story": "전체 이야기 내용",
+  "title": "Story title",
+  "story": "Entire story content",
   "questions": [
     {
       "id": 1,
-      "question": "언제 일어난 일인가요?",
-      "answer": "정답",
+      "question": "When did it happen?",
+      "answer": "Correct answer",
       "type": "when",
       "difficulty": 1
     }
   ]
 }
 
-육하원칙 질문(누가, 언제, 어디서, 무엇을, 어떻게, 왜)을 포함한 이야기와 질문을 만드세요.`
+Create a story that includes WH questions (WHO, WHAT, WHEN, WHERE, WHY, HOW) and answers.
+
+`
 }
 
 function parseResponse(activityType: string, text: string): any {
@@ -344,7 +366,7 @@ function parseWHQuestions(text: string) {
       questions.push({
         type,
         question: questionMatch[1].trim(),
-        hint: hintMatch?.[1]?.trim() || `${type.toLowerCase()} 관련 내용을 찾아보세요`
+        hint: hintMatch?.[1]?.trim() || `${type.toLowerCase()} related content`
       })
     }
   })
@@ -379,24 +401,24 @@ function parseSentenceOrderResponse(content: string) {
   try {
     const parsed = JSON.parse(content)
     return {
-      title: parsed.title || '이야기 순서 맞추기',
-      story: parsed.story || '이야기를 생성할 수 없습니다.',
+      title: parsed.title || 'Sentence Order',
+      story: parsed.story || 'Unable to generate story.',
       sentences: parsed.sentences || [
         {
           id: 1,
-          text: '첫 번째 문장입니다.',
+          text: 'First sentence.',
           correctOrder: 1
         }
       ]
     }
   } catch {
     return {
-      title: '이야기 순서 맞추기',
-      story: '파싱 오류로 샘플 이야기를 제공합니다.',
+      title: 'Sentence Order',
+      story: 'Error parsing story. Providing sample story.',
       sentences: [
         {
           id: 1,
-          text: '첫 번째 문장입니다.',
+          text: 'First sentence.',
           correctOrder: 1
         }
       ]
@@ -408,22 +430,22 @@ function parseThreeLineSummaryResponse(content: string) {
   try {
     const parsed = JSON.parse(content)
     return {
-      title: parsed.title || '세줄 요약하기',
-      story: parsed.story || '이야기를 생성할 수 없습니다.',
+      title: parsed.title || 'Three-Line Summary',
+      story: parsed.story || 'Unable to generate story.',
       summaryGuide: parsed.summaryGuide || [
-        '첫 번째 줄 요약',
-        '두 번째 줄 요약',
-        '세 번째 줄 요약'
+        'First line summary',
+        'Second line summary',
+        'Third line summary'
       ]
     }
   } catch {
     return {
-      title: '세줄 요약하기',
-      story: '파싱 오류로 샘플 이야기를 제공합니다.',
+      title: 'Three-Line Summary',
+      story: 'Error parsing story. Providing sample story.',
       summaryGuide: [
-        '첫 번째 줄 요약',
-        '두 번째 줄 요약',
-        '세 번째 줄 요약'
+        'First line summary',
+        'Second line summary',
+        'Third line summary'
       ]
     }
   }
@@ -433,27 +455,27 @@ function parseSentenceCompletionResponse(content: string) {
   try {
     const parsed = JSON.parse(content)
     return {
-      title: parsed.title || '문장 완성하기',
-      story: parsed.story || '이야기를 생성할 수 없습니다.',
+      title: parsed.title || 'Sentence Completion',
+      story: parsed.story || 'Unable to generate story.',
       blanks: parsed.blanks || [
         {
           id: 1,
-          original: '샘플 문장입니다.',
-          withBlank: '샘플 ______입니다.',
-          answer: '문장'
+          original: 'Sample sentence.',
+          withBlank: 'Sample ______.',
+          answer: 'sentence'
         }
       ]
     }
   } catch {
     return {
-      title: '문장 완성하기',
-      story: '파싱 오류로 샘플 이야기를 제공합니다.',
+      title: 'Sentence Completion',
+      story: 'Error parsing story. Providing sample story.',
       blanks: [
         {
           id: 1,
-          original: '샘플 문장입니다.',
-          withBlank: '샘플 ______입니다.',
-          answer: '문장'
+          original: 'Sample sentence.',
+          withBlank: 'Sample ______.',
+          answer: 'sentence'
         }
       ]
     }
@@ -464,32 +486,32 @@ function parseDrawAndTellResponse(content: string) {
   try {
     const parsed = JSON.parse(content)
     return {
-      title: parsed.title || '그림 그리고 말하기',
-      story: parsed.story || '그림을 그리고 이야기를 만들어보세요.',
+      title: parsed.title || 'Draw and Tell',
+      story: parsed.story || 'Draw and tell a story.',
       drawingPrompts: parsed.drawingPrompts || [
-        '주인공을 그려보세요',
-        '배경을 그려보세요',
-        '중요한 물건을 그려보세요'
+        'Draw the main character',
+        'Draw the background',
+        'Draw an important object'
       ],
       storyPrompts: parsed.storyPrompts || [
-        '누가 등장하나요?',
-        '어떤 일이 일어났나요?',
-        '어떻게 끝났나요?'
+        'Who is in the story?',
+        'What happened?',
+        'How did it end?'
       ]
     }
   } catch {
     return {
-      title: '그림 그리고 말하기',
-      story: '파싱 오류로 샘플 가이드를 제공합니다.',
+      title: 'Draw and Tell',
+      story: 'Error parsing story. Providing sample guide.',
       drawingPrompts: [
-        '주인공을 그려보세요',
-        '배경을 그려보세요',
-        '중요한 물건을 그려보세요'
+        'Draw the main character',
+        'Draw the background',
+        'Draw an important object'
       ],
       storyPrompts: [
-        '누가 등장하나요?',
-        '어떤 일이 일어났나요?',
-        '어떻게 끝났나요?'
+        'Who is in the story?',
+        'What happened?',
+        'How did it end?'
       ]
     }
   }
@@ -499,13 +521,13 @@ function parseWHQuestionsResponse(content: string) {
   try {
     const parsed = JSON.parse(content)
     return {
-      title: parsed.title || '육하원칙 질문',
-      story: parsed.story || '이야기를 생성할 수 없습니다.',
+      title: parsed.title || 'WH Questions',
+      story: parsed.story || 'Unable to generate story.',
       questions: parsed.questions || [
         {
           id: 1,
-          question: '누가 등장하나요?',
-          answer: '주인공',
+          question: 'Who is in the story?',
+          answer: 'Main character',
           type: 'who',
           difficulty: 1
         }

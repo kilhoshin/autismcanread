@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Use service role key for admin operations
 const supabaseAdmin = createClient(
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('🔄 Reactivating subscription for user:', userId)
+    console.log(' Reactivating subscription for user:', userId)
 
     // First check if user has a cancelled subscription with remaining period
     const { data: userData, error: fetchError } = await supabaseAdmin
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError) {
-      console.error('❌ Failed to fetch user data:', fetchError)
+      console.error(' Failed to fetch user data:', fetchError)
       return NextResponse.json(
         { error: 'Failed to fetch user data' },
         { status: 500 }
@@ -78,15 +78,15 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
 
     if (updateError) {
-      console.error('❌ Failed to reactivate subscription:', updateError)
+      console.error(' Failed to reactivate subscription:', updateError)
       return NextResponse.json(
         { error: 'Failed to reactivate subscription' },
         { status: 500 }
       )
     }
 
-    console.log('✅ Subscription reactivated for user:', userId)
-    console.log('📅 Original billing period maintained until:', userData.subscription_period_end)
+    console.log(' Subscription reactivated for user:', userId)
+    console.log(' Original billing period maintained until:', userData.subscription_period_end)
 
     return NextResponse.json({ 
       success: true,
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('❌ Reactivate subscription error:', error)
+    console.error(' Reactivate subscription error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

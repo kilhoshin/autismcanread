@@ -8,8 +8,13 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function Pricing() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [isLoading, setIsLoading] = useState('')
+
+  // Check if user has cancelled subscription with remaining period
+  const canReactivate = profile?.subscription_status === 'cancelled' && 
+    profile?.subscription_period_end && 
+    new Date(profile.subscription_period_end) > new Date()
 
   const handleSubscribe = async (priceId: string) => {
     if (!user) {
@@ -37,6 +42,40 @@ export default function Pricing() {
       }
     } catch (error) {
       console.error('Error:', error)
+    } finally {
+      setIsLoading('')
+    }
+  }
+
+  const handleReactivate = async () => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    setIsLoading('reactivate')
+
+    try {
+      const response = await fetch('/api/reactivate-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+        }),
+      })
+
+      if (response.ok) {
+        // Refresh the page or redirect to dashboard
+        router.push('/dashboard?reactivated=true')
+      } else {
+        const error = await response.json()
+        alert(`Failed to reactivate subscription: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Failed to reactivate subscription. Please try again.')
     } finally {
       setIsLoading('')
     }
@@ -195,26 +234,47 @@ export default function Pricing() {
               </li>
             </ul>
             
-            <button 
-              onClick={() => {
-                const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
-                console.log('🔍 Debug - Premium Price ID from env:', premiumPriceId);
-                console.log('🔍 Debug - All NEXT_PUBLIC env vars:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')));
-                
-                if (premiumPriceId) {
-                  console.log('✅ Calling handleSubscribe with Price ID:', premiumPriceId);
-                  handleSubscribe(premiumPriceId);
-                } else {
-                  console.error('❌ Stripe Premium Price ID is not configured in environment variables.');
-                  console.error('Available env vars:', process.env);
-                  // Optionally, display a user-friendly message, e.g., using a toast notification or alert
-                  alert('The subscription service is temporarily unavailable. Please check back later.');
-                }
-              }}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
-            >
-              Start Premium
-            </button>
+            {canReactivate ? (
+              <div className="space-y-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                  <p className="text-blue-700 text-sm">
+                    <strong>Good news!</strong> You still have {Math.ceil((new Date(profile.subscription_period_end!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left in your current billing period.
+                  </p>
+                  <p className="text-blue-600 text-xs mt-1">
+                    Reactivate now to restore recurring billing without additional charges.
+                  </p>
+                </div>
+                <button 
+                  onClick={handleReactivate}
+                  disabled={isLoading === 'reactivate'}
+                  className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                >
+                  {isLoading === 'reactivate' ? 'Reactivating...' : 'Reactivate Subscription '}
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => {
+                  const premiumPriceId = process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID;
+                  console.log(' Debug - Premium Price ID from env:', premiumPriceId);
+                  console.log(' Debug - All NEXT_PUBLIC env vars:', Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_')));
+                  
+                  if (premiumPriceId) {
+                    console.log(' Calling handleSubscribe with Price ID:', premiumPriceId);
+                    handleSubscribe(premiumPriceId);
+                  } else {
+                    console.error(' Stripe Premium Price ID is not configured in environment variables.');
+                    console.error('Available env vars:', process.env);
+                    // Optionally, display a user-friendly message, e.g., using a toast notification or alert
+                    alert('The subscription service is temporarily unavailable. Please check back later.');
+                  }
+                }}
+                disabled={isLoading !== ''}
+                className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+              >
+                {isLoading ? 'Processing...' : 'Start Premium'}
+              </button>
+            )}
           </div>
         </div>
 

@@ -66,6 +66,41 @@ export default function SubscriptionPage() {
     setLoading(false)
   }
 
+  const handleReactivateSubscription = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/reactivate-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(`구독이 재활성화되었습니다! ${new Date(data.periodEnd).toLocaleDateString('ko-KR')}까지 Premium 기능을 이용하실 수 있습니다.`)
+        fetchSubscriptionData()
+        
+        // Refresh user profile context to update subscription status immediately
+        if (refreshProfile) {
+          console.log('🔄 Refreshing profile context after subscription reactivation')
+          await refreshProfile()
+        }
+      } else {
+        if (data.error.includes('expired')) {
+          alert('구독 기간이 만료되어 재활성화할 수 없습니다. 새로운 구독을 구매해주세요.')
+          router.push('/pricing')
+        } else {
+          throw new Error(data.error || '구독 재활성화에 실패했습니다.')
+        }
+      }
+    } catch (error) {
+      console.error('Reactivate subscription error:', error)
+      alert('구독 재활성화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+    }
+    setLoading(false)
+  }
+
   if (!user || !subscriptionData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -78,6 +113,7 @@ export default function SubscriptionPage() {
   const isCancelled = subscriptionData.status === 'cancelled'
   const hasActiveAccess = isPremium || isCancelled // Both premium and cancelled users have access until period ends
   const nextBillingDate = new Date(subscriptionData.next_billing_date).toLocaleDateString('ko-KR')
+  const isExpired = isCancelled && new Date(subscriptionData.next_billing_date) < new Date()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,17 +227,32 @@ export default function SubscriptionPage() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <Link
-                href="/pricing"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block mr-4"
-              >
-                다시 구독하기
-              </Link>
-              <p className="text-sm text-gray-600">
-                Premium 기능이 필요하시면 언제든지 다시 구독하실 수 있습니다.
-              </p>
-            </div>
+            {isExpired ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  구독 기간이 만료되었습니다. 새로운 구독을 구매하시려면 아래 링크를 클릭해주세요.
+                </p>
+                <Link
+                  href="/pricing"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block"
+                >
+                  새로운 구독 구매하기
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <button
+                  onClick={handleReactivateSubscription}
+                  disabled={loading}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block mr-4"
+                >
+                  {loading ? '처리 중...' : '다시 구독하기'}
+                </button>
+                <p className="text-sm text-gray-600">
+                  Premium 기능이 필요하시면 언제든지 다시 구독하실 수 있습니다.
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-md p-6">

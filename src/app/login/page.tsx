@@ -22,14 +22,20 @@ export default function Login() {
     setError('')
     
     try {
+      console.log('🔐 Attempting login for:', formData.email)
       const { data, error } = await signIn(formData.email, formData.password)
       
       if (error) {
+        console.error('❌ Login error:', error.message)
         setError(error.message)
       } else {
+        console.log('✅ Login successful, redirecting immediately...')
+        // Redirect immediately without waiting for AuthContext
         router.push('/dashboard')
+        return // Don't reset loading state, let redirect happen
       }
     } catch (err) {
+      console.error('❌ Unexpected login error:', err)
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)

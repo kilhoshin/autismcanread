@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Book, Users, Download, Star, CheckCircle, ArrowRight, FileText, Printer, User, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { signOut } from '@/utils/supabase'
+import { clearAuthAndReload } from '@/utils/clearStorage'
 
 export default function Home() {
   const router = useRouter()
@@ -277,6 +278,15 @@ export default function Home() {
                 <li>• FAQ</li>
                 <li>• Technical Support</li>
               </ul>
+              <div className="mt-4">
+                <button 
+                  onClick={() => clearAuthAndReload()}
+                  className="text-gray-400 hover:text-gray-200 transition-colors text-sm block"
+                  title="Clear browser cache and fix login issues"
+                >
+                  🧹 Clear Cache & Fix Login Issues
+                </button>
+              </div>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">

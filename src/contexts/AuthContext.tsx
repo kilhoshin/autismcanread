@@ -104,11 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Set a shorter initial timeout for faster UX
+    // Set up quick timeout (2 seconds) for immediate UX
     const quickTimeout = setTimeout(() => {
-      console.warn('⚠️ Quick auth timeout after 5 seconds - continuing without full auth')
+      console.log('⏰ Quick timeout reached (2s) - showing UI')
       setLoading(false)
-    }, 5000) // 5 second quick timeout
+    }, 2000) // Reduced from 5 seconds to 2 seconds
 
     // Set a longer timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
@@ -147,16 +147,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           setUser(session.user)
           
+          // Start loading immediately for better UX
+          setLoading(false)
+          
           // Ensure user record exists and get profile (in background)
-          console.log('🔄 Ensuring user record exists...')
-          const profileData = await ensureUserRecord(session.user)
-          if (profileData) {
-            console.log('✅ Profile loaded successfully:', profileData.email)
-            setProfile(profileData)
-          } else {
-            console.error('❌ Failed to load or create profile')
+          console.log('🔄 Ensuring user record exists in background...')
+          ensureUserRecord(session.user).then((profileData) => {
+            if (profileData) {
+              console.log('✅ Profile loaded successfully:', profileData.email)
+              setProfile(profileData)
+            } else {
+              console.error('❌ Failed to load or create profile')
+              setProfile(null)
+            }
+          }).catch((error) => {
+            console.error('❌ Error loading profile in background:', error)
             setProfile(null)
-          }
+          })
         } else {
           console.log('👤 No session found')
         }
@@ -167,7 +174,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         clearTimeout(quickTimeout)
         clearTimeout(loadingTimeout)
-        setLoading(false)
         console.log('✅ Auth initialization complete')
       }
     }
@@ -183,23 +189,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session?.user) {
         setUser(session.user)
+        setLoading(false) // Set loading false immediately
         
-        // Ensure user record exists and get profile
-        console.log('🔄 Auth state change - ensuring user record exists...')
-        const profileData = await ensureUserRecord(session.user)
-        if (profileData) {
-          console.log('✅ Profile loaded from auth change:', profileData.email)
-          setProfile(profileData)
-        } else {
-          console.error('❌ Failed to load or create profile from auth change')
+        // Ensure user record exists and get profile (in background)
+        console.log('🔄 Auth state change - ensuring user record exists in background...')
+        ensureUserRecord(session.user).then((profileData) => {
+          if (profileData) {
+            console.log('✅ Profile loaded from auth change:', profileData.email)
+            setProfile(profileData)
+          } else {
+            console.error('❌ Failed to load or create profile from auth change')
+            setProfile(null)
+          }
+        }).catch((error) => {
+          console.error('❌ Error loading profile from auth change:', error)
           setProfile(null)
-        }
+        })
       } else {
         console.log('👤 Auth state change - no user')
         setUser(null)
         setProfile(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => {

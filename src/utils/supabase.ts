@@ -13,8 +13,9 @@ export interface UserProfile {
   avatar_url?: string
   reading_level?: number
   writing_level?: number
-  subscription_status: 'free' | 'premium'
+  subscription_status: 'free' | 'premium' | 'cancelled'
   subscription_expires_at?: string
+  subscription_period_end?: string
   created_at: string
   updated_at: string
   monthly_worksheets_generated?: number
@@ -160,7 +161,7 @@ export const checkUserSubscription = async (userId: string) => {
     
     const { data, error } = await supabase
       .from('users')
-      .select('subscription_status')
+      .select('subscription_status, subscription_period_end')
       .eq('id', userId)
       .single()
     
@@ -175,6 +176,7 @@ export const checkUserSubscription = async (userId: string) => {
     }
     
     console.log('✅ User subscription status:', data.subscription_status || 'free')
+    console.log('📅 Subscription period end:', data.subscription_period_end)
     return data.subscription_status || 'free'
   } catch (error) {
     console.error('❌ Exception in checkUserSubscription:', error)
@@ -184,8 +186,37 @@ export const checkUserSubscription = async (userId: string) => {
 
 export const isPremiumUser = async (userId: string): Promise<boolean> => {
   try {
-    const status = await checkUserSubscription(userId)
-    return status === 'premium'
+    const { data, error } = await supabase
+      .from('users')
+      .select('subscription_status, subscription_period_end')
+      .eq('id', userId)
+      .single()
+    
+    if (error || !data) {
+      console.error('Error checking premium status:', error)
+      return false
+    }
+    
+    const status = data.subscription_status
+    const periodEnd = data.subscription_period_end
+    
+    // If subscription is premium, user has access
+    if (status === 'premium') {
+      return true
+    }
+    
+    // If subscription is cancelled, check if still within paid period
+    if (status === 'cancelled' && periodEnd) {
+      const now = new Date()
+      const endDate = new Date(periodEnd)
+      const hasAccess = now <= endDate
+      
+      console.log(`🔄 Cancelled subscription - Period ends: ${periodEnd}, Has access: ${hasAccess}`)
+      return hasAccess
+    }
+    
+    // Default to no premium access
+    return false
   } catch (error) {
     console.error('Error checking premium status:', error)
     return false

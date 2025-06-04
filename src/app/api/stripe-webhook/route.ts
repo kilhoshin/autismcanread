@@ -13,33 +13,33 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(request: NextRequest) {
-  console.log('🔔 STRIPE WEBHOOK CALLED')
+  console.log(' STRIPE WEBHOOK CALLED')
   
   try {
     const body = await request.text()
-    console.log('📊 Body length:', body.length)
+    console.log(' Body length:', body.length)
     
     // Parse the event
     let event: Stripe.Event
     try {
       event = JSON.parse(body)
-      console.log('📋 Event type:', event.type)
+      console.log(' Event type:', event.type)
     } catch (error) {
-      console.error('❌ Invalid JSON:', error)
+      console.error(' Invalid JSON:', error)
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
     }
     
     // Handle checkout.session.completed
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
-      console.log('💳 Checkout session completed:', session.id)
-      console.log('👤 Customer ID:', session.customer)
-      console.log('📧 Customer email:', session.customer_details?.email)
+      console.log(' Checkout session completed:', session.id)
+      console.log(' Customer ID:', session.customer)
+      console.log(' Customer email:', session.customer_details?.email)
       
       // Get customer email
       const customerEmail = session.customer_details?.email
       if (!customerEmail) {
-        console.error('❌ No customer email found')
+        console.error(' No customer email found')
         return NextResponse.json({ error: 'No customer email' }, { status: 400 })
       }
       
@@ -51,29 +51,53 @@ export async function POST(request: NextRequest) {
         .single()
       
       if (userError || !user) {
-        console.error('❌ User not found:', userError)
+        console.error(' User not found:', userError)
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
       
-      console.log('👤 Found user:', user.id)
+      console.log(' Found user:', user.id)
+      
+      // Get subscription details from the session
+      const subscription = session.subscription
+      let subscriptionPeriodEnd = null
+      
+      if (subscription && typeof subscription === 'string') {
+        // Fetch subscription details from Stripe
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+            apiVersion: '2025-05-28.basil'
+          })
+          const subscriptionDetails = await stripe.subscriptions.retrieve(subscription) as Stripe.Subscription
+          subscriptionPeriodEnd = new Date((subscriptionDetails as any).current_period_end * 1000).toISOString()
+          console.log(' Subscription period end:', subscriptionPeriodEnd)
+        } catch (stripeError) {
+          console.error(' Failed to fetch subscription details:', stripeError)
+        }
+      }
       
       // Update subscription status
+      const updateData: any = { 
+        subscription_status: 'premium',
+        updated_at: new Date().toISOString()
+      }
+      
+      if (subscriptionPeriodEnd) {
+        updateData.subscription_period_end = subscriptionPeriodEnd
+      }
+      
       const { error: updateError } = await supabaseAdmin
         .from('users')
-        .update({ 
-          subscription_status: 'premium',
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id)
       
       if (updateError) {
-        console.error('❌ Update failed:', updateError)
+        console.error(' Update failed:', updateError)
         return NextResponse.json({ error: 'Update failed' }, { status: 500 })
       }
       
-      console.log('✅ Subscription updated for user:', user.id)
+      console.log(' Subscription updated for user:', user.id)
     } else {
-      console.log('ℹ️ Unhandled event type:', event.type)
+      console.log(' Unhandled event type:', event.type)
     }
     
     return NextResponse.json({ 
@@ -84,7 +108,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('❌ Webhook error:', error)
+    console.error(' Webhook error:', error)
     return NextResponse.json({ error: 'Webhook error' }, { status: 500 })
   }
 }

@@ -437,33 +437,6 @@ function DashboardContent() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Debug: Show subscription status */}
-              <div className="bg-yellow-100 border border-yellow-300 rounded-lg px-3 py-1 text-sm">
-                <div className="flex items-center space-x-3">
-                  <span className="font-medium text-yellow-800">
-                    Debug: {isPremium ? '👑 Premium' : '🆓 Free'} | 
-                    Profile: {profile?.subscription_status || 'undefined'} | 
-                    User ID: {user?.id?.slice(0, 8)}...
-                  </span>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => handleManualSubscriptionUpdate('premium')}
-                      disabled={isUpdatingSubscription}
-                      className="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 disabled:opacity-50"
-                    >
-                      Set Premium
-                    </button>
-                    <button
-                      onClick={() => handleManualSubscriptionUpdate('free')}
-                      disabled={isUpdatingSubscription}
-                      className="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 disabled:opacity-50"
-                    >
-                      Set Free
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
               <div className="flex items-center space-x-2">
                 <User className="w-5 h-5 text-gray-600" />
                 <span className="text-gray-700 font-medium">
@@ -487,41 +460,6 @@ function DashboardContent() {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">📄 Create Worksheet</h2>
             <p className="text-gray-600">Create customized reading worksheets for children</p>
-          </div>
-
-          {/* Debug Info */}
-          <div className="bg-gray-100 p-4 rounded-lg mb-6">
-            <h3 className="font-semibold mb-2">🔍 Debug Info:</h3>
-            <p><strong>User ID:</strong> {user?.id}</p>
-            <p><strong>User Email:</strong> {user?.email}</p>
-            <p><strong>Profile Subscription:</strong> {profile?.subscription_status || 'undefined'}</p>
-            <p><strong>Is Premium (state):</strong> {isPremium ? 'true' : 'false'}</p>
-            <p><strong>Profile Object:</strong> {JSON.stringify(profile, null, 2)}</p>
-            
-            <div className="mt-4 space-x-2">
-              <button
-                onClick={async () => {
-                  const response = await fetch('/api/create-user-safe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      userId: user?.id,
-                      email: user?.email,
-                      fullName: user?.user_metadata?.full_name
-                    })
-                  })
-                  const result = await response.json()
-                  alert(JSON.stringify(result, null, 2))
-                  if (result.success) {
-                    await refreshProfile()
-                    window.location.reload()
-                  }
-                }}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-              >
-                🔧 Create User Record
-              </button>
-            </div>
           </div>
 
           {/* Subscription Status */}

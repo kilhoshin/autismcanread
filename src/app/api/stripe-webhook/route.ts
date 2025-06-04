@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ 
-          subscription_status: 'active',
+          subscription_status: 'premium',
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id)

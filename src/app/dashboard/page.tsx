@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Book, Download, History, Settings, LogOut, Plus, FileText, Eye, X, User, Crown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -10,6 +10,7 @@ import { canDownloadPDF, canGenerateWorksheets, incrementMonthlyUsage } from '@/
 export default function Dashboard() {
   const { user, profile, signOut, loading, refreshProfile } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [selectedActivities, setSelectedActivities] = useState<string[]>([])
   const [customTopic, setCustomTopic] = useState('')
@@ -102,6 +103,53 @@ export default function Dashboard() {
       checkUserStatus()
     }
   }, [profile?.subscription_status, user?.id])
+
+  // Handle payment success
+  useEffect(() => {
+    const paymentSuccess = searchParams.get('success') || searchParams.get('paymentSuccess')
+    if (paymentSuccess === 'true' && user?.id) {
+      console.log('🎉 Payment successful detected, refreshing subscription status...')
+      
+      // Force refresh subscription status
+      const forceRefreshSubscription = async () => {
+        try {
+          setCheckingPremium(true)
+          
+          // Wait a moment for webhook to process
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          
+          console.log('🔄 Force checking premium status after payment...')
+          const premiumStatus = await canDownloadPDF(user.id)
+          console.log('📊 Updated premium status:', premiumStatus)
+          setIsPremium(premiumStatus)
+          
+          const usageInfo = await canGenerateWorksheets(user.id, 0)
+          console.log('📊 Updated monthly usage:', usageInfo.currentCount)
+          setMonthlyUsage(usageInfo.currentCount)
+          
+          // Also refresh profile to get latest subscription_status
+          await refreshProfile()
+          
+          setSubscriptionError(false)
+          setCheckingPremium(false)
+          
+          console.log('✅ Subscription status refresh complete')
+        } catch (error) {
+          console.error('❌ Error refreshing subscription after payment:', error)
+          setSubscriptionError(true)
+          setCheckingPremium(false)
+        }
+      }
+      
+      forceRefreshSubscription()
+      
+      // Clean URL by removing success parameter
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('success')
+      newUrl.searchParams.delete('paymentSuccess')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [searchParams, user?.id, refreshProfile])
 
   // Show loading only while auth is loading
   if (loading) {

@@ -13,6 +13,8 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔔 Stripe webhook called')
+    
     if (!stripe) {
       console.error('❌ Stripe not configured')
       return NextResponse.json({ error: 'Stripe not configured' }, { status: 500 })
@@ -75,7 +77,6 @@ export async function POST(request: NextRequest) {
         console.log('✅ Subscription created:', subscription.id)
         console.log('📊 Customer:', subscription.customer)
         
-        // Update user record with subscription details
         const { error } = await supabase
           .from('users')
           .update({ 
@@ -132,33 +133,6 @@ export async function POST(request: NextRequest) {
           console.error('❌ Error updating deleted subscription:', error)
         } else {
           console.log('✅ Subscription marked as inactive')
-        }
-        break
-      }
-
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice
-        console.log('💰 Payment succeeded for invoice:', invoice.id)
-        console.log('📊 Customer:', invoice.customer)
-        break
-      }
-
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice
-        console.log('❌ Payment failed for invoice:', invoice.id)
-        console.log('📊 Customer:', invoice.customer)
-        
-        // Optionally update subscription status to past_due
-        const { error } = await supabase
-          .from('users')
-          .update({ 
-            subscription_status: 'past_due',
-            updated_at: new Date().toISOString()
-          })
-          .eq('stripe_customer_id', invoice.customer as string)
-
-        if (error) {
-          console.error('❌ Error updating payment failed status:', error)
         }
         break
       }

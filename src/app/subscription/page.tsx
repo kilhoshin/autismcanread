@@ -32,8 +32,8 @@ export default function SubscriptionPage() {
     setSubscriptionData({
       status: profile?.subscription_status || 'free',
       created_at: profile?.created_at,
-      // Mock data for demonstration
-      next_billing_date: '2025-07-03',
+      // Use actual subscription_period_end from database
+      next_billing_date: profile?.subscription_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       amount: 5.00,
       currency: 'USD'
     })

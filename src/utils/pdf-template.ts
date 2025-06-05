@@ -33,8 +33,17 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
     }
     
     .page-break {
-      page-break-before: always;
-      break-before: page;
+      page-break-before: always !important;
+      page-break-after: avoid !important;
+      break-before: page !important;
+      break-after: avoid !important;
+      display: block !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      clear: both !important;
     }
     
     .section-header {
@@ -220,7 +229,8 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
     }
     
     .story-section {
-      page-break-inside: avoid;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
       margin-bottom: 20px;
     }
     
@@ -251,118 +261,127 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
 }
 
 function generateWorksheetContent(stories: StoryData[]): string {
+  console.log(`🔍 Generating content for ${stories.length} stories`)
+  
   return `
     <div class="worksheet-content">
-      ${stories.map((story: StoryData, index: number) => `
-      ${index > 0 ? '<div class="page-break"></div>' : ''}
-      
-      <div class="story-section">
-        <div class="story-title">
-          <div class="section-header">Story ${index + 1}: ${story.title || 'Reading Adventure'}</div>
-        </div>
+      ${stories.map((story: StoryData, index: number) => {
+        console.log(`📄 Processing story ${index + 1}: ${story.title}`)
         
-        <div class="story-box">
-          ${story.content || story.story || 'Story content will be displayed here.'}
-        </div>
+        return `
+        ${index > 0 ? `
+          <div class="page-break" style="page-break-before: always !important; height: 1px; width: 100%;"></div>
+          <div style="page-break-before: always !important;"></div>
+        ` : ''}
         
-        ${story.whQuestions ? `
-          <div class="activity-section">
-            <div class="activity-title">📝 Reading Comprehension Questions</div>
-            ${story.whQuestions.map((q: any, i: number) => `
-              <div class="question">${i + 1}. ${typeof q === 'string' ? q : q.question}</div>
+        <div class="story-section" style="page-break-inside: avoid !important;">
+          <div class="story-title">
+            <div class="section-header">Story ${index + 1}: ${story.title || 'Reading Adventure'}</div>
+          </div>
+          
+          <div class="story-box">
+            ${story.content || story.story || 'Story content will be displayed here.'}
+          </div>
+          
+          ${story.whQuestions ? `
+            <div class="activity-section">
+              <div class="activity-title">📝 Reading Comprehension Questions</div>
+              ${story.whQuestions.map((q: any, i: number) => `
+                <div class="question">${i + 1}. ${typeof q === 'string' ? q : q.question}</div>
+                <div class="answer-lines">
+                  <div class="answer-line"></div>
+                  <div class="answer-line"></div>
+                  <div class="answer-line"></div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          ${story.emotionQuiz ? `
+            <div class="activity-section">
+              <div class="activity-title">😊 Emotion Recognition</div>
+              ${story.emotionQuiz.map((q: any, i: number) => `
+                <div class="question">${i + 1}. ${q.question}</div>
+                <div class="multiple-choice">
+                  ${q.options?.map((option: string, optIndex: number) => `
+                    <div>☐ ${String.fromCharCode(65 + optIndex)}. ${option}</div>
+                  `).join('') || ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          ${story.drawAndTell ? `
+            <div class="activity-section">
+              <div class="activity-title">🎨 Draw and Tell</div>
+              <div class="question">${story.drawAndTell.prompt}</div>
+              <div class="drawing-box"></div>
+              ${story.drawAndTell.questions ? story.drawAndTell.questions.map((q: string, i: number) => `
+                <div class="question">${i + 1}. ${q}</div>
+                <div class="answer-lines">
+                  <div class="answer-line"></div>
+                  <div class="answer-line"></div>
+                </div>
+              `).join('') : ''}
+            </div>
+          ` : ''}
+          
+          ${story.bmeStory ? `
+            <div class="activity-section">
+              <div class="activity-title">📚 Story Structure (Beginning, Middle, End)</div>
+              <div class="bme-section">
+                <div class="bme-item">
+                  <div class="bme-label">Beginning</div>
+                  <div class="answer-lines">
+                    <div class="answer-line"></div>
+                    <div class="answer-line"></div>
+                  </div>
+                </div>
+                <div class="bme-item">
+                  <div class="bme-label">Middle</div>
+                  <div class="answer-lines">
+                    <div class="answer-line"></div>
+                    <div class="answer-line"></div>
+                  </div>
+                </div>
+                <div class="bme-item">
+                  <div class="bme-label">End</div>
+                  <div class="answer-lines">
+                    <div class="answer-line"></div>
+                    <div class="answer-line"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+          
+          ${story.threeLineSummary ? `
+            <div class="activity-section">
+              <div class="activity-title">📝 Three Line Summary</div>
+              <div class="question">Write a summary of the story in exactly three sentences:</div>
               <div class="answer-lines">
                 <div class="answer-line"></div>
                 <div class="answer-line"></div>
                 <div class="answer-line"></div>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-        
-        ${story.emotionQuiz ? `
-          <div class="activity-section">
-            <div class="activity-title">😊 Emotion Recognition</div>
-            ${story.emotionQuiz.map((q: any, i: number) => `
-              <div class="question">${i + 1}. ${q.question}</div>
-              <div class="multiple-choice">
-                ${q.options?.map((option: string, optIndex: number) => `
-                  <div>☐ ${String.fromCharCode(65 + optIndex)}. ${option}</div>
-                `).join('') || ''}
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-        
-        ${story.drawAndTell ? `
-          <div class="activity-section">
-            <div class="activity-title">🎨 Draw and Tell</div>
-            <div class="question">${story.drawAndTell.prompt}</div>
-            <div class="drawing-box"></div>
-            ${story.drawAndTell.questions ? story.drawAndTell.questions.map((q: string, i: number) => `
-              <div class="question">${i + 1}. ${q}</div>
-              <div class="answer-lines">
+                <div class="answer-line"></div>
                 <div class="answer-line"></div>
                 <div class="answer-line"></div>
               </div>
-            `).join('') : ''}
-          </div>
-        ` : ''}
-        
-        ${story.bmeStory ? `
-          <div class="activity-section">
-            <div class="activity-title">📚 Story Structure (Beginning, Middle, End)</div>
-            <div class="bme-section">
-              <div class="bme-item">
-                <div class="bme-label">Beginning</div>
-                <div class="answer-lines">
-                  <div class="answer-line"></div>
-                  <div class="answer-line"></div>
-                </div>
-              </div>
-              <div class="bme-item">
-                <div class="bme-label">Middle</div>
-                <div class="answer-lines">
-                  <div class="answer-line"></div>
-                  <div class="answer-line"></div>
-                </div>
-              </div>
-              <div class="bme-item">
-                <div class="bme-label">End</div>
-                <div class="answer-lines">
-                  <div class="answer-line"></div>
-                  <div class="answer-line"></div>
-                </div>
-              </div>
             </div>
-          </div>
-        ` : ''}
-        
-        ${story.threeLineSummary ? `
-          <div class="activity-section">
-            <div class="activity-title">📝 Three Line Summary</div>
-            <div class="question">Write a summary of the story in exactly three sentences:</div>
-            <div class="answer-lines">
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
-              <div class="answer-line"></div>
+          ` : ''}
+          
+          ${story.sentenceOrder ? `
+            <div class="activity-section">
+              <div class="activity-title">🔢 Sentence Ordering</div>
+              <div class="question">Put these sentences in the correct order by writing numbers 1-${story.sentenceOrder.sentences.length}:</div>
+              ${story.sentenceOrder.sentences.map((sentence: string) => `
+                <div class="sentence-order">☐ ${sentence}</div>
+              `).join('')}
             </div>
-          </div>
-        ` : ''}
-        
-        ${story.sentenceOrder ? `
-          <div class="activity-section">
-            <div class="activity-title">🔢 Sentence Ordering</div>
-            <div class="question">Put these sentences in the correct order by writing numbers 1-${story.sentenceOrder.sentences.length}:</div>
-            ${story.sentenceOrder.sentences.map((sentence: string) => `
-              <div class="sentence-order">☐ ${sentence}</div>
-            `).join('')}
-          </div>
-        ` : ''}
-      </div>
-      `).join('')}
+          ` : ''}
+        </div>
+        `
+      }).join('')}
     </div>
   `
 }

@@ -483,9 +483,11 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
     const pdfBuffer = await page.pdf({
       format: 'letter',
       printBackground: true,
-      preferCSSPageSize: true,
+      preferCSSPageSize: false,
       displayHeaderFooter: false,
-      margin: { top: '0.5in', bottom: '0.5in', left: '0.5in', right: '0.5in' }
+      margin: { top: '0.5in', bottom: '0.5in', left: '0.5in', right: '0.5in' },
+      width: '8.5in',
+      height: '11in'
     })
     
     console.log('PDF buffer size:', pdfBuffer.length)

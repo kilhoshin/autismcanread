@@ -50,9 +50,11 @@ export default function SubscriptionPage() {
       })
 
       if (response.ok) {
-        setSuccessMessage('Your subscription has been cancelled. You can continue using Premium features until the end of your current billing period.')
+        const result = await response.json()
+        console.log('✅ Cancel response:', result) // Debug log
+        
+        setSuccessMessage('Your subscription has been cancelled. You can continue to use Premium features until the end of your current billing period.')
         setSuccessType('cancel')
-        setShowCancelModal(false)
         setShowSuccessModal(true)
         fetchSubscriptionData()
         
@@ -60,6 +62,12 @@ export default function SubscriptionPage() {
         if (refreshProfile) {
           console.log('Refreshing profile context after subscription cancellation')
           await refreshProfile()
+          console.log('🔍 Profile after refresh:', profile) // Debug log
+          
+          // Small delay to ensure state update, then refresh subscription data
+          setTimeout(() => {
+            fetchSubscriptionData()
+          }, 500)
         }
       } else {
         throw new Error('Failed to cancel subscription.')

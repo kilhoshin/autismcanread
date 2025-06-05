@@ -293,11 +293,18 @@ function generateWorksheetContent(stories: StoryData[]): string {
           </div>
         ` : ''}
         
-        ${story.drawingPrompt ? `
+        ${story.drawAndTell ? `
           <div class="activity-section">
-            <div class="activity-title">🎨 Creative Drawing</div>
-            <div class="question">${story.drawingPrompt}</div>
+            <div class="activity-title">🎨 Draw and Tell</div>
+            <div class="question">${story.drawAndTell.prompt}</div>
             <div class="drawing-box"></div>
+            ${story.drawAndTell.questions ? story.drawAndTell.questions.map((q: string, i: number) => `
+              <div class="question">${i + 1}. ${q}</div>
+              <div class="answer-lines">
+                <div class="answer-line"></div>
+                <div class="answer-line"></div>
+              </div>
+            `).join('') : ''}
           </div>
         ` : ''}
         
@@ -348,9 +355,9 @@ function generateWorksheetContent(stories: StoryData[]): string {
         ${story.sentenceOrder ? `
           <div class="activity-section">
             <div class="activity-title">🔢 Sentence Ordering</div>
-            <div class="question">Put these sentences in the correct order by writing numbers 1-${story.sentenceOrder.length}:</div>
-            ${story.sentenceOrder.map((sentence: string) => `
-              <div class="sentence-order">${sentence}</div>
+            <div class="question">Put these sentences in the correct order by writing numbers 1-${story.sentenceOrder.sentences.length}:</div>
+            ${story.sentenceOrder.sentences.map((sentence: string) => `
+              <div class="sentence-order">☐ ${sentence}</div>
             `).join('')}
           </div>
         ` : ''}
@@ -406,13 +413,13 @@ function generateAnswerKey(stories: StoryData[]): string {
         ${story.sentenceOrder ? `
           <div class="activity-title">🔢 Sentence Ordering</div>
           <div class="answer-text">✅ <strong>Correct Order:</strong></div>
-          ${story.sentenceOrder.map((sentence: string, i: number) => `
+          ${story.sentenceOrder.sentences.map((sentence: string, i: number) => `
             <div class="answer-text">${i + 1}. ${sentence}</div>
           `).join('')}
         ` : ''}
         
-        ${story.drawingPrompt ? `
-          <div class="activity-title">🎨 Creative Drawing</div>
+        ${story.drawAndTell ? `
+          <div class="activity-title">🎨 Draw and Tell</div>
           <div class="answer-text">💡 <strong>Drawing should include:</strong> Details from the story, main characters, setting, or key events mentioned in the prompt.</div>
         ` : ''}
         

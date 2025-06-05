@@ -432,31 +432,48 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
       ],
-      timeout: 30000, // 30초 타임아웃
+      timeout: 60000, // 60초 타임아웃으로 증가
     })
     
     const page = await browser.newPage()
+    
+    // 페이지 뷰포트 설정
+    await page.setViewport({ 
+      width: 1200, 
+      height: 1600, 
+      deviceScaleFactor: 2 
+    })
     
     // Generate HTML content
     const htmlContent = generateWorksheetHTML(stories)
     
     // Set content
     await page.setContent(htmlContent, { 
-      waitUntil: 'load',
-      timeout: 30000
+      waitUntil: ['load', 'domcontentloaded', 'networkidle0'],
+      timeout: 60000
     })
+    
+    // 폰트 로딩을 위해 잠시 대기
+    await new Promise(resolve => setTimeout(resolve, 2000))
     
     // Generate PDF
     const pdfBuffer = await page.pdf({
       format: 'letter',
       printBackground: true,
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
       margin: {
-        top: '0.75in',
-        bottom: '0.75in',
-        left: '0.75in',
-        right: '0.75in'
+        top: '0.5in',
+        bottom: '0.5in',
+        left: '0.5in',
+        right: '0.5in'
       }
     })
     

@@ -21,11 +21,13 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
     }
     
     body {
-      font-family: 'Comic Sans MS', 'Arial', cursive;
+      font-family: 'DejaVu Sans', 'Liberation Sans', 'Arial', 'Helvetica', sans-serif;
       font-size: 14px;
       line-height: 1.6;
       color: #333;
       background: white;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .page-break {
@@ -92,7 +94,7 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
     }
     
     .drawing-box::before {
-      content: "✏️ Draw here";
+      content: "Draw here";
       position: absolute;
       top: 50%;
       left: 50%;
@@ -178,6 +180,7 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
   </style>
 </head>
 <body>
+  <div class="section-header">Reading Comprehension Worksheet</div>
   ${generateWorksheetContent(stories)}
   ${generateAnswerKey(stories)}
 </body>
@@ -186,11 +189,12 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
 }
 
 function generateWorksheetContent(stories: StoryData[]): string {
-  return stories.map((story: StoryData, index: number) => `
+  return `
+    ${stories.map((story: StoryData, index: number) => `
     ${index > 0 ? '<div class="page-break"></div>' : ''}
     
     <div class="story-title">
-      <div class="section-header">📚 Story ${index + 1}: ${story.title || 'Reading Adventure'} 📚</div>
+      <div class="section-header">Story ${index + 1}: ${story.title || 'Reading Adventure'}</div>
     </div>
     
     <div class="story-box">
@@ -199,7 +203,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.whQuestions ? `
       <div class="activity-section">
-        <div class="activity-title">❓ WH Questions</div>
+        <div class="activity-title">WH Questions</div>
         ${story.whQuestions.map((q: any, i: number) => `
           <div class="question">${i + 1}. ${typeof q === 'string' ? q : q.question}</div>
           <div class="answer-lines">
@@ -212,7 +216,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.emotionQuiz ? `
       <div class="activity-section">
-        <div class="activity-title">😊 Emotion Quiz</div>
+        <div class="activity-title">Emotion Quiz</div>
         ${story.emotionQuiz.map((q: any, i: number) => `
           <div class="question">${i + 1}. ${q.question}</div>
           ${q.options.map((option: string, j: number) => `
@@ -224,22 +228,22 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.bmeStory ? `
       <div class="activity-section">
-        <div class="activity-title">📝 Story Structure (Beginning, Middle, End)</div>
+        <div class="activity-title">Story Structure (Beginning, Middle, End)</div>
         <div class="bme-section">
           <div class="bme-item">
-            <div class="bme-label">🌅 Beginning:</div>
+            <div class="bme-label">Beginning:</div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
           </div>
           <div class="bme-item">
-            <div class="bme-label">⭐ Middle:</div>
+            <div class="bme-label">Middle:</div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
           </div>
           <div class="bme-item">
-            <div class="bme-label">🎉 End:</div>
+            <div class="bme-label">End:</div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
             <div class="answer-line"></div>
@@ -250,7 +254,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.sentenceOrder ? `
       <div class="activity-section">
-        <div class="activity-title">🔢 Put in Correct Order</div>
+        <div class="activity-title">Put in Correct Order</div>
         <p>Number these sentences in the correct order:</p>
         ${story.sentenceOrder.sentences.sort(() => Math.random() - 0.5).map((sentence: string) => `
           <div class="sentence-order">${sentence}</div>
@@ -260,7 +264,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.threeLineSummary ? `
       <div class="activity-section">
-        <div class="activity-title">📋 Three Line Summary</div>
+        <div class="activity-title">Three Line Summary</div>
         <p>Write a 3-line summary of the story:</p>
         <div class="answer-lines">
           <div>1. <span class="answer-line"></span></div><br>
@@ -272,7 +276,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.sentenceCompletion ? `
       <div class="activity-section">
-        <div class="activity-title">✏️ Sentence Completion</div>
+        <div class="activity-title">Sentence Completion</div>
         ${story.sentenceCompletion.map((item: any, i: number) => `
           <div class="question">${i + 1}. ${item.sentence}</div>
           <div class="answer-line"></div>
@@ -283,7 +287,7 @@ function generateWorksheetContent(stories: StoryData[]): string {
     
     ${story.drawAndTell ? `
       <div class="activity-section">
-        <div class="activity-title">🎨 Draw and Tell</div>
+        <div class="activity-title">Draw and Tell</div>
         <p>${story.drawAndTell.prompt}</p>
         <div class="drawing-box"></div>
         ${story.drawAndTell.questions ? story.drawAndTell.questions.map((q: string, i: number) => `
@@ -292,7 +296,8 @@ function generateWorksheetContent(stories: StoryData[]): string {
         `).join('') : ''}
       </div>
     ` : ''}
-  `).join('')
+  `).join('')}
+  `
 }
 
 function generateAnswerKey(stories: StoryData[]): string {
@@ -300,7 +305,7 @@ function generateAnswerKey(stories: StoryData[]): string {
     <div class="page-break"></div>
     
     <div class="answer-key">
-      <h2>🔑 ANSWER KEY 🔑</h2>
+      <h2>ANSWER KEY</h2>
       
       ${stories.map((story: StoryData, index: number) => `
         <div class="story-title">
@@ -308,7 +313,7 @@ function generateAnswerKey(stories: StoryData[]): string {
         </div>
         
         ${story.whQuestions ? `
-          <div class="activity-title">❓ WH Questions - Sample Answers</div>
+          <div class="activity-title">WH Questions - Sample Answers</div>
           ${story.whQuestions.map((q: any, i: number) => `
             <div class="question">${i + 1}. ${typeof q === 'string' ? q : q.question}</div>
             <div class="answer-text">Answer: <strong>${typeof q === 'string' ? 'Leo (from story)' : (q.answer || 'Answer from story')}</strong></div>
@@ -316,7 +321,7 @@ function generateAnswerKey(stories: StoryData[]): string {
         ` : ''}
         
         ${story.emotionQuiz ? `
-          <div class="activity-title">😊 Emotion Quiz Answers</div>
+          <div class="activity-title">Emotion Quiz Answers</div>
           ${story.emotionQuiz.map((q: any, i: number) => `
             <div class="question">${i + 1}. ${q.question}</div>
             <div class="answer-text">Answer: ${String.fromCharCode(65 + q.correct)}) ${q.options[q.correct]}</div>
@@ -324,14 +329,14 @@ function generateAnswerKey(stories: StoryData[]): string {
         ` : ''}
         
         ${story.sentenceOrder ? `
-          <div class="activity-title">🔢 Sentence Order - Correct Order</div>
+          <div class="activity-title">Put in Correct Order - Correct Order</div>
           ${story.sentenceOrder.sentences.map((sentence: string, i: number) => `
             <div class="answer-text">${i + 1}. ${sentence}</div>
           `).join('')}
         ` : ''}
         
         ${story.sentenceCompletion ? `
-          <div class="activity-title">✏️ Sentence Completion Answers</div>
+          <div class="activity-title">Sentence Completion Answers</div>
           ${story.sentenceCompletion.map((item: any, i: number) => `
             <div class="question">${i + 1}. ${item.sentence}</div>
             ${item.answers && item.answers.length > 0 ? item.answers.map((answer: string, answerIndex: number) => `
@@ -343,21 +348,21 @@ function generateAnswerKey(stories: StoryData[]): string {
         ` : ''}
         
         ${story.bmeStory ? `
-          <div class="activity-title">📖 BME Story Structure - Sample Answers</div>
+          <div class="activity-title">BME Story Structure - Sample Answers</div>
           <div class="answer-text"><strong>Beginning:</strong> ${story.bmeStory.beginning}</div>
           <div class="answer-text"><strong>Middle:</strong> ${story.bmeStory.middle}</div>
           <div class="answer-text"><strong>End:</strong> ${story.bmeStory.end}</div>
         ` : ''}
         
         ${story.threeLineSummary ? `
-          <div class="activity-title">📋 Three Line Summary - Sample Answer</div>
+          <div class="activity-title">Three Line Summary - Sample Answer</div>
           <div class="answer-text">1. ${story.threeLineSummary.line1}</div>
           <div class="answer-text">2. ${story.threeLineSummary.line2}</div>
           <div class="answer-text">3. ${story.threeLineSummary.line3}</div>
         ` : ''}
         
         ${story.drawAndTell ? `
-          <div class="activity-title">🎨 Draw and Tell - Sample Responses</div>
+          <div class="activity-title">Draw and Tell - Sample Responses</div>
           <div class="answer-text"><strong>Drawing Prompt:</strong> ${story.drawAndTell.prompt}</div>
           ${story.drawAndTell.questions ? story.drawAndTell.questions.map((q: string, i: number) => `
             <div class="answer-text">${i + 1}. ${q} - <em>(Answers will vary based on child's drawing)</em></div>
@@ -366,7 +371,7 @@ function generateAnswerKey(stories: StoryData[]): string {
         
         ${!story.bmeStory && !story.threeLineSummary && !story.drawAndTell ? '' : `
           <div class="answer-text" style="margin-top: 15px; font-style: italic; color: #666;">
-            📝 Note: For creative activities, encourage children to express their own ideas and interpretations!
+            Note: For creative activities, encourage children to express their own ideas and interpretations!
           </div>
         `}
         

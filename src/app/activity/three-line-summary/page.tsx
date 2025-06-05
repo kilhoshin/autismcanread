@@ -91,38 +91,48 @@ export default function ThreeLineSummaryActivity() {
 
   const downloadPDF = async () => {
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          activityType: 'three-line-summary',
-          storyContent: storyContent?.story,
-          userAnswers: {
-            userSummary,
-            summaryGuide: storyContent?.summaryGuide
+          topic: 'Three Line Summary Activity',
+          readingLevel: 2,
+          activities: ['three-line-summary'],
+          customStory: {
+            title: 'Story Summary Activity',
+            content: storyContent?.story,
+            threeLineSummary: {
+              userSummary: userSummary,
+              summaryGuide: storyContent?.summaryGuide
+            }
           }
         })
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.pdfData) {
-          const link = document.createElement('a')
-          link.href = data.pdfData
-          link.download = `Three-Line-Summary_${new Date().toLocaleDateString('en-US')}.pdf`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = 'three-line-summary-worksheet.pdf'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       } else {
-        console.error('PDF generation failed')
-        alert('Failed to generate PDF. Please try again.')
+        const errorData = await response.json()
+        if (errorData.code === 'PREMIUM_REQUIRED') {
+          alert('Premium subscription required for PDF downloads')
+        } else {
+          alert('Failed to generate worksheet. Please try again.')
+        }
       }
     } catch (error) {
-      console.error('PDF download error:', error)
-      alert('Error downloading PDF.')
+      console.error('Error generating worksheet:', error)
+      alert('Failed to generate worksheet. Please try again.')
     }
   }
 

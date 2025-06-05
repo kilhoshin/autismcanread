@@ -71,46 +71,49 @@ export default function BMEStoryActivity() {
 
   const generatePDF = async () => {
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          activityType: 'bme-story',
-          storyContent: storyContent,
-          userAnswers: userAnswers,
-          activityTitle: 'B-M-E Story Analysis',
-          userId: user?.id
+          topic: 'Beginning-Middle-End Story Analysis',
+          readingLevel: 2,
+          activities: ['bme-story'],
+          customStory: {
+            title: storyContent?.title || 'Story Analysis',
+            content: storyContent?.story,
+            bmeStory: {
+              beginning: userAnswers?.beginning,
+              middle: userAnswers?.middle,
+              end: userAnswers?.end
+            }
+          }
         })
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.pdfData) {
-          // Create download link
-          const blob = new Blob([new Uint8Array(data.pdfData.data)], { type: 'application/pdf' })
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = url
-          a.download = 'bme-story-analysis.pdf'
-          document.body.appendChild(a)
-          a.click()
-          window.URL.revokeObjectURL(url)
-          document.body.removeChild(a)
-        }
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = 'bme-story-analysis-worksheet.pdf'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       } else {
         const errorData = await response.json()
         if (errorData.code === 'PREMIUM_REQUIRED') {
           alert('Premium subscription required for PDF downloads')
         } else {
-          alert('Failed to generate PDF. Please try again.')
+          alert('Failed to generate worksheet. Please try again.')
         }
       }
     } catch (error) {
-      console.error('Error generating PDF:', error)
-      alert('Failed to generate PDF. Please try again.')
+      console.error('Error generating worksheet:', error)
+      alert('Failed to generate worksheet. Please try again.')
     }
   }
 

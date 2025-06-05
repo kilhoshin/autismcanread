@@ -119,37 +119,47 @@ export default function DrawAndTellActivity() {
       const canvas = canvasRef.current
       if (!canvas) return
 
-      const imageData = canvas.toDataURL('image/png')
+      const userDrawing = canvas.toDataURL('image/png')
       
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          activityType: 'draw-and-tell',
-          storyContent: userStory,
-          userAnswers: {
-            topic: selectedTopic === 'custom' ? customTopic : topics.find(t => t.id === selectedTopic)?.title,
-            imageData,
-            story: userStory
+          topic: 'Draw and Tell Activity',
+          readingLevel: 2,
+          activities: ['draw-and-tell'],
+          customStory: {
+            title: 'Draw and Tell Exercise',
+            content: userStory,
+            drawAndTell: {
+              userDrawing,
+              userStory,
+              prompts: ''
+            }
           }
         })
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.pdfData) {
-          const link = document.createElement('a')
-          link.href = data.pdfData
-          link.download = `DrawAndTell_${new Date().toLocaleDateString('en-US')}.pdf`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = 'draw-and-tell-worksheet.pdf'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       } else {
-        console.error('PDF creation failed')
-        alert('Failed to create PDF. Please try again.')
+        const errorData = await response.json()
+        if (errorData.code === 'PREMIUM_REQUIRED') {
+          alert('Premium subscription required for PDF downloads')
+        } else {
+          alert('Failed to generate worksheet. Please try again.')
+        }
       }
     } catch (error) {
       console.error('PDF download error:', error)

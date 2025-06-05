@@ -160,36 +160,45 @@ export default function SentenceOrderActivity() {
 
   const downloadPDF = async () => {
     try {
-      const response = await fetch('/api/generate-pdf', {
+      const response = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          activityType: 'sentence-order',
-          storyContent: storyContent?.story,
-          userAnswers: {
-            userOrder,
-            correctOrder: storyContent?.sentences.sort((a, b) => a.correctOrder - b.correctOrder),
-            isCorrect: isCorrectOrder
+          topic: 'Sentence Order Activity',
+          readingLevel: 2,
+          activities: ['sentence-order'],
+          customStory: {
+            title: 'Sentence Ordering Exercise',
+            content: storyContent?.story,
+            sentenceOrder: {
+              userOrder: userOrder,
+              correctOrder: storyContent?.sentences.sort((a, b) => a.correctOrder - b.correctOrder),
+              isCorrect: isCorrectOrder
+            }
           }
         })
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.pdfData) {
-          // Download PDF
-          const link = document.createElement('a')
-          link.href = data.pdfData
-          link.download = `Sentence Order Activity_${new Date().toLocaleDateString('en-US')}.pdf`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = 'sentence-order-worksheet.pdf'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       } else {
-        console.error('PDF creation failed')
-        alert('Failed to create PDF. Please try again.')
+        const errorData = await response.json()
+        if (errorData.code === 'PREMIUM_REQUIRED') {
+          alert('Premium subscription required for PDF downloads')
+        } else {
+          alert('Failed to generate worksheet. Please try again.')
+        }
       }
     } catch (error) {
       console.error('PDF download error:', error)

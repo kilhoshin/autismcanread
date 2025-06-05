@@ -148,14 +148,24 @@ Format: { "drawAndTell": { "prompt": "Draw your favorite scene from the story", 
   }
 
   prompt += `
-Return all activities in one complete JSON object. Do not include any explanatory text, only valid JSON.
+CRITICAL JSON FORMAT RULES:
+1. Use EXACT property names: "whQuestions", "emotionQuiz", "bmeStory", "sentenceOrder", "threeLineSummary", "sentenceCompletion", "drawAndTell"
+2. NO underscores in property names (wh_questions ❌, whQuestions ✅)
+3. NO extra text or IDs in the JSON
+4. ALL strings must be properly escaped and quoted
+5. NO trailing commas
 
-Example:
+EXAMPLE VALID JSON:
 {
-  "whQuestions": [{"question": "Who is the main character?", "answer": "Lily"}],
-  "emotionQuiz": [{"question": "How does Lily feel?", "options": ["happy", "sad"], "correct": 0}],
-  "sentenceCompletion": [{"sentence": "Lily went to _____.", "answers": ["school"], "blanks": ["_____"]}]
+  "whQuestions": [
+    {"question": "Who is the main character?", "answer": "Maya"}
+  ],
+  "emotionQuiz": [
+    {"question": "How does Maya feel?", "options": ["happy", "sad"], "correct": 0}
+  ]
 }
+
+Return ONLY valid JSON with no extra text before or after.
 `
   return prompt
 }
@@ -176,14 +186,29 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
   try {
     console.log('Raw AI Response:', response)
     
-    // Remove JSON code block
     let cleanResponse = response.trim()
+    
+    // Remove markdown code blocks
     if (cleanResponse.startsWith('```json')) {
       cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '')
     }
     if (cleanResponse.startsWith('```')) {
       cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '')
     }
+    
+    // Remove any extra text before/after JSON
+    const jsonStart = cleanResponse.indexOf('{')
+    const jsonEnd = cleanResponse.lastIndexOf('}')
+    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+      cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1)
+    }
+    
+    // Fix common JSON issues
+    cleanResponse = cleanResponse
+      .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+      .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+      .replace(/(\w+):/g, '"$1":') // Add quotes to property names
+      .replace(/:\s*'([^']*)'/g, ': "$1"') // Replace single quotes with double
     
     console.log('Cleaned Response:', cleanResponse)
     

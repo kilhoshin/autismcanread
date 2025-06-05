@@ -50,7 +50,7 @@ IMPORTANT:
 - Do NOT use sequence words like "First", "Then", "Finally", "Second", etc.
 - All activities must relate directly to the story content provided
 
-Return ONLY valid JSON format:
+Return ONLY valid JSON format with these exact property names:
 {
   "whQuestions": [
     {"question": "Who is the main character?", "answer": "specific answer"},
@@ -61,9 +61,7 @@ Return ONLY valid JSON format:
   ],
   "bmeStory": {"beginning": "story beginning", "middle": "story middle", "end": "story end"},
   "sentenceOrder": [
-    {"scrambled": ["The", "character", "smiled", "with", "joy."], "correct": ["The", "character", "smiled", "with", "joy."]},
-    {"scrambled": ["Something", "wonderful", "happened", "that", "day."], "correct": ["Something", "wonderful", "happened", "that", "day."]},
-    {"scrambled": ["The", "character", "learned", "an", "important", "lesson."], "correct": ["The", "character", "learned", "an", "important", "lesson."]}
+    {"scrambled": ["word1", "word2", "word3"], "correct": ["word1", "word2", "word3"]}
   ],
   "threeLineSummary": {"lines": ["First thing happened", "Then something else", "Finally it ended"]},
   "sentenceCompletion": [
@@ -344,26 +342,46 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       },
     }
     
-    // Map activity request names to handler names
-    const activityNameMap: { [key: string]: string } = {
-      'wh-questions': 'whQuestions',
-      'emotion-quiz': 'emotionQuiz', 
-      'sentence-order': 'sentenceOrder',
-      'sentence-completion': 'sentenceCompletion',
-      'three-line-summary': 'threeLineSummary',
-      'bme-story': 'bmeStory',
-      'draw-and-tell': 'drawAndTell'
+    // Helper function to normalize property names for flexible matching
+    const normalizeKey = (key: string): string => {
+      return key.toLowerCase().replace(/[-_\s]/g, '')
     }
     
+    // Create a mapping of normalized keys to actual keys in parsed data
+    const normalizedKeyMap: { [key: string]: string } = {}
+    Object.keys(parsed).forEach(key => {
+      normalizedKeyMap[normalizeKey(key)] = key
+    })
+    
+    console.log('Normalized key mapping:', normalizedKeyMap)
     console.log('Final parsed result before activity processing:', result)
     
     activityTypes.forEach((type) => {
-      const handlerKey = activityNameMap[type] || type
+      // Convert kebab-case to camelCase for handler lookup
+      const handlerKey = type.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
       console.log(`🔍 Processing activity type: "${type}" -> handler: "${handlerKey}"`)
       
+      // Try to find the data using multiple key variations
+      let dataKey = handlerKey
+      let data = parsed[dataKey]
+      
+      if (!data) {
+        // Try normalized matching
+        const normalizedHandler = normalizeKey(handlerKey)
+        dataKey = normalizedKeyMap[normalizedHandler] || handlerKey
+        data = parsed[dataKey]
+        console.log(`🔍 Trying normalized key: "${normalizedHandler}" -> found key: "${dataKey}"`)
+      }
+      
       if (activityTypeHandlers[handlerKey]) {
-        console.log(`✅ Found handler for: ${handlerKey}`)
-        activityTypeHandlers[handlerKey](parsed)
+        console.log(`✅ Found handler for: ${handlerKey}, data found: ${!!data}`)
+        // Pass the actual data to the handler
+        if (data) {
+          const tempParsed = { [handlerKey]: data }
+          activityTypeHandlers[handlerKey](tempParsed)
+        } else {
+          activityTypeHandlers[handlerKey](parsed)
+        }
       } else {
         console.log(`❌ No handler found for: ${handlerKey}`)
       }

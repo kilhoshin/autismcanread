@@ -38,66 +38,38 @@ Return in JSON format:
 `
 }
 
-function generateActivityPrompts(topic: string, activityTypes: string[], readingLevel: string, writingLevel: string): string {
-  // 더 명확한 프롬프트로 개선
-  let prompt = `Generate educational content about ${topic} for ${readingLevel} reading level.
+function generateActivityPrompts(storyTitle: string, storyContent: string, activityTypes: string[], readingLevel: string, writingLevel: string): string {
+  // 이미 생성된 스토리를 기반으로 활동 생성
+  let prompt = `Based on the following story, create educational activities for ${readingLevel} reading level.
 
-Create a SHORT story (100-150 words) AND activities.
+STORY CONTENT: "${storyContent}"
 
-IMPORTANT: For sentence-order activity, create sentences that require understanding story context to determine correct order. Do NOT use sequence words like "First", "Then", "Finally", "Second", etc.
+IMPORTANT: 
+- Use the EXACT characters and events from the story above
+- For sentence-order activity, create sentences that require understanding story context to determine correct order
+- Do NOT use sequence words like "First", "Then", "Finally", "Second", etc.
+- All activities must relate directly to the story content provided
 
 Return ONLY valid JSON format:
 {
-  "story": "story text here",
-  "title": "story title"`
-
-  if (activityTypes.includes('wh-questions')) {
-    prompt += `,
   "whQuestions": [
     {"question": "Who is the main character?", "answer": "specific answer"},
     {"question": "What happens in the story?", "answer": "specific answer"}
-  ]`
-  }
-
-  if (activityTypes.includes('emotion-quiz')) {
-    prompt += `,
+  ],
   "emotionQuiz": [
     {"question": "How does the character feel?", "options": ["happy", "sad", "excited"], "correct": 0}
-  ]`
-  }
-
-  if (activityTypes.includes('bme-story')) {
-    prompt += `,
-  "bmeStory": {"beginning": "story beginning", "middle": "story middle", "end": "story end"}`
-  }
-
-  if (activityTypes.includes('sentence-order')) {
-    prompt += `,
+  ],
+  "bmeStory": {"beginning": "story beginning", "middle": "story middle", "end": "story end"},
   "sentenceOrder": [
     {"scrambled": ["The", "character", "smiled", "with", "joy."], "correct": ["The", "character", "smiled", "with", "joy."]},
     {"scrambled": ["Something", "wonderful", "happened", "that", "day."], "correct": ["Something", "wonderful", "happened", "that", "day."]},
     {"scrambled": ["The", "character", "learned", "an", "important", "lesson."], "correct": ["The", "character", "learned", "an", "important", "lesson."]}
-  ]`
-  }
-
-  if (activityTypes.includes('three-line-summary')) {
-    prompt += `,
-  "threeLineSummary": {"lines": ["First thing happened", "Then something else", "Finally it ended"]}`
-  }
-
-  if (activityTypes.includes('sentence-completion')) {
-    prompt += `,
+  ],
+  "threeLineSummary": {"lines": ["First thing happened", "Then something else", "Finally it ended"]},
   "sentenceCompletion": [
     {"sentence": "The character was _____ happy.", "answer": "very"}
-  ]`
-  }
-
-  if (activityTypes.includes('draw-and-tell')) {
-    prompt += `,
-  "drawAndTell": {"prompt": "Draw the main character", "questions": ["What did you draw?"]}`
-  }
-
-  prompt += `
+  ],
+  "drawAndTell": {"prompt": "Draw the main character", "questions": ["What did you draw?"]}
 }
 
 CRITICAL: Return ONLY the JSON object. No explanations, no markdown, no extra text.`
@@ -598,11 +570,14 @@ export async function POST(request: NextRequest) {
           const cleanStoryResponse = storyResponse.trim().replace(/```json\s*/, '').replace(/```\s*$/, '')
           storyData = JSON.parse(cleanStoryResponse)
         } catch (error) {
-          storyData = { title: 'Sample Story', content: 'This is a sample story about ' + topic }
+          storyData = { 
+            title: `Story about ${topic}`,
+            content: 'This is a sample story about ' + topic 
+          }
         }
 
         // Generate activities with faster model and timeout
-        const activityPrompt = generateActivityPrompts(topic, activities, String(readingLevel), String(writingLevel))
+        const activityPrompt = generateActivityPrompts('', storyData.content, activities, String(readingLevel), String(writingLevel))
         console.log('🚀 Activity Prompt sent to AI:')
         console.log('=====================================')
         console.log(activityPrompt)
@@ -740,9 +715,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Merge story data with activities
-        const completeStory = { ...storyData, ...parsedActivities }
+        const completeStory = { 
+          title: storyData.title || `Story about ${topic}`, 
+          ...storyData, 
+          ...parsedActivities 
+        }
         console.log('🔍 Complete story data before adding to array:')
-        console.log('- Title:', completeStory.title)
         console.log('- Content length:', completeStory.content?.length || 0)
         console.log('- WH Questions:', completeStory.whQuestions?.length || 0, 'questions')
         console.log('- Emotion Quiz:', completeStory.emotionQuiz?.length || 0, 'questions')

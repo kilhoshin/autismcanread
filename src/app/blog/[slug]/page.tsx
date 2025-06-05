@@ -591,13 +591,14 @@ Every child's journey is different, and what works for one may not work for anot
 ]
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function BlogPostPage({ params }: PageProps) {
-  const post = blogPosts.find(p => p.slug === params.slug)
+export default async function BlogPostPage({ params }: PageProps) {
+  const { slug } = await params
+  const post = blogPosts.find(p => p.slug === slug)
 
   if (!post) {
     notFound()
@@ -702,7 +703,7 @@ Thank you for your patience as we continue to expand our resource library!
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Articles</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {blogPosts
-              .filter(p => p.slug !== params.slug)
+              .filter(p => p.slug !== slug)
               .slice(0, 2)
               .map((relatedPost, index) => (
                 <Link

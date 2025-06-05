@@ -11,6 +11,15 @@ export async function POST(request: NextRequest) {
   try {
     const { activityType, storyContent, userAnswers, activityTitle, userId } = await request.json()
 
+    // Debug logging
+    console.log('=== PDF Generation Debug ===')
+    console.log('Activity Type:', activityType)
+    console.log('Story Content:', storyContent)
+    console.log('User Answers:', userAnswers)
+    console.log('Activity Title:', activityTitle)
+    console.log('User ID:', userId)
+    console.log('============================')
+
     // Check if user has premium subscription for PDF download
     if (userId && !(await canDownloadPDF(userId))) {
       return NextResponse.json(
@@ -32,20 +41,20 @@ export async function POST(request: NextRequest) {
 
     // Header
     pdf.setFontSize(20)
-    pdf.setTextColor(60, 60, 60)
-    pdf.text('Reading Friends - Learning Activity Results', 20, yPosition)
+    pdf.setTextColor(220, 53, 69) // Bright red
+    pdf.text('📚 Reading Friends - Learning Activity Results', 20, yPosition)
     yPosition += 15
 
     // Activity title
     pdf.setFontSize(16)
-    pdf.setTextColor(220, 53, 69) // Red
-    pdf.text(activityTitle || 'Learning Activity', 20, yPosition)
+    pdf.setTextColor(40, 167, 69) // Green
+    pdf.text(`🎯 ${activityTitle || 'Learning Activity'}`, 20, yPosition)
     yPosition += 10
 
     // Date
     pdf.setFontSize(12)
-    pdf.setTextColor(100, 100, 100)
-    pdf.text(`Date: ${new Date().toLocaleDateString('ko-KR')}`, 20, yPosition)
+    pdf.setTextColor(108, 117, 125) // Gray
+    pdf.text(`📅 Date: ${new Date().toLocaleDateString('ko-KR')}`, 20, yPosition)
     yPosition += 20
 
     // Generate activity-specific content
@@ -76,10 +85,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Encouragement message
+    yPosition += 15
+    pdf.setFontSize(16)
+    pdf.setTextColor(220, 53, 69) // Red
+    pdf.text('🌟 Excellent Work! 🌟', 20, yPosition)
     yPosition += 10
-    pdf.setFontSize(14)
+    
+    pdf.setFontSize(12)
     pdf.setTextColor(40, 167, 69) // Green
-    pdf.text('Great job! Keep up the good work! 🌟', 20, yPosition)
+    pdf.text('Keep practicing and improving your reading skills!', 20, yPosition)
+    yPosition += 8
+    
+    pdf.setFontSize(10)
+    pdf.setTextColor(108, 117, 125) // Gray
+    pdf.text('💪 You are doing amazing! Every step makes you stronger! 🚀', 20, yPosition)
 
     // Convert PDF to Base64
     const pdfBase64 = pdf.output('datauristring')
@@ -257,12 +276,14 @@ function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers:
   if (storyContent) {
     pdf.setFontSize(12)
     pdf.setTextColor(40, 40, 40)
-    pdf.text('Original Story:', 20, yPosition)
+    pdf.text('📖 Original Story:', 20, yPosition)
     yPosition += 10
 
     pdf.setFontSize(10)
     pdf.setTextColor(80, 80, 80)
-    const storyLines = pdf.splitTextToSize(storyContent, 170)
+    // Handle both string and object types
+    const storyText = typeof storyContent === 'string' ? storyContent : storyContent?.story || storyContent
+    const storyLines = pdf.splitTextToSize(storyText, 170)
     pdf.text(storyLines, 20, yPosition)
     yPosition += storyLines.length * 5 + 15
   }
@@ -270,8 +291,8 @@ function generateThreeLineSummaryPDF(pdf: jsPDF, storyContent: any, userAnswers:
   // User summary
   if (userAnswers && userAnswers.userSummary) {
     pdf.setFontSize(12)
-    pdf.setTextColor(60, 60, 60)
-    pdf.text('User Summary:', 20, yPosition)
+    pdf.setTextColor(220, 53, 69) // Red color
+    pdf.text('✏️ Your Three-Line Summary:', 20, yPosition)
     yPosition += 10
 
     userAnswers.userSummary.forEach((line: string, index: number) => {

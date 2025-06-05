@@ -81,7 +81,7 @@ export default function BMEStoryActivity() {
           readingLevel: 2,
           activities: ['bme-story'],
           customStory: {
-            title: storyContent?.title || 'Story Analysis',
+            title: 'Story Analysis',
             content: storyContent?.story,
             bmeStory: {
               beginning: userAnswers?.beginning,

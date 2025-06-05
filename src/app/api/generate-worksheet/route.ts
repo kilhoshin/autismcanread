@@ -445,10 +445,36 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
         ignoreHTTPSErrors: true,
       })
     } else {
-      // Local development: Use regular puppeteer
+      // Local development: Use regular puppeteer with better Chrome detection
       const puppeteer = await import('puppeteer')
+      
+      // Try to find Chrome executable
+      let executablePath;
+      try {
+        executablePath = puppeteer.default.executablePath()
+      } catch (error) {
+        console.log('Default puppeteer path failed, trying alternatives...')
+        // Common Chrome paths on Windows
+        const chromePaths = [
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          process.env.CHROME_PATH || '',
+        ].filter(Boolean)
+        
+        for (const path of chromePaths) {
+          try {
+            const fs = await import('fs')
+            if (fs.existsSync(path)) {
+              executablePath = path
+              break
+            }
+          } catch {}
+        }
+      }
+      
       browser = await puppeteer.default.launch({
         headless: true,
+        executablePath,
         args: [
           '--no-sandbox', 
           '--disable-setuid-sandbox',

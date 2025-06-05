@@ -646,10 +646,27 @@ export async function POST(request: NextRequest) {
         }
 
         // Parse AI response
-        let parsedActivities
+        let parsedActivities: any = {}
         try {
           console.log('🔄 Attempting to parse AI response...')
-          parsedActivities = parseAIResponse(activityResponse, activities)
+          
+          // First, let's see what JSON we actually got
+          console.log('🔍 RAW AI Response for parsing:')
+          console.log('===================================')
+          console.log(activityResponse)
+          console.log('===================================')
+          
+          // Try to extract and clean JSON
+          const cleanResponse = activityResponse.trim().replace(/```json\s*/, '').replace(/```\s*$/, '')
+          console.log('🧹 Cleaned response:')
+          console.log(cleanResponse)
+          
+          // Parse JSON
+          const rawParsed = JSON.parse(cleanResponse)
+          console.log('📋 Raw parsed JSON:')
+          console.log(JSON.stringify(rawParsed, null, 2))
+          
+          parsedActivities = parseAIResponse(cleanResponse, activities)
           console.log('✅ Successfully parsed AI activities:')
           console.log(JSON.stringify(parsedActivities, null, 2))
         } catch (parseError) {

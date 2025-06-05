@@ -46,7 +46,7 @@ STORY CONTENT: "${storyContent}"
 
 IMPORTANT: 
 - Use the EXACT characters and events from the story above
-- For sentence-order activity, create sentences that require understanding story context to determine correct order
+- For sentence-order activity, create complete sentences in chronological order
 - Do NOT use sequence words like "First", "Then", "Finally", "Second", etc.
 - All activities must relate directly to the story content provided
 
@@ -61,7 +61,7 @@ Return ONLY valid JSON format with these exact property names:
   ],
   "bmeStory": {"beginning": "story beginning", "middle": "story middle", "end": "story end"},
   "sentenceOrder": [
-    {"scrambled": ["word1", "word2", "word3"], "correct": ["word1", "word2", "word3"]}
+    {"scrambled": ["Leo found his lightsaber under the leaf.", "Leo went to practice in the field.", "Leo's lightsaber went missing."], "correct": ["Leo went to practice in the field.", "Leo's lightsaber went missing.", "Leo found his lightsaber under the leaf."]}
   ],
   "threeLineSummary": {"lines": ["First thing happened", "Then something else", "Finally it ended"]},
   "sentenceCompletion": [
@@ -265,32 +265,23 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
           
           // Handle array format: [{scrambled: [...], correct: [...]}, ...]
           if (Array.isArray(parsed.sentenceOrder)) {
-            const sentences = parsed.sentenceOrder.map((item: any) => 
-              Array.isArray(item.scrambled) ? item.scrambled.join(' ') : item.scrambled
-            )
-            const correctOrder = parsed.sentenceOrder.map((item: any, index: number) => index + 1)
-            
-            result.sentenceOrder = {
-              sentences: sentences,
-              correctOrder: correctOrder
+            const firstItem = parsed.sentenceOrder[0]
+            if (firstItem && firstItem.scrambled && firstItem.correct) {
+              result.sentenceOrder = {
+                sentences: firstItem.scrambled, // This should be an array of complete sentences
+                correctOrder: firstItem.correct.map((_: string, index: number) => index + 1) // Generate 1-based indices
+              }
             }
           }
-          // Handle object format with correctOrder and sentences
-          else if (parsed.sentenceOrder.correctOrder && Array.isArray(parsed.sentenceOrder.correctOrder)) {
-            // If correctOrder contains actual sentences (not indices)
-            if (typeof parsed.sentenceOrder.correctOrder[0] === 'string') {
-              result.sentenceOrder = {
-                sentences: parsed.sentenceOrder.correctOrder,
-                correctOrder: parsed.sentenceOrder.correctOrder.map((_: any, index: number) => index + 1)
-              }
-            } else {
-              // If correctOrder contains indices, use jumbled sentences
-              result.sentenceOrder = {
-                sentences: parsed.sentenceOrder.jumbled || parsed.sentenceOrder.sentences || [],
-                correctOrder: parsed.sentenceOrder.correctOrder
-              }
+          // Handle direct object format
+          else if (parsed.sentenceOrder.scrambled && parsed.sentenceOrder.correct) {
+            result.sentenceOrder = {
+              sentences: parsed.sentenceOrder.scrambled, // Array of complete sentences
+              correctOrder: parsed.sentenceOrder.correct.map((_: string, index: number) => index + 1) // Generate 1-based indices
             }
-          } else if (parsed.sentenceOrder.sentences) {
+          }
+          // Handle legacy format with sentences and correctOrder
+          else if (parsed.sentenceOrder.sentences) {
             result.sentenceOrder = parsed.sentenceOrder
           }
           
@@ -706,9 +697,9 @@ export async function POST(request: NextRequest) {
           if (activities.includes('sentence-order')) {
             parsedActivities.sentenceOrder = {
               sentences: [
-                'The character learned an important lesson.',
-                'Something wonderful happened that day.',
-                'The character smiled with joy.'
+                'Leo went to practice in the field.',
+                'Leo\'s lightsaber went missing.',
+                'Leo found his lightsaber under the leaf.'
               ],
               correctOrder: [1, 2, 3]
             }

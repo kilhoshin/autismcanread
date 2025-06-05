@@ -82,6 +82,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
   
   // Find user by email
+  console.log('🔍 Looking for user with email:', customerEmail)
+  
   const { data: user, error: userError } = await supabaseAdmin
     .from('users')
     .select('*')
@@ -89,11 +91,22 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .single()
   
   if (userError || !user) {
-    console.error(' User not found:', userError)
+    console.error('❌ User not found with email:', customerEmail)
+    
+    // Try to find similar emails for debugging
+    const { data: allUsers, error: debugError } = await supabaseAdmin
+      .from('users')
+      .select('email')
+      .limit(10)
+    
+    if (!debugError && allUsers) {
+      console.log('📋 Available emails in database:', allUsers.map(u => u.email))
+    }
+    
     return
   }
   
-  console.log(' Found user:', user.id)
+  console.log('✅ Found user:', user.id, 'with email:', user.email)
   
   // Get subscription details
   const subscription = session.subscription
@@ -102,20 +115,33 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (subscription && typeof subscription === 'string') {
     try {
       const subscriptionDetails = await stripe.subscriptions.retrieve(subscription)
-      console.log(' Raw subscription details:', {
+      console.log('🔍 Raw subscription details:', {
+        current_period_start: (subscriptionDetails as any).current_period_start,
         current_period_end: (subscriptionDetails as any).current_period_end,
-        status: (subscriptionDetails as any).status
+        status: (subscriptionDetails as any).status,
+        billing_cycle_anchor: (subscriptionDetails as any).billing_cycle_anchor,
+        created: (subscriptionDetails as any).created
       })
       
       // Safely handle current_period_end timestamp
       let periodEndISOString = null
       const currentPeriodEnd = (subscriptionDetails as any).current_period_end
+      const currentPeriodStart = (subscriptionDetails as any).current_period_start
+      
       if (currentPeriodEnd && typeof currentPeriodEnd === 'number') {
         const periodEndDate = new Date(currentPeriodEnd * 1000)
+        const periodStartDate = new Date(currentPeriodStart * 1000)
+        
+        console.log('📅 Billing period:', {
+          start: periodStartDate.toISOString(),
+          end: periodEndDate.toISOString(),
+          duration_days: Math.ceil((currentPeriodEnd - currentPeriodStart) / (60 * 60 * 24))
+        })
+        
         if (!isNaN(periodEndDate.getTime())) {
           periodEndISOString = periodEndDate.toISOString()
         } else {
-          console.error(' Invalid current_period_end timestamp:', currentPeriodEnd)
+          console.error('❌ Invalid current_period_end timestamp:', currentPeriodEnd)
         }
       }
       

@@ -419,67 +419,81 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
 // PDF creation function using HTML→PDF approach
 async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
   try {
-    // Dynamic imports for server-only modules
-    const { default: puppeteer } = await import('puppeteer')
+    console.log('=== PDF Generation Debug ===')
+    console.log('Number of stories:', stories.length)
+    console.log('Stories data:', JSON.stringify(stories, null, 2))
     
-    // 모든 환경에서 동일한 Puppeteer 설정 사용
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
-      ],
-      timeout: 60000, // 60초 타임아웃으로 증가
-    })
+    // Use chrome-aws-lambda for serverless environments
+    let browser;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // Production: Use chrome-aws-lambda
+      const chromium = await import('chrome-aws-lambda')
+      const puppeteerCore = await import('puppeteer-core')
+      
+      browser = await puppeteerCore.default.launch({
+        args: [
+          ...chromium.default.args,
+          '--hide-scrollbars',
+          '--disable-web-security',
+          '--no-sandbox',
+          '--disable-setuid-sandbox'
+        ],
+        defaultViewport: chromium.default.defaultViewport,
+        executablePath: await chromium.default.executablePath,
+        headless: chromium.default.headless,
+        ignoreHTTPSErrors: true,
+      })
+    } else {
+      // Local development: Use regular puppeteer
+      const puppeteer = await import('puppeteer')
+      browser = await puppeteer.default.launch({
+        headless: true,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-web-security'
+        ],
+        timeout: 60000,
+      })
+    }
     
     const page = await browser.newPage()
+    await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 2 })
     
-    // 페이지 뷰포트 설정
-    await page.setViewport({ 
-      width: 1200, 
-      height: 1600, 
-      deviceScaleFactor: 2 
-    })
-    
-    // Generate HTML content
     const htmlContent = generateWorksheetHTML(stories)
+    console.log('Generated HTML length:', htmlContent.length)
+    console.log('HTML contains page-break:', htmlContent.includes('page-break'))
+    console.log('HTML preview (first 1000 chars):', htmlContent.substring(0, 1000))
     
-    // Set content
-    await page.setContent(htmlContent, { 
-      waitUntil: ['load', 'domcontentloaded', 'networkidle0'],
-      timeout: 60000
-    })
+    await page.setContent(htmlContent, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'], timeout: 60000 })
     
-    // 폰트 로딩을 위해 잠시 대기
+    // Check page content after loading
+    const pageContent = await page.content()
+    console.log('Page content length after loading:', pageContent.length)
+    console.log('Page contains page-break after loading:', pageContent.includes('page-break'))
+    
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    // Generate PDF
     const pdfBuffer = await page.pdf({
       format: 'letter',
       printBackground: true,
       preferCSSPageSize: true,
       displayHeaderFooter: false,
-      margin: {
-        top: '0.5in',
-        bottom: '0.5in',
-        left: '0.5in',
-        right: '0.5in'
-      }
+      margin: { top: '0.5in', bottom: '0.5in', left: '0.5in', right: '0.5in' }
     })
+    
+    console.log('PDF buffer size:', pdfBuffer.length)
+    console.log('=== End PDF Debug ===')
     
     await page.close()
     await browser.close()
-    console.log('✅ Puppeteer PDF generated successfully')
+    
     return Buffer.from(pdfBuffer)
     
   } catch (error) {

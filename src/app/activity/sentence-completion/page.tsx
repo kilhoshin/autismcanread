@@ -159,17 +159,20 @@ export default function SentenceCompletionActivity() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic: 'Sentence Completion Activity',
-          readingLevel: 2,
+          topics: ['Sentence Completion Activity'],
           activities: ['sentence-completion'],
-          customStory: {
+          count: 1,
+          readingLevel: 2,
+          writingLevel: 2,
+          usePreviewData: true,
+          previewStoryData: [{
             title: 'Sentence Completion Exercise',
-            content: storyContent?.story,
+            content: storyContent?.story || '',
             sentenceCompletion: {
               userAnswers: userAnswers,
               blanks: storyContent?.blanks
             }
-          }
+          }]
         })
       })
 

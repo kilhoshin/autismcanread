@@ -127,10 +127,13 @@ export default function DrawAndTellActivity() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic: 'Draw and Tell Activity',
-          readingLevel: 2,
+          topics: ['Draw and Tell Activity'],
           activities: ['draw-and-tell'],
-          customStory: {
+          count: 1,
+          readingLevel: 2,
+          writingLevel: 2,
+          usePreviewData: true,
+          previewStoryData: [{
             title: 'Draw and Tell Exercise',
             content: userStory,
             drawAndTell: {
@@ -138,7 +141,7 @@ export default function DrawAndTellActivity() {
               userStory,
               prompts: ''
             }
-          }
+          }]
         })
       })
 

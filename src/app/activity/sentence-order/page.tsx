@@ -166,18 +166,21 @@ export default function SentenceOrderActivity() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic: 'Sentence Order Activity',
-          readingLevel: 2,
+          topics: ['Sentence Order Activity'],
           activities: ['sentence-order'],
-          customStory: {
+          count: 1,
+          readingLevel: 2,
+          writingLevel: 2,
+          usePreviewData: true,
+          previewStoryData: [{
             title: 'Sentence Ordering Exercise',
-            content: storyContent?.story,
+            content: storyContent?.story || '',
             sentenceOrder: {
               userOrder: userOrder,
               correctOrder: storyContent?.sentences.sort((a, b) => a.correctOrder - b.correctOrder),
               isCorrect: isCorrectOrder
             }
-          }
+          }]
         })
       })
 

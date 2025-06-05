@@ -77,18 +77,21 @@ export default function BMEStoryActivity() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic: 'Beginning-Middle-End Story Analysis',
-          readingLevel: 2,
+          topics: ['Beginning-Middle-End Story Analysis'],
           activities: ['bme-story'],
-          customStory: {
+          count: 1,
+          readingLevel: 2,
+          writingLevel: 2,
+          usePreviewData: true,
+          previewStoryData: [{
             title: 'Story Analysis',
-            content: storyContent?.story,
+            content: storyContent?.story || '',
             bmeStory: {
               beginning: userAnswers?.beginning,
               middle: userAnswers?.middle,
               end: userAnswers?.end
             }
-          }
+          }]
         })
       })
 

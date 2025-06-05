@@ -97,17 +97,20 @@ export default function ThreeLineSummaryActivity() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topic: 'Three Line Summary Activity',
-          readingLevel: 2,
+          topics: ['Three Line Summary Activity'],
           activities: ['three-line-summary'],
-          customStory: {
+          count: 1,
+          readingLevel: 2,
+          writingLevel: 2,
+          usePreviewData: true,
+          previewStoryData: [{
             title: 'Story Summary Activity',
-            content: storyContent?.story,
+            content: storyContent?.story || '',
             threeLineSummary: {
               userSummary: userSummary,
               summaryGuide: storyContent?.summaryGuide
             }
-          }
+          }]
         })
       })
 

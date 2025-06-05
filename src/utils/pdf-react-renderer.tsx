@@ -211,7 +211,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
         ].some(Boolean)
 
         const page3Activities = [
-          hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0),
+          hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0),
           hasActivity('Three Line Summary', story.threeLineSummary),
           hasActivity('Draw and Tell', story.drawAndTell)
         ].some(Boolean)
@@ -323,7 +323,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
             {page3Activities && (
               <Page size="LETTER" style={styles.page}>
                 {/* Sentence Completion */}
-                {hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0) && (
+                {hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0) && (
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Complete the Sentences</Text>
                     <Text style={styles.instruction}>Fill in the blanks with words from the story.</Text>
@@ -496,7 +496,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
               )}
 
               {/* Sentence Completion Answers */}
-              {hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0) && (
+              {hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0) && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Sentence Completion - Answers</Text>
                   {story.sentenceCompletion?.map((item, index) => (

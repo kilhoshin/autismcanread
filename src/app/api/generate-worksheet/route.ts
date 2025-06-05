@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import jsPDF from 'jspdf'
 import { generateWorksheetHTML } from '../../../utils/pdf-template'
 import { StoryData } from '@/types/story'
 
@@ -501,129 +500,12 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
     
   } catch (error) {
     console.error('❌ Puppeteer PDF generation failed:', error)
-    console.log('🔄 Using jsPDF fallback...')
+    console.error('Full error details:', JSON.stringify(error, null, 2))
+    console.error('Environment:', process.env.NODE_ENV)
     
-    // Fallback to jsPDF generation with clean formatting
-    return createFallbackPDF(stories)
+    // DO NOT use fallback - force Puppeteer to work!
+    throw new Error(`Puppeteer PDF generation failed: ${error}`)
   }
-}
-
-// Fallback PDF creation using jsPDF with enhanced styling
-function createFallbackPDF(stories: StoryData[]): Buffer {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'letter'
-  })
-  
-  const pageWidth = 216
-  const pageHeight = 279
-  const margin = 20
-  let yPosition = margin
-  
-  // Helper functions
-  const addTitle = (title: string) => {
-    // Add colorful header background
-    doc.setFillColor(100, 150, 255) // Blue background
-    doc.rect(margin, yPosition - 8, pageWidth - (margin * 2), 12, 'F')
-    
-    doc.setTextColor(255, 255, 255) // White text
-    doc.setFontSize(16)
-    doc.setFont('helvetica', 'bold')
-    doc.text(title, pageWidth / 2, yPosition, { align: 'center' })
-    yPosition += 20
-    doc.setTextColor(0, 0, 0) // Reset to black
-  }
-  
-  const addSubheading = (text: string) => {
-    doc.setFillColor(255, 200, 100) // Orange background
-    doc.rect(margin, yPosition - 5, pageWidth - (margin * 2), 8, 'F')
-    
-    doc.setFontSize(14)
-    doc.setFont('helvetica', 'bold')
-    doc.text(text, margin + 5, yPosition)
-    yPosition += 15
-  }
-  
-  const addContent = (content: string) => {
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'normal')
-    const lines = doc.splitTextToSize(content, pageWidth - (margin * 2))
-    doc.text(lines, margin, yPosition)
-    yPosition += lines.length * 6 + 10
-  }
-  
-  const addAnswerLines = (count: number = 3) => {
-    doc.setDrawColor(100, 100, 100)
-    for (let i = 0; i < count; i++) {
-      doc.line(margin, yPosition, pageWidth - margin, yPosition)
-      yPosition += 10
-    }
-    yPosition += 5
-  }
-  
-  // Generate worksheet content
-  stories.forEach((story, index) => {
-    if (index > 0) {
-      doc.addPage()
-      yPosition = margin
-    }
-    
-    // Main title
-    addTitle(`Reading Comprehension Worksheet`)
-    
-    // Story section
-    if (story.content) {
-      addSubheading('Story')
-      addContent(story.content)
-    }
-    
-    // Activities based on story data
-    if (story.whQuestions?.length) {
-      addSubheading('Questions')
-      story.whQuestions.forEach((q, i) => {
-        const questionText = typeof q === 'string' ? q : q.question
-        doc.setFontSize(12)
-        doc.setFont('helvetica', 'bold')
-        doc.text(`${i + 1}. ${questionText}`, margin, yPosition)
-        yPosition += 8
-        addAnswerLines(2)
-      })
-    }
-    
-    if (story.bmeStory) {
-      addSubheading('Story Structure')
-      
-      doc.text('Beginning:', margin, yPosition)
-      yPosition += 8
-      addAnswerLines(2)
-      
-      doc.text('Middle:', margin, yPosition)
-      yPosition += 8
-      addAnswerLines(2)
-      
-      doc.text('End:', margin, yPosition)
-      yPosition += 8
-      addAnswerLines(2)
-    }
-    
-    if (story.threeLineSummary) {
-      addSubheading('Three Line Summary')
-      doc.text('Write a summary in three sentences:', margin, yPosition)
-      yPosition += 10
-      addAnswerLines(3)
-    }
-    
-    // Encouragement section
-    yPosition += 10
-    doc.setFillColor(200, 255, 200) // Light green
-    doc.rect(margin, yPosition - 5, pageWidth - (margin * 2), 15, 'F')
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.text('Great job! Keep practicing your reading skills!', pageWidth / 2, yPosition + 5, { align: 'center' })
-  })
-  
-  return Buffer.from(doc.output('arraybuffer'))
 }
 
 interface WorksheetRequest {

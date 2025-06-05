@@ -335,7 +335,11 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
           
           // Handle array format (convert to string)
           if (Array.isArray(parsed.threeLineSummary)) {
-            result.threeLineSummary = parsed.threeLineSummary.join(' ')
+            result.threeLineSummary = {
+              line1: parsed.threeLineSummary[0],
+              line2: parsed.threeLineSummary[1],
+              line3: parsed.threeLineSummary[2]
+            }
           } else {
             result.threeLineSummary = parsed.threeLineSummary
           }
@@ -463,7 +467,11 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     }
     
     if (activityTypes.includes('three-line-summary')) {
-      sampleData.threeLineSummary = 'This is a three line summary of the story. It includes the main events. The story has a good ending.'
+      sampleData.threeLineSummary = {
+        line1: 'This is the first line of the summary.',
+        line2: 'This is the second line with main events.',
+        line3: 'This is the third line with the ending.'
+      }
     }
     
     if (activityTypes.includes('sentence-completion')) {
@@ -672,7 +680,11 @@ export async function POST(request: NextRequest) {
           }
           
           if (activities.includes('three-line-summary')) {
-            parsedActivities.threeLineSummary = 'This is a three line summary of the story. It includes the main events. The story has a good ending.'
+            parsedActivities.threeLineSummary = {
+              line1: 'This is the first line of the summary.',
+              line2: 'This is the second line with main events.',
+              line3: 'This is the third line with the ending.'
+            }
           }
           
           if (activities.includes('draw-and-tell')) {

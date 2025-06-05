@@ -181,6 +181,85 @@ function DashboardContent() {
     router.push('/')
   }
 
+  // PDF 워크시트 생성 및 다운로드 함수
+  const handleGenerateWorksheet = async () => {
+    if (!isPremium) {
+      router.push('/pricing')
+      return
+    }
+
+    if (selectedTopics.length === 0 || selectedActivities.length === 0) {
+      alert('Please select at least one topic and one activity.')
+      return
+    }
+
+    try {
+      setIsGenerating(true)
+      
+      const requestBody = {
+        topics: selectedTopics.includes('custom') && customTopic 
+          ? [...selectedTopics.filter(t => t !== 'custom'), customTopic]
+          : selectedTopics,
+        activities: selectedActivities,
+        count: worksheetCount,
+        readingLevel: profile?.reading_level || 3,
+        writingLevel: profile?.writing_level || 3,
+        usePreviewData: showPreviewModal && previewData ? true : false,
+        previewStoryData: showPreviewModal && previewData ? previewData.stories : null
+      }
+
+      console.log('Generating worksheet with:', requestBody)
+
+      const response = await fetch('/api/generate-worksheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate worksheet')
+      }
+
+      console.log('📥 Received response, converting to blob...')
+      const blob = await response.blob()
+      console.log('📄 Blob created, size:', blob.size, 'type:', blob.type)
+      
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file')
+      }
+      
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `autism-can-read-worksheet-${new Date().toISOString().split('T')[0]}.pdf`
+      document.body.appendChild(a)
+      console.log('🔗 Download link created, triggering download...')
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      console.log('📁 Download completed!')
+
+      // 성공 시 usage 증가
+      if (user?.id) {
+        await incrementMonthlyUsage(user.id)
+        const usageInfo = await canGenerateWorksheets(user.id, 0)
+        setMonthlyUsage(usageInfo.currentCount)
+      }
+
+      console.log('✅ Worksheet generated and downloaded successfully')
+
+    } catch (error) {
+      console.error('❌ Error generating worksheet:', error)
+      alert(error instanceof Error ? error.message : 'Failed to generate worksheet. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   const topics = [
     { id: 'cooking', label: 'Cooking', icon: '🍳' },
     { id: 'morning', label: 'Morning Routine', icon: '🌅' },
@@ -304,89 +383,6 @@ function DashboardContent() {
       alert('Error occurred while generating preview.')
     } finally {
       setIsPreviewing(false)
-    }
-  }
-
-  const handleGenerateWorksheet = async () => {
-    if (selectedTopics.length === 0 || selectedActivities.length === 0) {
-      alert('Please select at least one topic and one activity.')
-      return
-    }
-
-    // Check if user has premium subscription for PDF downloads
-    if (!isPremium) {
-      alert('Premium subscription required for PDF downloads. Please upgrade to download worksheets.')
-      return
-    }
-
-    setIsGenerating(true)
-
-    try {
-      // If we have preview data, use it directly for PDF generation
-      if (previewData) {
-        const response = await fetch('/api/generate-worksheet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            topics: selectedTopics,
-            activities: selectedActivities,
-            count: worksheetCount,
-            readingLevel: profile?.reading_level || 3,
-            writingLevel: profile?.writing_level || 3,
-            usePreviewData: true,
-            previewStoryData: previewData.stories,
-            userId: user?.id // Add userId for tracking
-          })
-        })
-
-        if (response.ok) {
-          const blob = await response.blob()
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = url
-          a.download = `worksheet-with-answers-${new Date().toISOString().split('T')[0]}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          window.URL.revokeObjectURL(url)
-          document.body.removeChild(a)
-        } else {
-          alert('Failed to generate worksheet.')
-        }
-      } else {
-        // Original generation logic for when no preview data exists
-        const response = await fetch('/api/generate-worksheet', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            topics: selectedTopics,
-            activities: selectedActivities,
-            count: worksheetCount,
-            readingLevel: profile?.reading_level || 3,
-            writingLevel: profile?.writing_level || 3
-          })
-        })
-
-        if (response.ok) {
-          const blob = await response.blob()
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = url
-          a.download = `worksheet-with-answers-${new Date().toISOString().split('T')[0]}.pdf`
-          document.body.appendChild(a)
-          a.click()
-          window.URL.revokeObjectURL(url)
-          document.body.removeChild(a)
-        } else {
-          alert('Failed to generate worksheet.')
-        }
-      }
-    } catch (error) {
-      console.error('Error generating worksheet:', error)
-      alert('An error occurred while generating the worksheet.')
-    } finally {
-      setIsGenerating(false)
     }
   }
 

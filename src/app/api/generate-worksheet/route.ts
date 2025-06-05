@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import puppeteer from 'puppeteer'
-import chromium from 'chrome-aws-lambda'
 import jsPDF from 'jspdf'
 import { generateWorksheetHTML } from '../../../utils/pdf-template'
 import { StoryData } from '@/types/story'
@@ -421,12 +419,22 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
 // PDF creation function using HTML→PDF approach
 async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
   try {
+    // Dynamic imports for server-only modules
+    const { default: puppeteer } = await import('puppeteer')
+    
+    // 모든 환경에서 동일한 Puppeteer 설정 사용
     const browser = await puppeteer.launch({
       headless: true,
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
-      timeout: 0,
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ],
+      timeout: 30000, // 30초 타임아웃
     })
     
     const page = await browser.newPage()
@@ -436,7 +444,8 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
     
     // Set content
     await page.setContent(htmlContent, { 
-      waitUntil: 'load'
+      waitUntil: 'load',
+      timeout: 30000
     })
     
     // Generate PDF
@@ -453,11 +462,12 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
     
     await page.close()
     await browser.close()
+    console.log('✅ Puppeteer PDF generated successfully')
     return Buffer.from(pdfBuffer)
     
   } catch (error) {
-    console.error('Puppeteer PDF generation failed:', error)
-    console.log('Using jsPDF fallback...')
+    console.error('❌ Puppeteer PDF generation failed:', error)
+    console.log('🔄 Using jsPDF fallback...')
     
     // Fallback to jsPDF generation with clean formatting
     return createFallbackPDF(stories)
@@ -650,7 +660,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create combined PDF with both worksheet and answer key
+    console.log('🔄 Starting PDF generation...')
     const combinedPdfBuffer = await createCombinedPDF(stories)
+    console.log('✅ PDF generation completed, buffer size:', combinedPdfBuffer.length)
 
     // Return combined PDF
     return new NextResponse(combinedPdfBuffer, {

@@ -561,7 +561,7 @@ export async function POST(request: NextRequest) {
         
         // Generate story
         const storyPrompt = generateStoryPrompt(topic, readingLevel)
-        const storyModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+        const storyModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })  // Updated to latest model
         const storyResult = await storyModel.generateContent(storyPrompt)
         const storyResponse = storyResult.response.text()
         
@@ -585,10 +585,10 @@ export async function POST(request: NextRequest) {
         
         // Use stable and reliable model
         const activityModel = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash',  // More stable than lite version
+          model: 'gemini-2.0-flash',     // Updated to latest stable model
           generationConfig: {
-            maxOutputTokens: 2048,     // Increased for complex activities
-            temperature: 0.3           // Balanced creativity
+            maxOutputTokens: 2048,       // Increased for complex activities
+            temperature: 0.3             // Balanced creativity
           }
         })
 

@@ -565,7 +565,7 @@ function DashboardContent() {
           {/* Worksheet Count */}
           <div className="mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">📊 Number of Worksheets to Generate</h3>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 justify-center">
               <button
                 onClick={() => setWorksheetCount(1)}
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
@@ -577,26 +577,15 @@ function DashboardContent() {
                 1 worksheet
               </button>
               <button
-                onClick={() => setWorksheetCount(7)}
+                onClick={() => setWorksheetCount(3)}
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  worksheetCount === 7
+                  worksheetCount === 3
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                7 worksheets (Weekly)
+                3 worksheets
               </button>
-              <div className="flex items-center">
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={worksheetCount}
-                  onChange={(e) => setWorksheetCount(parseInt(e.target.value) || 1)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-center"
-                />
-                <span className="ml-2 text-gray-700">worksheets</span>
-              </div>
             </div>
           </div>
 

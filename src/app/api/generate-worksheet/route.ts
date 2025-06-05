@@ -37,6 +37,8 @@ function generateActivityPrompts(topic: string, activityTypes: string[], reading
 
 Create a SHORT story (100-150 words) AND activities.
 
+IMPORTANT: For sentence-order activity, create sentences that require understanding story context to determine correct order. Do NOT use sequence words like "First", "Then", "Finally", "Second", etc.
+
 Return ONLY valid JSON format:
 {
   "story": "story text here",
@@ -65,9 +67,9 @@ Return ONLY valid JSON format:
   if (activityTypes.includes('sentence-order')) {
     prompt += `,
   "sentenceOrder": [
-    {"scrambled": ["Third,", "the", "character", "felt", "happy."], "correct": ["Third,", "the", "character", "felt", "happy."]},
-    {"scrambled": ["First,", "something", "important", "happened."], "correct": ["First,", "something", "important", "happened."]},
-    {"scrambled": ["Second,", "the", "character", "took", "action."], "correct": ["Second,", "the", "character", "took", "action."]}
+    {"scrambled": ["The", "character", "smiled", "with", "joy."], "correct": ["The", "character", "smiled", "with", "joy."]},
+    {"scrambled": ["Something", "wonderful", "happened", "that", "day."], "correct": ["Something", "wonderful", "happened", "that", "day."]},
+    {"scrambled": ["The", "character", "learned", "an", "important", "lesson."], "correct": ["The", "character", "learned", "an", "important", "lesson."]}
   ]`
   }
 
@@ -455,18 +457,18 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     
     if (activityTypes.includes('bme-story')) {
       sampleData.bmeStory = {
-        beginning: 'The story begins with John playing soccer.',
-        middle: 'John scores a goal and his friends cheer for him.',
-        end: 'John feels happy and proud of himself.'
+        beginning: 'The story starts with...',
+        middle: 'In the middle...',
+        end: 'At the end...'
       }
     }
     
     if (activityTypes.includes('sentence-order')) {
       sampleData.sentenceOrder = {
         sentences: [
-          'First, the main character wakes up and gets ready for an adventure.',
-          'Then, the character faces a challenge or meets someone important.',
-          'Finally, the character learns something valuable and the story ends happily.'
+          'The character learned an important lesson.',
+          'Something wonderful happened that day.',
+          'The character smiled with joy.'
         ],
         correctOrder: [1, 2, 3]
       }
@@ -661,9 +663,9 @@ export async function POST(request: NextRequest) {
           if (activities.includes('sentence-order')) {
             parsedActivities.sentenceOrder = {
               sentences: [
-                'First, the main character wakes up and gets ready for an adventure.',
-                'Then, the character faces a challenge or meets someone important.',
-                'Finally, the character learns something valuable and the story ends happily.'
+                'The character learned an important lesson.',
+                'Something wonderful happened that day.',
+                'The character smiled with joy.'
               ],
               correctOrder: [1, 2, 3]
             }

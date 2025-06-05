@@ -7,6 +7,13 @@ import { StoryData } from '@/types/story'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
+// Check if API key is properly configured
+if (!process.env.GEMINI_API_KEY) {
+  console.error('❌ GEMINI_API_KEY environment variable is not set')
+} else {
+  console.log('✅ GEMINI_API_KEY is configured (length:', process.env.GEMINI_API_KEY.length, ')')
+}
+
 // AI prompt generation functions
 function generateStoryPrompt(topic: string, readingLevel: number): string {
   return `
@@ -596,47 +603,73 @@ export async function POST(request: NextRequest) {
 
         // Generate activities with faster model and timeout
         const activityPrompt = generateActivityPrompts(topic, activities, String(readingLevel), String(writingLevel))
-        console.log('Activity Prompt sent to AI:', activityPrompt)
+        console.log('🚀 Activity Prompt sent to AI:')
+        console.log('=====================================')
+        console.log(activityPrompt)
+        console.log('=====================================')
         
-        // Use faster and lighter model
+        // Use stable and reliable model
         const activityModel = genAI.getGenerativeModel({ 
-          model: 'gemini-2.0-flash-lite',  // Much lighter and faster model
+          model: 'gemini-1.5-flash',  // More stable than lite version
           generationConfig: {
-            maxOutputTokens: 1024,     // Reduced further for simple tasks
-            temperature: 0.2           // Even less creative = faster
+            maxOutputTokens: 2048,     // Increased for complex activities
+            temperature: 0.3           // Balanced creativity
           }
         })
 
         let activityResponse
         try {
+          console.log('⏰ Starting AI generation...')
+          
+          // Verify API connection first
+          if (!process.env.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY is not configured')
+          }
+          
           // Add timeout wrapper - reduced for lighter model
           const aiPromise = activityModel.generateContent(activityPrompt)
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('AI generation timeout')), 20000) // 20 second timeout for lite model
+            setTimeout(() => reject(new Error('AI generation timeout after 30 seconds')), 30000) // Increased timeout
           )
           
           const result = await Promise.race([aiPromise, timeoutPromise]) as any
-          activityResponse = result.response?.text() || ''
           
+          if (!result || !result.response) {
+            throw new Error('Invalid AI response structure')
+          }
+          
+          activityResponse = result.response.text()
+          
+          if (!activityResponse || activityResponse.trim().length === 0) {
+            throw new Error('AI returned empty response')
+          }
+          
+          console.log('✅ AI generation completed successfully!')
           console.log('🔍 RAW AI RESPONSE RECEIVED:')
           console.log('=====================================')
           console.log('Response length:', activityResponse.length)
-          console.log('First 1000 chars:', activityResponse.substring(0, 1000))
+          console.log('Full response:', activityResponse)
           console.log('=====================================')
           
         } catch (error) {
-          console.error('AI generation failed or timed out:', error)
-          // Use fallback data immediately
-          activityResponse = JSON.stringify({
-            story: `A simple story about ${topic}. This is a placeholder story that teaches us something important.`,
-            title: `Story About ${topic}`,
-            whQuestions: activities.includes('wh-questions') ? [
-              { question: 'Who is in the story?', answer: 'The main character' },
-              { question: 'What happens?', answer: 'Something interesting' }
-            ] : undefined
-          })
+          console.error('❌ AI generation failed or timed out:', error)
+          console.error('Error type:', typeof error)
+          console.error('Error message:', error instanceof Error ? error.message : String(error))
+          
+          // Return proper error response instead of fallback
+          if (previewOnly) {
+            return Response.json({ 
+              error: 'AI 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+              details: error instanceof Error ? error.message : String(error)
+            }, { status: 500 })
+          } else {
+            return new Response('AI 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.', { 
+              status: 500,
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            })
+          }
         }
-        
+
         // Parse AI response
         let parsedActivities
         try {

@@ -24,6 +24,7 @@ function DashboardContent() {
   const [monthlyUsage, setMonthlyUsage] = useState(0)
   const [subscriptionError, setSubscriptionError] = useState(false)
   const [isUpdatingSubscription, setIsUpdatingSubscription] = useState(false)
+  const [showReactivatedMessage, setShowReactivatedMessage] = useState(false)
 
   // Check premium status and monthly usage on mount
   useEffect(() => {
@@ -150,6 +151,22 @@ function DashboardContent() {
       window.history.replaceState({}, '', newUrl.toString())
     }
   }, [searchParams, user?.id, refreshProfile])
+
+  // Check for reactivated parameter
+  useEffect(() => {
+    const reactivated = searchParams.get('reactivated')
+    if (reactivated === 'true') {
+      setShowReactivatedMessage(true)
+      // Clear the parameter from URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        setShowReactivatedMessage(false)
+      }, 5000)
+    }
+  }, [searchParams])
 
   // Show loading only while auth is loading
   if (loading) {
@@ -692,6 +709,28 @@ function DashboardContent() {
           )}
         </div>
       </div>
+
+      {/* Reactivated Message */}
+      {showReactivatedMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Subscription Reactivated</h2>
+                <button
+                  onClick={() => setShowReactivatedMessage(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <p className="text-gray-600 text-lg">
+                Your subscription has been successfully reactivated. You can now access all Premium features.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {showPreviewModal && previewData && (

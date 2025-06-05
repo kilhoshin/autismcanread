@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function Pricing() {
   const router = useRouter()
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const [isLoading, setIsLoading] = useState('')
 
   // Check if user has cancelled subscription with remaining period
@@ -67,8 +67,16 @@ export default function Pricing() {
       })
 
       if (response.ok) {
-        // Refresh the page or redirect to dashboard
-        router.push('/dashboard?reactivated=true')
+        const result = await response.json()
+        console.log('✅ Subscription reactivated:', result)
+        
+        // 🎯 Key Fix: Refresh profile data immediately
+        await refreshProfile()
+        
+        // Small delay to ensure state update, then redirect
+        setTimeout(() => {
+          router.push('/dashboard?reactivated=true')
+        }, 500)
       } else {
         const error = await response.json()
         alert(`Failed to reactivate subscription: ${error.error}`)

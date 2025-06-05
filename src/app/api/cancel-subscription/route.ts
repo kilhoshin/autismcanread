@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from 'next/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil',
@@ -40,12 +40,20 @@ export async function POST(request: NextRequest) {
     // Cancel subscription in Stripe if it exists
     if (user.stripe_subscription_id) {
       try {
-        console.log('🔄 Cancelling Stripe subscription...')
-        const cancelledSubscription = await stripe.subscriptions.cancel(user.stripe_subscription_id)
-        console.log('✅ Stripe subscription cancelled:', cancelledSubscription.id)
+        console.log('🔄 Setting subscription to cancel at period end...')
+        // 🎯 Key Fix: Don't cancel immediately, set to cancel at period end
+        const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
+          cancel_at_period_end: true
+        })
+        console.log('✅ Stripe subscription set to cancel at period end:', {
+          id: updatedSubscription.id,
+          status: updatedSubscription.status,
+          cancel_at_period_end: updatedSubscription.cancel_at_period_end,
+          current_period_end: new Date((updatedSubscription as any).current_period_end * 1000).toISOString()
+        })
       } catch (stripeError: any) {
-        console.error('❌ Failed to cancel Stripe subscription:', stripeError.message)
-        // Continue with database update even if Stripe cancellation fails
+        console.error('❌ Failed to update Stripe subscription:', stripeError.message)
+        // Continue with database update even if Stripe update fails
       }
     }
     

@@ -536,17 +536,17 @@ function createFallbackPDF(stories: StoryData[]): Buffer {
     }
     
     // Main title
-    addTitle(`📚 Reading Comprehension Worksheet`)
+    addTitle(`Reading Comprehension Worksheet`)
     
     // Story section
     if (story.content) {
-      addSubheading('📖 Story')
+      addSubheading('Story')
       addContent(story.content)
     }
     
     // Activities based on story data
     if (story.whQuestions?.length) {
-      addSubheading('❓ Questions')
+      addSubheading('Questions')
       story.whQuestions.forEach((q, i) => {
         const questionText = typeof q === 'string' ? q : q.question
         doc.setFontSize(12)
@@ -558,7 +558,7 @@ function createFallbackPDF(stories: StoryData[]): Buffer {
     }
     
     if (story.bmeStory) {
-      addSubheading('📝 Story Structure')
+      addSubheading('Story Structure')
       
       doc.text('Beginning:', margin, yPosition)
       yPosition += 8
@@ -574,7 +574,7 @@ function createFallbackPDF(stories: StoryData[]): Buffer {
     }
     
     if (story.threeLineSummary) {
-      addSubheading('📋 Three Line Summary')
+      addSubheading('Three Line Summary')
       doc.text('Write a summary in three sentences:', margin, yPosition)
       yPosition += 10
       addAnswerLines(3)
@@ -586,7 +586,7 @@ function createFallbackPDF(stories: StoryData[]): Buffer {
     doc.rect(margin, yPosition - 5, pageWidth - (margin * 2), 15, 'F')
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text('🌟 Great job! Keep practicing your reading skills! 🌟', pageWidth / 2, yPosition + 5, { align: 'center' })
+    doc.text('Great job! Keep practicing your reading skills!', pageWidth / 2, yPosition + 5, { align: 'center' })
   })
   
   return Buffer.from(doc.output('arraybuffer'))

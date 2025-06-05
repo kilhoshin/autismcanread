@@ -31,144 +31,72 @@ Return in JSON format:
 `
 }
 
-function generateActivityPrompts(storyContent: string, activityTypes: string[]): string {
-  let prompt = `
-Based on the following story, create activities suitable for children with autism spectrum and ADHD.
+function generateActivityPrompts(topic: string, activityTypes: string[], readingLevel: string, writingLevel: string): string {
+  // 프롬프트 간소화 및 속도 최적화
+  let prompt = `Create educational story content for ${readingLevel} readers with ${writingLevel} writing level about: ${topic}
 
-Story:
-${storyContent}
+Story Requirements:
+- 120-200 words maximum
+- Simple sentences
+- Clear beginning, middle, end
+- 1-2 main characters
 
-IMPORTANT: Read the story above carefully and use ONLY information from this specific story for all answers.
-
-Create the following activities: ${activityTypes.join(', ')}
-
-Requirements:
-- Clear and simple questions
-- Avoid abstract concepts, use concrete examples
-- Step-by-step structured approach
-- Visual and repetitive elements
-- Appropriate difficulty for special education
-
-`
+Output ONLY valid JSON with this structure:
+{
+  "story": "story text here",
+  "title": "story title"`
 
   if (activityTypes.includes('whQuestions')) {
-    prompt += `
-CRITICAL: For WH Questions, you MUST analyze the story above and extract REAL details.
-
-Step 1: Read the story and identify:
-- Character names (not "the character" but actual names like "Lily", "Sam", etc.)
-- Specific actions (not "did something" but "ate breakfast", "played soccer", etc.)
-- Exact locations (not "somewhere" but "kitchen", "park", "school", etc.)
-- Clear reasons or times (not "because" but "to find her friend", "in the morning", etc.)
-
-Step 2: Create exactly 4 questions using these REAL details:
-
-MANDATORY FORMAT - DO NOT CHANGE:
-{ "whQuestions": [
-  {"question": "Who [specific action]?", "answer": "[character name from story]"},
-  {"question": "What did [character name] [action]?", "answer": "[specific object/action from story]"},
-  {"question": "Where did [character name] [action]?", "answer": "[specific place from story]"},
-  {"question": "Why/When [event from story]?", "answer": "[specific reason/time from story]"}
-]}
-
-REQUIRED: Each object MUST have both "question" AND "answer" fields.
-
-EXAMPLE (copy this structure exactly):
-{"question": "Who went to school?", "answer": "Leo"}
-{"question": "What did Leo use?", "answer": "blue timer"}
-{"question": "Where did Leo do homework?", "answer": "home"}
-{"question": "Why was Leo worried?", "answer": "homework was hard"}
-`
+    prompt += `,
+  "whQuestions": [
+    {"question": "Who...", "answer": "..."},
+    {"question": "What...", "answer": "..."},
+    {"question": "Where...", "answer": "..."},
+    {"question": "Why...", "answer": "..."}
+  ]`
   }
 
   if (activityTypes.includes('emotionQuiz')) {
-    prompt += `
-For Emotion Quiz: Create 2-3 multiple choice questions about characters' feelings with CLEAR CORRECT ANSWERS.
-
-MANDATORY FORMAT - DO NOT CHANGE:
-{ "emotionQuiz": [
-  {"question": "How does [character] feel when [specific event]?", "options": ["happy", "sad", "angry", "excited"], "correct": 0}
-]}
-
-REQUIRED: Each object MUST have "question", "options" array, and "correct" number (0-3).
-The "correct" field MUST be the INDEX number of the correct option (0, 1, 2, or 3).
-
-EXAMPLE (copy this structure exactly):
-{"question": "How does Leo feel about homework at first?", "options": ["happy", "worried", "angry", "excited"], "correct": 1}
-{"question": "How does Leo feel after using the timer?", "options": ["worried", "calm", "angry", "sad"], "correct": 1}
-`
+    prompt += `,
+  "emotionQuiz": [
+    {"question": "How does [character] feel?", "options": ["happy", "sad", "angry", "excited"], "correct": 0}
+  ]`
   }
 
   if (activityTypes.includes('bmeStory')) {
-    prompt += `
-For BME Story: Provide framework for Beginning-Middle-End story structure.
-Format: { "bmeStory": { "beginning": "example beginning", "middle": "example middle", "end": "example end" } }
-`
+    prompt += `,
+  "bmeStory": { "beginning": "...", "middle": "...", "end": "..." }`
   }
 
   if (activityTypes.includes('sentenceOrder')) {
-    prompt += `
-For Sentence Order: Create 4-6 sentences from the story that can be reordered.
-Format: { "sentenceOrder": { "sentences": ["First sentence", "Second sentence", ...], "correctOrder": [1, 2, 3, ...] } }
-`
+    prompt += `,
+  "sentenceOrder": [
+    {"scrambled": ["word1", "word2", "word3"], "correct": ["word1", "word2", "word3"]}
+  ]`
   }
 
   if (activityTypes.includes('threeLineSummary')) {
-    prompt += `
-For Three Line Summary: Provide structure for summarizing in 3 lines.
-Format: { "threeLineSummary": { "line1": "first summary line", "line2": "second summary line", "line3": "third summary line" } }
-`
+    prompt += `,
+  "threeLineSummary": { "lines": ["line1", "line2", "line3"] }`
   }
 
   if (activityTypes.includes('sentenceCompletion')) {
-    prompt += `
-For Sentence Completion: Create 3-4 incomplete sentences from the story with SPECIFIC ANSWERS from the story content.
-
-MANDATORY FORMAT - DO NOT CHANGE:
-{ "sentenceCompletion": [
-  {"sentence": "The character went to _____ to find her friend.", "answers": ["park"], "blanks": ["_____"]},
-  {"sentence": "She felt _____ when she saw the rainbow.", "answers": ["happy"], "blanks": ["_____"]}
-]}
-
-REQUIRED: Each object MUST have both "sentence", "answers" AND "blanks" fields.
-The "sentence" must contain _____ where the blank word goes.
-The "answers" must be the word that fills the blank.
-The "blanks" must be the blank word in the sentence.
-
-EXAMPLE (copy this structure exactly):
-{"sentence": "Leo used the _____ to help with homework.", "answers": ["timer"], "blanks": ["_____"]}
-{"sentence": "Leo felt _____ at the beginning.", "answers": ["worried"], "blanks": ["_____"]}
-{"sentence": "Leo built _____ during his break.", "answers": ["LEGOs"], "blanks": ["_____"]}
-`
+    prompt += `,
+  "sentenceCompletion": [
+    {"sentence": "The character went to _____ to find.", "answer": "park"}
+  ]`
   }
 
   if (activityTypes.includes('drawAndTell')) {
-    prompt += `
-For Draw and Tell: Create drawing prompt and related questions.
-Format: { "drawAndTell": { "prompt": "Draw your favorite scene from the story", "questions": ["What did you draw?", "Why is this your favorite part?"] } }
-`
+    prompt += `,
+  "drawAndTell": { "prompt": "Draw your favorite scene", "questions": ["What did you draw?"] }`
   }
 
   prompt += `
-CRITICAL JSON FORMAT RULES:
-1. Use EXACT property names: "whQuestions", "emotionQuiz", "bmeStory", "sentenceOrder", "threeLineSummary", "sentenceCompletion", "drawAndTell"
-2. NO underscores in property names (wh_questions ❌, whQuestions ✅)
-3. NO extra text or IDs in the JSON
-4. ALL strings must be properly escaped and quoted
-5. NO trailing commas
-
-EXAMPLE VALID JSON:
-{
-  "whQuestions": [
-    {"question": "Who is the main character?", "answer": "Maya"}
-  ],
-  "emotionQuiz": [
-    {"question": "How does Maya feel?", "options": ["happy", "sad"], "correct": 0}
-  ]
 }
 
-Return ONLY valid JSON with no extra text before or after.
-`
+Keep it simple and fast. Use exact property names.`
+
   return prompt
 }
 
@@ -632,20 +560,41 @@ export async function POST(request: NextRequest) {
           storyData = { title: 'Sample Story', content: 'This is a sample story about ' + topic }
         }
 
-        // Generate activities
-        const activityPrompt = generateActivityPrompts(storyData.content, activities)
+        // Generate activities with faster model and timeout
+        const activityPrompt = generateActivityPrompts(topic, activities, String(readingLevel), String(writingLevel))
         console.log('Activity Prompt sent to AI:', activityPrompt)
         
-        const activityModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' })
-        const activityResult = await activityModel.generateContent(activityPrompt)
-        const activityResponse = activityResult.response.text()
-        
-        console.log('RAW AI Activity Response:')
-        console.log('=====================================')
-        console.log(activityResponse)
-        console.log('=====================================')
-        console.log('Response length:', activityResponse?.length || 0)
-        console.log('Response type:', typeof activityResponse)
+        // Use faster model and set timeout
+        const activityModel = genAI.getGenerativeModel({ 
+          model: 'gemini-1.5-flash',  // Faster model
+          generationConfig: {
+            maxOutputTokens: 2048,     // Limit output
+            temperature: 0.3           // Less creative = faster
+          }
+        })
+
+        let activityResponse
+        try {
+          // Add timeout wrapper
+          const aiPromise = activityModel.generateContent(activityPrompt)
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('AI generation timeout')), 30000) // 30 second timeout
+          )
+          
+          const result = await Promise.race([aiPromise, timeoutPromise]) as any
+          activityResponse = result.response?.text() || ''
+        } catch (error) {
+          console.error('AI generation failed or timed out:', error)
+          // Use fallback data immediately
+          activityResponse = JSON.stringify({
+            story: `A simple story about ${topic}. This is a placeholder story that teaches us something important.`,
+            title: `Story About ${topic}`,
+            whQuestions: activities.includes('whQuestions') ? [
+              { question: 'Who is in the story?', answer: 'The main character' },
+              { question: 'What happens?', answer: 'Something interesting' }
+            ] : undefined
+          })
+        }
         
         // Parse AI response
         let parsedActivities

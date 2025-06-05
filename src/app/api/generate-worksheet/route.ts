@@ -447,13 +447,24 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
     console.log('Number of stories:', stories.length)
     console.log('Stories data:', JSON.stringify(stories, null, 2))
     
-    // Use chrome-aws-lambda for serverless environments
+    // Always use chrome-aws-lambda in serverless environments (Vercel)
     let browser;
     
-    if (process.env.NODE_ENV === 'production') {
-      // Production: Use chrome-aws-lambda
+    console.log('Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      AWS_REGION: process.env.AWS_REGION,
+      platform: process.platform
+    })
+    
+    // Force chrome-aws-lambda in any serverless environment
+    if (process.env.VERCEL || process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production' || process.env.AWS_REGION) {
+      console.log('🚀 Using chrome-aws-lambda for serverless environment')
       const chromium = await import('chrome-aws-lambda')
       const puppeteerCore = await import('puppeteer-core')
+      
+      console.log('Chrome executable path:', await chromium.default.executablePath)
       
       browser = await puppeteerCore.default.launch({
         args: [
@@ -461,7 +472,12 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
           '--hide-scrollbars',
           '--disable-web-security',
           '--no-sandbox',
-          '--disable-setuid-sandbox'
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
         ],
         defaultViewport: chromium.default.defaultViewport,
         executablePath: await chromium.default.executablePath,
@@ -469,7 +485,7 @@ async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
         ignoreHTTPSErrors: true,
       })
     } else {
-      // Local development: Use regular puppeteer
+      console.log('💻 Using regular puppeteer for local development')
       const puppeteer = await import('puppeteer')
       
       browser = await puppeteer.default.launch({

@@ -260,6 +260,171 @@ function DashboardContent() {
     }
   }
 
+  const handlePreviewWorksheet = async () => {
+    if (!user?.id) {
+      alert('Please sign in to generate worksheets')
+      return
+    }
+
+    if (selectedActivities.length === 0) {
+      alert('Please select at least one activity')
+      return
+    }
+
+    // Check if we have topics or custom topic
+    const finalTopics = customTopic.trim() 
+      ? [customTopic.trim()] 
+      : selectedTopics.length > 0 
+        ? selectedTopics 
+        : ['Reading comprehension story']
+
+    if (finalTopics.length === 0) {
+      alert('Please select a topic or enter a custom topic')
+      return
+    }
+
+    setIsPreviewing(true)
+    
+    try {
+      console.log('🚀 Generating worksheet preview...')
+      console.log('Topics:', finalTopics)
+      console.log('Activities:', selectedActivities)
+      console.log('Count:', worksheetCount)
+      console.log('Reading Level:', profile?.reading_level || 3)
+      console.log('Writing Level:', profile?.writing_level || 3)
+
+      const response = await fetch('/api/generate-worksheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topics: finalTopics,
+          activities: selectedActivities,
+          count: worksheetCount,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
+          previewOnly: true,  // Request preview data only
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log('📋 Received preview data:', data)
+      
+      // Generate PDF for preview using the actual story data
+      const pdfResponse = await fetch('/api/generate-worksheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topics: finalTopics,
+          activities: selectedActivities,
+          count: worksheetCount,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
+          usePreviewData: true,
+          previewStoryData: data.stories
+        }),
+      })
+
+      if (!pdfResponse.ok) {
+        throw new Error(`PDF generation failed! status: ${pdfResponse.status}`)
+      }
+
+      const blob = await pdfResponse.blob()
+      const pdfBase64 = await blobToBase64(blob)
+
+      setPreviewData({ stories: data.stories, pdfBase64 })
+      setShowPreviewModal(true)
+      
+      // Increment usage count for preview
+      await incrementMonthlyUsage(user.id)
+      setMonthlyUsage(prev => prev + worksheetCount)
+      
+    } catch (error) {
+      console.error('❌ Error generating worksheet:', error)
+      alert('Failed to generate worksheet. Please try again.')
+    } finally {
+      setIsPreviewing(false)
+    }
+  }
+
+  const handleGenerateWorksheetFinal = async () => {
+    if (!previewData) {
+      alert('Please preview the worksheet first')
+      return
+    }
+
+    try {
+      setIsGenerating(true)
+      
+      // Generate final PDF with actual data
+      const finalTopics = customTopic.trim() 
+        ? [customTopic.trim()] 
+        : selectedTopics.length > 0 
+          ? selectedTopics 
+          : ['Reading comprehension story']
+
+      const response = await fetch('/api/generate-worksheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topics: finalTopics,
+          activities: selectedActivities,
+          count: worksheetCount,
+          readingLevel: profile?.reading_level || 3,
+          writingLevel: profile?.writing_level || 3,
+          usePreviewData: true,
+          previewStoryData: previewData.stories
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `worksheet-${Date.now()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      setShowPreviewModal(false)
+      alert('Worksheet downloaded successfully!')
+      
+    } catch (error) {
+      console.error('❌ Error downloading worksheet:', error)
+      alert('Failed to download worksheet. Please try again.')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  // Helper function to convert blob to base64
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        resolve(result.split(',')[1]) // Remove data:application/pdf;base64, prefix
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  }
+
   const topics = [
     { id: 'cooking', label: 'Cooking', icon: '🍳' },
     { id: 'morning', label: 'Morning Routine', icon: '🌅' },
@@ -298,126 +463,6 @@ function DashboardContent() {
   const handleRandomTopic = () => {
     const randomTopic = topics[Math.floor(Math.random() * topics.length)]
     setSelectedTopics([randomTopic.id])
-  }
-
-  const handlePreviewWorksheet = async () => {
-    if (selectedTopics.length === 0 || selectedActivities.length === 0) {
-      alert('Please select at least one topic and one activity.')
-      return
-    }
-
-    // Check monthly limit for free users
-    if (!isPremium && user?.id) {
-      const usageInfo = await canGenerateWorksheets(user.id, worksheetCount)
-      if (!usageInfo.canGenerate) {
-        alert(`You've reached your monthly limit of 5 worksheets. You've generated ${usageInfo.currentCount} this month. Please upgrade to Premium for unlimited worksheets.`)
-        return
-      }
-    }
-
-    setIsPreviewing(true)
-    
-    try {
-      const response = await fetch('/api/preview-worksheet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topics: selectedTopics.length > 0 ? selectedTopics : [customTopic],
-          activities: selectedActivities,
-          count: worksheetCount, // Generate the actual number of worksheets for preview
-          readingLevel: profile?.reading_level || 3,
-          writingLevel: profile?.writing_level || 3
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Received preview data:', data)
-        console.log('Stories in preview data:', data.stories)
-        data.stories?.forEach((story: any, index: number) => {
-          console.log(`Preview Story ${index + 1}:`, {
-            title: story.title,
-            hasWhQuestions: !!story.whQuestions,
-            whQuestionsCount: story.whQuestions?.length || 0,
-            hasEmotionQuiz: !!story.emotionQuiz,
-            emotionQuizCount: story.emotionQuiz?.length || 0,
-            hasStory: !!story.story,
-            storyLength: story.story?.length || 0
-          })
-        })
-        setPreviewData(data)
-        setShowPreviewModal(true)
-        
-        // Increment monthly usage for free users after successful preview generation
-        if (!isPremium && user?.id) {
-          // Development mode: check current local state to prevent exceeding limits
-          if (monthlyUsage + worksheetCount > 5) {
-            alert(`Monthly limit exceeded! You can only generate ${5 - monthlyUsage} more worksheets this month. Please upgrade to Premium for unlimited access.`)
-            setShowPreviewModal(false)
-            return
-          }
-          
-          // Double-check: verify we haven't exceeded limits before incrementing
-          const usageCheck = await canGenerateWorksheets(user.id, worksheetCount)
-          if (!usageCheck.canGenerate) {
-            alert(`Monthly limit exceeded! You can only generate ${5 - usageCheck.currentCount} more worksheets this month. Please upgrade to Premium for unlimited access.`)
-            setShowPreviewModal(false)
-            return
-          }
-          
-          const incrementSuccess = await incrementMonthlyUsage(user.id, worksheetCount)
-          if (incrementSuccess) {
-            // Update local state to reflect the new count
-            setMonthlyUsage(prev => prev + worksheetCount)
-          } else {
-            console.warn('Failed to increment monthly usage')
-          }
-        }
-      } else {
-        alert('Failed to generate preview.')
-      }
-    } catch (error) {
-      console.error('Error generating preview:', error)
-      alert('Error occurred while generating preview.')
-    } finally {
-      setIsPreviewing(false)
-    }
-  }
-
-  // Manual subscription update for debugging
-  const handleManualSubscriptionUpdate = async (newStatus: 'free' | 'premium') => {
-    if (!user) return
-    
-    try {
-      const response = await fetch('/api/update-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          subscriptionStatus: newStatus
-        })
-      })
-      
-      if (response.ok) {
-        console.log('✅ Manual subscription update successful')
-        
-        // Force profile refresh
-        await refreshProfile()
-        
-        // Wait a bit and refresh again to ensure state is updated
-        setTimeout(async () => {
-          await refreshProfile()
-          // Force a complete page reload as last resort
-          window.location.reload()
-        }, 1000)
-      } else {
-        console.error('❌ Manual subscription update failed')
-      }
-    } catch (error) {
-      console.error('❌ Error in manual subscription update:', error)
-    }
   }
 
   return (
@@ -676,134 +721,141 @@ function DashboardContent() {
               
               <div className="space-y-6">
                 {/* Story Section */}
-                {previewData.stories.map((story: any, index: number) => (
-                  <div key={index} className="border-2 border-dashed border-gray-300 p-6 rounded-lg space-y-4">
-                    {/* Worksheet Header */}
-                    <div className="text-center">
-                      <h2 className="text-2xl font-bold text-purple-800 mb-2">📚 Worksheet {index + 1}</h2>
-                      <hr className="border-purple-300 mb-4" />
-                    </div>
-                    
-                    {/* Story Content */}
-                    <div className="bg-blue-50 p-6 rounded-lg">
-                      <h3 className="text-xl font-bold text-blue-800 mb-4">{story.title}</h3>
-                      <p className="text-gray-700 leading-relaxed">{story.content}</p>
-                    </div>
+                {previewData && previewData.stories && Array.isArray(previewData.stories) ? 
+                  previewData.stories.map((story: any, index: number) => (
+                    <div key={index} className="border-2 border-dashed border-gray-300 p-6 rounded-lg space-y-4">
+                      {/* Worksheet Header */}
+                      <div className="text-center">
+                        <h2 className="text-2xl font-bold text-purple-800 mb-2">📚 Worksheet {index + 1}</h2>
+                        <hr className="border-purple-300 mb-4" />
+                      </div>
+                      
+                      {/* Story Content */}
+                      <div className="bg-blue-50 p-6 rounded-lg">
+                        <h3 className="text-xl font-bold text-blue-800 mb-4">{story.title}</h3>
+                        <p className="text-gray-700 leading-relaxed">{story.content}</p>
+                      </div>
 
-                    {/* Activities for this worksheet */}
-                    <div className="space-y-4">
-                      {story.whQuestions && (
-                        <div className="bg-yellow-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-yellow-800 mb-4">❓ WH Questions</h4>
-                          <div className="space-y-2">
-                            {story.whQuestions.map((q: any, qIndex: number) => (
-                              <div key={qIndex} className="text-gray-700">
-                                {qIndex + 1}. {q.question}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {story.bmeStory && (
-                        <div className="bg-purple-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-purple-800 mb-4">📖 BME Story Structure</h4>
-                          <div className="space-y-4">
-                            <div>
-                              <strong>Beginning:</strong>
-                              <p className="text-gray-700 mt-1">_____________________________________</p>
-                            </div>
-                            <div>
-                              <strong>Middle:</strong>
-                              <p className="text-gray-700 mt-1">_____________________________________</p>
-                            </div>
-                            <div>
-                              <strong>End:</strong>
-                              <p className="text-gray-700 mt-1">_____________________________________</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {story.sentenceOrder && (
-                        <div className="bg-indigo-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-indigo-800 mb-4">🔢 Sentence Order</h4>
-                          <p className="text-gray-700 mb-3">Put these sentences in the correct order:</p>
-                          <div className="space-y-2">
-                            {story.sentenceOrder.sentences?.map((sentence: string, sIndex: number) => (
-                              <div key={sIndex} className="text-gray-700 bg-white p-2 rounded border">
-                                {sIndex + 1}. {sentence}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {story.threeLineSummary && (
-                        <div className="bg-orange-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-orange-800 mb-4">📝 Three Line Summary</h4>
-                          <p className="text-gray-700 mb-3">Summarize the story in three lines:</p>
-                          <div className="space-y-3">
-                            <div>
-                              <strong>1.</strong> _____________________________
-                            </div>
-                            <div>
-                              <strong>2.</strong> _____________________________
-                            </div>
-                            <div>
-                              <strong>3.</strong> _____________________________
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {story.emotionQuiz && (
-                        <div className="bg-pink-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-pink-800 mb-4">😊 Emotion Quiz</h4>
-                          <div className="space-y-4">
-                            {story.emotionQuiz.map((q: any, qIndex: number) => (
-                              <div key={qIndex} className="text-gray-700">
-                                <div className="font-semibold">{qIndex + 1}. {q.question}</div>
-                                <div className="ml-4 mt-1">
-                                  {q.options.map((option: string, optIndex: number) => (
-                                    <div key={optIndex}>• {option}</div>
-                                  ))}
+                      {/* Activities for this worksheet */}
+                      <div className="space-y-4">
+                        {story.whQuestions && Array.isArray(story.whQuestions) && (
+                          <div className="bg-yellow-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-yellow-800 mb-4">❓ WH Questions</h4>
+                            <div className="space-y-2">
+                              {story.whQuestions.map((q: any, qIndex: number) => (
+                                <div key={qIndex} className="text-gray-700">
+                                  {qIndex + 1}. {q.question}
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {story.sentenceCompletion && (
-                        <div className="bg-green-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-green-800 mb-4">✏️ Sentence Completion</h4>
-                          <div className="space-y-2">
-                            {story.sentenceCompletion.map((s: any, sIndex: number) => (
-                              <div key={sIndex} className="text-gray-700">
-                                {sIndex + 1}. {s.sentence}
+                        {story.bmeStory && (
+                          <div className="bg-purple-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-purple-800 mb-4">📖 BME Story Structure</h4>
+                            <div className="space-y-4">
+                              <div>
+                                <strong>Beginning:</strong>
+                                <p className="text-gray-700 mt-1">_____________________________________</p>
                               </div>
-                            ))}
+                              <div>
+                                <strong>Middle:</strong>
+                                <p className="text-gray-700 mt-1">_____________________________________</p>
+                              </div>
+                              <div>
+                                <strong>End:</strong>
+                                <p className="text-gray-700 mt-1">_____________________________________</p>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {story.drawAndTell && (
-                        <div className="bg-purple-50 p-6 rounded-lg">
-                          <h4 className="text-lg font-bold text-purple-800 mb-4">🎨 Draw and Tell</h4>
-                          <p className="text-gray-700 mb-3">{story.drawAndTell.prompt}</p>
-                          <div className="space-y-1">
-                            {story.drawAndTell.questions.map((q: string, qIndex: number) => (
-                              <div key={qIndex} className="text-gray-700">
-                                {qIndex + 1}. {q}
-                              </div>
-                            ))}
+                        {story.sentenceOrder?.sentences && Array.isArray(story.sentenceOrder.sentences) ? (
+                          <div className="bg-indigo-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-indigo-800 mb-4">🔢 Sentence Order</h4>
+                            <p className="text-gray-700 mb-3">Put these sentences in the correct order:</p>
+                            <div className="space-y-2">
+                              {story.sentenceOrder.sentences.map((sentence: string, sIndex: number) => (
+                                <div key={sIndex} className="text-gray-700 bg-white p-2 rounded border">
+                                  {sIndex + 1}. {sentence}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="text-gray-500">No sentences available</div>
+                        )}
+
+                        {story.threeLineSummary && (
+                          <div className="bg-orange-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-orange-800 mb-4">📝 Three Line Summary</h4>
+                            <p className="text-gray-700 mb-3">Summarize the story in three lines:</p>
+                            <div className="space-y-3">
+                              <div>
+                                <strong>1.</strong> _____________________________
+                              </div>
+                              <div>
+                                <strong>2.</strong> _____________________________
+                              </div>
+                              <div>
+                                <strong>3.</strong> _____________________________
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {story.emotionQuiz && Array.isArray(story.emotionQuiz) && (
+                          <div className="bg-pink-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-pink-800 mb-4">😊 Emotion Quiz</h4>
+                            <div className="space-y-4">
+                              {story.emotionQuiz.map((q: any, qIndex: number) => (
+                                <div key={qIndex} className="text-gray-700">
+                                  <div className="font-semibold">{qIndex + 1}. {q.question}</div>
+                                  <div className="ml-4 mt-1">
+                                    {q.options && Array.isArray(q.options) && q.options.map((option: string, optIndex: number) => (
+                                      <div key={optIndex}>• {option}</div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {story.sentenceCompletion && Array.isArray(story.sentenceCompletion) && (
+                          <div className="bg-green-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-green-800 mb-4">✏️ Sentence Completion</h4>
+                            <div className="space-y-2">
+                              {story.sentenceCompletion.map((s: any, sIndex: number) => (
+                                <div key={sIndex} className="text-gray-700">
+                                  {sIndex + 1}. {s.sentence}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {story.drawAndTell && story.drawAndTell.questions && Array.isArray(story.drawAndTell.questions) && (
+                          <div className="bg-purple-50 p-6 rounded-lg">
+                            <h4 className="text-lg font-bold text-purple-800 mb-4">🎨 Draw and Tell</h4>
+                            <p className="text-gray-700 mb-3">{story.drawAndTell.prompt}</p>
+                            <div className="space-y-1">
+                              {story.drawAndTell.questions.map((q: string, qIndex: number) => (
+                                <div key={qIndex} className="text-gray-700">
+                                  {qIndex + 1}. {q}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )) : (
+                    <div className="text-center text-gray-500">
+                      No story data available for preview
+                    </div>
+                  )}
               </div>
 
               <div className="mt-8 flex justify-center gap-4">
@@ -826,7 +878,7 @@ function DashboardContent() {
                 <button
                   onClick={() => {
                     if (isPremium) {
-                      handleGenerateWorksheet()
+                      handleGenerateWorksheetFinal()
                     } else {
                       router.push('/pricing')
                     }

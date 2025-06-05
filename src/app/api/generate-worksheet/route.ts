@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { generateWorksheetHTML } from '../../../utils/pdf-template'
+import { renderToBuffer } from '@react-pdf/renderer'
+import * as React from 'react'
+import WorksheetPDF from '../../../utils/pdf-react-renderer'
 import { StoryData } from '@/types/story'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
@@ -184,9 +186,18 @@ function extractAnswerFromQuestion(question: string): string {
 // AI response parsing function
 function parseAIResponse(response: string, activityTypes: string[]): Partial<StoryData> {
   try {
-    console.log('Raw AI Response:', response)
+    console.log('🔍 PARSE AI RESPONSE DEBUG START')
+    console.log('- Response length:', response?.length || 0)
+    console.log('- Activity types requested:', activityTypes)
+    console.log('- Raw AI Response preview:', response?.substring(0, 500) + '...')
     
     let cleanResponse = response.trim()
+    
+    // Check if response is actually an error message
+    if (cleanResponse.startsWith('Failed') || cleanResponse.startsWith('Error') || cleanResponse.startsWith('Sorry')) {
+      console.error('❌ AI returned error message instead of JSON:', cleanResponse)
+      throw new Error(`AI generation failed: ${cleanResponse}`)
+    }
     
     // Remove markdown code blocks
     if (cleanResponse.startsWith('```json')) {
@@ -199,21 +210,35 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     // Remove any extra text before/after JSON
     const jsonStart = cleanResponse.indexOf('{')
     const jsonEnd = cleanResponse.lastIndexOf('}')
-    if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-      cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1)
+    if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+      console.error('❌ No valid JSON found in response')
+      throw new Error(`No valid JSON structure found in AI response: ${cleanResponse.substring(0, 200)}...`)
     }
+    
+    cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1)
     
     // Fix common JSON issues
     cleanResponse = cleanResponse
       .replace(/,\s*}/g, '}')  // Remove trailing commas before }
       .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
-      .replace(/(\w+):/g, '"$1":') // Add quotes to property names
+      .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Add quotes to property names
       .replace(/:\s*'([^']*)'/g, ': "$1"') // Replace single quotes with double
+      .replace(/\\'/g, "'") // Fix escaped single quotes
+      .replace(/\n/g, ' ') // Remove newlines
+      .replace(/\s+/g, ' ') // Normalize spaces
     
     console.log('Cleaned Response:', cleanResponse)
     
+    // Validate JSON before parsing
+    if (!cleanResponse.startsWith('{') || !cleanResponse.endsWith('}')) {
+      throw new Error(`Invalid JSON format: ${cleanResponse.substring(0, 100)}...`)
+    }
+    
+    console.log('🔍 About to parse JSON...')
     const parsed = JSON.parse(cleanResponse)
-    console.log('Raw parsed JSON:', parsed)
+    console.log('✅ JSON parsing successful!')
+    console.log('Raw parsed JSON keys:', Object.keys(parsed))
+    console.log('Raw parsed JSON:', JSON.stringify(parsed, null, 2))
     
     // Convert snake_case to camelCase for activity keys
     if (parsed.wh_questions && !parsed.whQuestions) {
@@ -248,8 +273,6 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     console.log('After snake_case conversion:', parsed)
     
     const result: Partial<StoryData> = {}
-    
-    // Convert AI format to our expected format if needed
     const activityTypeHandlers: { [key: string]: (parsed: any) => void } = {
       whQuestions: (parsed) => {
         console.log('Processing WH Questions...')
@@ -305,39 +328,126 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
         result.bmeStory = parsed.bmeStory
       },
       sentenceOrder: (parsed) => {
-        result.sentenceOrder = parsed.sentenceOrder
-      },
-      threeLineSummary: (parsed) => {
-        result.threeLineSummary = parsed.threeLineSummary
+        console.log('Processing Sentence Order...')
+        if (parsed.sentenceOrder) {
+          console.log('Original Sentence Order:', parsed.sentenceOrder)
+          
+          // Handle array format: [{scrambled: [...], correct: [...]}, ...]
+          if (Array.isArray(parsed.sentenceOrder)) {
+            const sentences = parsed.sentenceOrder.map((item: any) => 
+              Array.isArray(item.scrambled) ? item.scrambled.join(' ') : item.scrambled
+            )
+            const correctOrder = parsed.sentenceOrder.map((item: any, index: number) => index + 1)
+            
+            result.sentenceOrder = {
+              sentences: sentences,
+              correctOrder: correctOrder
+            }
+          }
+          // Handle object format with correctOrder and sentences
+          else if (parsed.sentenceOrder.correctOrder && Array.isArray(parsed.sentenceOrder.correctOrder)) {
+            // If correctOrder contains actual sentences (not indices)
+            if (typeof parsed.sentenceOrder.correctOrder[0] === 'string') {
+              result.sentenceOrder = {
+                sentences: parsed.sentenceOrder.correctOrder,
+                correctOrder: parsed.sentenceOrder.correctOrder.map((_: any, index: number) => index + 1)
+              }
+            } else {
+              // If correctOrder contains indices, use jumbled sentences
+              result.sentenceOrder = {
+                sentences: parsed.sentenceOrder.jumbled || parsed.sentenceOrder.sentences || [],
+                correctOrder: parsed.sentenceOrder.correctOrder
+              }
+            }
+          } else if (parsed.sentenceOrder.sentences) {
+            result.sentenceOrder = parsed.sentenceOrder
+          }
+          
+          console.log('Final Sentence Order:', result.sentenceOrder)
+        } else {
+          console.log('No Sentence Order found in parsed data')
+        }
       },
       sentenceCompletion: (parsed) => {
+        console.log('Processing Sentence Completion...')
         if (parsed.sentenceCompletion && Array.isArray(parsed.sentenceCompletion)) {
-          parsed.sentenceCompletion = parsed.sentenceCompletion.map((q: any) => {
-            if (!q.answers && q.sentence) {
-              return { sentence: q.sentence, answers: ['answer'], blanks: ['_____'] }
-            }
-            return q
-          })
+          console.log('Original Sentence Completion:', parsed.sentenceCompletion)
           result.sentenceCompletion = parsed.sentenceCompletion
-          console.log('Sentence Completion from parsed data:', result.sentenceCompletion)
+          console.log('Final Sentence Completion:', result.sentenceCompletion)
+        } else {
+          console.log('No Sentence Completion found in parsed data')
+        }
+      },
+      threeLineSummary: (parsed) => {
+        console.log('Processing Three Line Summary...')
+        if (parsed.threeLineSummary) {
+          console.log('Original Three Line Summary:', parsed.threeLineSummary)
+          
+          // Handle array format (convert to string)
+          if (Array.isArray(parsed.threeLineSummary)) {
+            result.threeLineSummary = parsed.threeLineSummary.join(' ')
+          } else {
+            result.threeLineSummary = parsed.threeLineSummary
+          }
+          
+          console.log('Final Three Line Summary:', result.threeLineSummary)
+        } else {
+          console.log('No Three Line Summary found in parsed data')
         }
       },
       drawAndTell: (parsed) => {
-        result.drawAndTell = parsed.drawAndTell
+        console.log('Processing Draw and Tell...')
+        if (parsed.drawAndTell) {
+          console.log('Original Draw and Tell:', parsed.drawAndTell)
+          result.drawAndTell = parsed.drawAndTell
+          console.log('Final Draw and Tell:', result.drawAndTell)
+        } else {
+          console.log('No Draw and Tell found in parsed data')
+        }
       },
     }
     
+    // Map activity request names to handler names
+    const activityNameMap: { [key: string]: string } = {
+      'wh-questions': 'whQuestions',
+      'emotion-quiz': 'emotionQuiz', 
+      'sentence-order': 'sentenceOrder',
+      'sentence-completion': 'sentenceCompletion',
+      'three-line-summary': 'threeLineSummary',
+      'bme-story': 'bmeStory',
+      'draw-and-tell': 'drawAndTell'
+    }
+    
+    console.log('Final parsed result before activity processing:', result)
+    
     activityTypes.forEach((type) => {
-      if (activityTypeHandlers[type]) {
-        activityTypeHandlers[type](parsed)
+      const handlerKey = activityNameMap[type] || type
+      console.log(`🔍 Processing activity type: "${type}" -> handler: "${handlerKey}"`)
+      
+      if (activityTypeHandlers[handlerKey]) {
+        console.log(`✅ Found handler for: ${handlerKey}`)
+        activityTypeHandlers[handlerKey](parsed)
+      } else {
+        console.log(`❌ No handler found for: ${handlerKey}`)
       }
     })
     
     console.log('Final parsed result:', result)
     return result
   } catch (error) {
-    console.error('AI response parsing failed:', error)
-    console.log('Using fallback with story analysis...')
+    console.error('❌ AI response parsing failed:', error)
+    console.error('❌ Error type:', error instanceof SyntaxError ? 'JSON Syntax Error' : 'Other Error')
+    if (error instanceof SyntaxError) {
+      console.error('❌ JSON parsing error details:', {
+        message: error.message,
+        position: error.message.match(/position (\d+)/)?.[1] || 'unknown'
+      })
+    }
+    
+    console.log('📝 Original response length:', response?.length || 0)
+    console.log('📝 Response preview:', response?.substring(0, 300) + '...')
+    
+    console.log('🔄 Using enhanced fallback with story analysis...')
     
     // Try to create better sample data based on story content if available
     const sampleData: Partial<StoryData> = {}
@@ -397,14 +507,8 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     
     if (activityTypes.includes('sentenceOrder')) {
       sampleData.sentenceOrder = {
-        sentences: [
-          'John plays soccer.',
-          'John scores a goal.',
-          'John\'s friends cheer for him.',
-          'John feels happy and proud of himself.',
-          'John continues to play soccer.'
-        ],
-        correctOrder: [1, 2, 3, 4, 5]
+        sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
+        correctOrder: [1, 2, 3]
       }
     }
     
@@ -440,112 +544,40 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
   }
 }
 
-// PDF creation function using HTML→PDF approach
-async function createCombinedPDF(stories: StoryData[]): Promise<Buffer> {
+// PDF creation function using React PDF renderer
+async function createCombinedPDF(stories: StoryData[], activities: string[]): Promise<Buffer> {
   try {
     console.log('=== PDF Generation Debug ===')
     console.log('Number of stories:', stories.length)
+    console.log('Activities array:', activities)
     console.log('Stories data:', JSON.stringify(stories, null, 2))
     
-    // Always use chrome-aws-lambda in serverless environments (Vercel)
-    let browser;
-    
-    console.log('Environment check:', {
-      NODE_ENV: process.env.NODE_ENV,
-      VERCEL: process.env.VERCEL,
-      VERCEL_ENV: process.env.VERCEL_ENV,
-      AWS_REGION: process.env.AWS_REGION,
-      platform: process.platform
-    })
-    
-    // Force chrome-aws-lambda in any serverless environment
-    if (process.env.VERCEL || process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production' || process.env.AWS_REGION) {
-      console.log('🚀 Using chrome-aws-lambda for serverless environment')
-      const chromium = await import('chrome-aws-lambda')
-      const puppeteerCore = await import('puppeteer-core')
-      
-      console.log('Chrome executable path:', await chromium.default.executablePath)
-      
-      browser = await puppeteerCore.default.launch({
-        args: [
-          ...chromium.default.args,
-          '--hide-scrollbars',
-          '--disable-web-security',
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu'
-        ],
-        defaultViewport: chromium.default.defaultViewport,
-        executablePath: await chromium.default.executablePath,
-        headless: chromium.default.headless,
-        ignoreHTTPSErrors: true,
-      })
-    } else {
-      console.log('💻 Using regular puppeteer for local development')
-      const puppeteer = await import('puppeteer')
-      
-      browser = await puppeteer.default.launch({
-        headless: true,
-        args: [
-          '--no-sandbox', 
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-          '--disable-web-security'
-        ],
-        timeout: 60000,
-      })
+    // Check specific activity data for first story
+    if (stories.length > 0) {
+      const firstStory = stories[0]
+      console.log('First story activities check:')
+      console.log('- whQuestions:', firstStory.whQuestions?.length || 0)
+      console.log('- emotionQuiz:', firstStory.emotionQuiz?.length || 0)
+      console.log('- sentenceOrder:', !!firstStory.sentenceOrder ? 'YES' : 'NO')
+      console.log('- bmeStory:', !!firstStory.bmeStory ? 'YES' : 'NO')
+      console.log('- sentenceCompletion:', firstStory.sentenceCompletion?.length || 0)
+      console.log('- threeLineSummary:', !!firstStory.threeLineSummary ? 'YES' : 'NO')
+      console.log('- drawAndTell:', !!firstStory.drawAndTell ? 'YES' : 'NO')
     }
     
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 2 })
-    
-    const htmlContent = generateWorksheetHTML(stories)
-    console.log('Generated HTML length:', htmlContent.length)
-    console.log('HTML contains page-break:', htmlContent.includes('page-break'))
-    console.log('HTML preview (first 1000 chars):', htmlContent.substring(0, 1000))
-    
-    await page.setContent(htmlContent, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'], timeout: 60000 })
-    
-    // Check page content after loading
-    const pageContent = await page.content()
-    console.log('Page content length after loading:', pageContent.length)
-    console.log('Page contains page-break after loading:', pageContent.includes('page-break'))
-    
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    const pdfBuffer = await page.pdf({
-      format: 'letter',
-      printBackground: true,
-      preferCSSPageSize: false,
-      displayHeaderFooter: false,
-      margin: { top: '0.5in', bottom: '0.5in', left: '0.5in', right: '0.5in' },
-      width: '8.5in',
-      height: '11in'
-    })
-    
+    const pdfBuffer = await renderToBuffer(React.createElement(WorksheetPDF, { stories, activities }) as any);
     console.log('PDF buffer size:', pdfBuffer.length)
     console.log('=== End PDF Debug ===')
     
-    await page.close()
-    await browser.close()
-    
-    return Buffer.from(pdfBuffer)
+    return pdfBuffer
     
   } catch (error) {
-    console.error('❌ Puppeteer PDF generation failed:', error)
+    console.error('❌ React PDF generation failed:', error)
     console.error('Full error details:', JSON.stringify(error, null, 2))
     console.error('Environment:', process.env.NODE_ENV)
     
-    // DO NOT use fallback - force Puppeteer to work!
-    throw new Error(`Puppeteer PDF generation failed: ${error}`)
+    // DO NOT use fallback - force React PDF to work!
+    throw new Error(`React PDF generation failed: ${error}`)
   }
 }
 
@@ -557,12 +589,18 @@ interface WorksheetRequest {
   writingLevel: number
   usePreviewData?: boolean
   previewStoryData?: any
+  previewOnly?: boolean  // Add flag for preview-only requests
 }
 
 // API Route Handler
 export async function POST(request: NextRequest) {
   try {
-    const { topics, activities, count, readingLevel, writingLevel, usePreviewData, previewStoryData }: WorksheetRequest = await request.json()
+    const { topics, activities, count, readingLevel, writingLevel, usePreviewData, previewStoryData, previewOnly }: WorksheetRequest = await request.json()
+
+    console.log('🔍 Request parameters:')
+    console.log('- usePreviewData:', usePreviewData)
+    console.log('- previewStoryData length:', previewStoryData?.length)
+    console.log('- previewOnly:', previewOnly)
 
     if (!topics?.length || !activities?.length || count < 1) {
       return new NextResponse('Missing required fields', { status: 400 })
@@ -571,9 +609,11 @@ export async function POST(request: NextRequest) {
     const stories: StoryData[] = []
 
     if (usePreviewData && previewStoryData) {
+      console.log('✅ Using preview data for PDF generation')
       // Use the existing preview data directly
       stories.push(...previewStoryData)
     } else {
+      console.log('🔄 Generating new stories from scratch')
       // Generate new stories from scratch
       for (let i = 0; i < count; i++) {
         const topic = topics[Math.floor(Math.random() * topics.length)]
@@ -600,25 +640,106 @@ export async function POST(request: NextRequest) {
         const activityResult = await activityModel.generateContent(activityPrompt)
         const activityResponse = activityResult.response.text()
         
-        console.log('RAW AI Activity Response:', activityResponse)
+        console.log('RAW AI Activity Response:')
+        console.log('=====================================')
+        console.log(activityResponse)
+        console.log('=====================================')
+        console.log('Response length:', activityResponse?.length || 0)
+        console.log('Response type:', typeof activityResponse)
         
-        const activityData = parseAIResponse(activityResponse, activities)
+        // Parse AI response
+        let parsedActivities
+        try {
+          console.log('🔄 Attempting to parse AI response...')
+          parsedActivities = parseAIResponse(activityResponse, activities)
+          console.log('✅ Successfully parsed AI activities:')
+          console.log(JSON.stringify(parsedActivities, null, 2))
+        } catch (parseError) {
+          console.error('❌ Failed to parse AI response, using fallback:', parseError)
+          console.error('Parse error details:', parseError instanceof Error ? parseError.message : String(parseError))
+          
+          // Create simple fallback data
+          parsedActivities = {} as any
+          
+          if (activities.includes('whQuestions')) {
+            parsedActivities.whQuestions = [
+              { question: 'Who is in the story?', answer: 'The main character' },
+              { question: 'What happens in the story?', answer: 'An adventure takes place' },
+              { question: 'Where does it happen?', answer: 'In the story setting' },
+              { question: 'When does it happen?', answer: 'During the story time' }
+            ]
+          }
+          
+          if (activities.includes('sentenceOrder')) {
+            parsedActivities.sentenceOrder = {
+              sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
+              correctOrder: [1, 2, 3]
+            }
+          }
+          
+          if (activities.includes('emotionQuiz')) {
+            parsedActivities.emotionQuiz = [
+              { question: 'How does the character feel?', options: ['Happy', 'Sad', 'Excited'], correct: 0 }
+            ]
+          }
+          
+          if (activities.includes('bmeStory')) {
+            parsedActivities.bmeStory = {
+              beginning: 'The story starts with...',
+              middle: 'In the middle...',
+              end: 'At the end...'
+            }
+          }
+          
+          if (activities.includes('sentenceCompletion')) {
+            parsedActivities.sentenceCompletion = [
+              { sentence: 'The character is _____.', answers: ['happy', 'excited', 'brave'] }
+            ]
+          }
+          
+          if (activities.includes('threeLineSummary')) {
+            parsedActivities.threeLineSummary = 'This is a three line summary of the story. It includes the main events. The story has a good ending.'
+          }
+          
+          if (activities.includes('drawAndTell')) {
+            parsedActivities.drawAndTell = 'Draw your favorite part of the story and tell someone about it!'
+          }
+          
+          console.log('📋 Using fallback data:', parsedActivities)
+        }
+
+        // Merge story data with activities
+        const completeStory = { ...storyData, ...parsedActivities }
+        console.log('🔍 Complete story data before adding to array:')
+        console.log('- Title:', completeStory.title)
+        console.log('- Content length:', completeStory.content?.length || 0)
+        console.log('- WH Questions:', completeStory.whQuestions?.length || 0, 'questions')
+        console.log('- Emotion Quiz:', completeStory.emotionQuiz?.length || 0, 'questions')
+        console.log('- Sentence Order:', !!completeStory.sentenceOrder ? 'YES' : 'NO')
+        console.log('- BME Story:', !!completeStory.bmeStory ? 'YES' : 'NO')
+        console.log('- Three Line Summary:', !!completeStory.threeLineSummary ? 'YES' : 'NO')
+        console.log('- Sentence Completion:', completeStory.sentenceCompletion?.length || 0, 'questions')
+        console.log('- Draw and Tell:', !!completeStory.drawAndTell ? 'YES' : 'NO')
         
-        console.log('Final activity data before adding to stories:', activityData)
-        
-        stories.push({
-          title: storyData.title,
-          content: storyData.content,
-          ...activityData
-        })
+        stories.push(completeStory)
         
         console.log('Story added to stories array:', stories[stories.length - 1])
       }
     }
 
-    // Create combined PDF with both worksheet and answer key
-    console.log('🔄 Starting PDF generation...')
-    const combinedPdfBuffer = await createCombinedPDF(stories)
+    console.log('✅ All stories generated:', stories.length)
+    
+    // If this is a preview-only request, return JSON data instead of PDF
+    if (previewOnly) {
+      console.log('📋 Returning preview data only')
+      return NextResponse.json({
+        stories: stories,
+        activities: activities
+      })
+    }
+
+    // Create combined PDF
+    const combinedPdfBuffer = await createCombinedPDF(stories, activities)
     console.log('✅ PDF generation completed, buffer size:', combinedPdfBuffer.length)
 
     // Return combined PDF

@@ -211,7 +211,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
         ].some(Boolean)
 
         const page3Activities = [
-          hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0),
+          hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0),
           hasActivity('Three Line Summary', story.threeLineSummary),
           hasActivity('Draw and Tell', story.drawAndTell)
         ].some(Boolean)
@@ -239,7 +239,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Questions</Text>
                   <Text style={styles.instruction}>Read the story carefully and answer these questions.</Text>
-                  {story.whQuestions.map((q, qIndex) => (
+                  {story.whQuestions?.map((q, qIndex) => (
                     <View key={qIndex} style={styles.question}>
                       <Text style={styles.questionText}>
                         {qIndex + 1}. {typeof q === 'string' ? q : q.question}
@@ -260,7 +260,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Put the Sentences in Order</Text>
                     <Text style={styles.instruction}>Read the sentences and number them in the correct order (1, 2, 3...).</Text>
-                    {story.sentenceOrder.sentences.map((sentence, sIndex) => (
+                    {story.sentenceOrder?.sentences?.map((sentence, sIndex) => (
                       <View key={sIndex} style={styles.question}>
                         <Text style={styles.questionText}>
                           _____ {sentence}
@@ -275,12 +275,12 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Emotion Quiz</Text>
                     <Text style={styles.instruction}>Circle the best answer for each question.</Text>
-                    {story.emotionQuiz.map((eq, eqIndex) => (
+                    {story.emotionQuiz?.map((eq, eqIndex) => (
                       <View key={eqIndex} style={styles.question}>
                         <Text style={styles.questionText}>
                           {eqIndex + 1}. {eq.question}
                         </Text>
-                        {eq.options.map((option, optIndex) => (
+                        {eq.options?.map((option, optIndex) => (
                           <Text key={optIndex} style={{ fontSize: 11, marginLeft: 15, marginBottom: 3 }}>
                             {String.fromCharCode(65 + optIndex)}. {option}
                           </Text>
@@ -323,11 +323,11 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
             {page3Activities && (
               <Page size="LETTER" style={styles.page}>
                 {/* Sentence Completion */}
-                {hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0) && (
+                {hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0) && (
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Complete the Sentences</Text>
                     <Text style={styles.instruction}>Fill in the blanks with words from the story.</Text>
-                    {story.sentenceCompletion.map((sc, scIndex) => (
+                    {story.sentenceCompletion?.map((sc, scIndex) => (
                       <View key={scIndex} style={styles.question}>
                         <Text style={styles.completionSentence}>
                           {scIndex + 1}. {sc.sentence}
@@ -367,7 +367,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                 {hasActivity('Draw and Tell', story.drawAndTell) && (
                   <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Draw and Tell</Text>
-                    <Text style={styles.instruction}>{story.drawAndTell.prompt}</Text>
+                    <Text style={styles.instruction}>{story.drawAndTell?.prompt}</Text>
                     
                     {/* Drawing Space */}
                     <View style={{
@@ -376,7 +376,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                       marginBottom: 15
                     }} />
                     
-                    {story.drawAndTell.questions?.map((question, qIndex) => (
+                    {story.drawAndTell?.questions?.map((question, qIndex) => (
                       <View key={qIndex} style={styles.question}>
                         <Text style={styles.questionText}>{question}</Text>
                         <View style={styles.answerLines} />
@@ -470,7 +470,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                   {story.emotionQuiz?.map((q, qIndex) => (
                     <View key={qIndex} style={styles.answerItem}>
                       <Text style={styles.questionText}>{qIndex + 1}. {q.question}</Text>
-                      <Text style={styles.answerText}>Answer: {q.options[q.correct]}</Text>
+                      <Text style={styles.answerText}>Answer: {q.options?.[q.correct]}</Text>
                     </View>
                   ))}
                 </View>
@@ -496,7 +496,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
               )}
 
               {/* Sentence Completion Answers */}
-              {hasActivity('Sentence Completion', story.sentenceCompletion && story.sentenceCompletion.length > 0) && (
+              {hasActivity('Sentence Completion', story.sentenceCompletion?.length > 0) && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Sentence Completion - Answers</Text>
                   {story.sentenceCompletion?.map((item, index) => (

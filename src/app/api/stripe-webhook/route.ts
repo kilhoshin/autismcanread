@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from 'next/server'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil'
@@ -102,12 +102,29 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (subscription && typeof subscription === 'string') {
     try {
       const subscriptionDetails = await stripe.subscriptions.retrieve(subscription)
+      console.log(' Raw subscription details:', {
+        current_period_end: (subscriptionDetails as any).current_period_end,
+        status: (subscriptionDetails as any).status
+      })
+      
+      // Safely handle current_period_end timestamp
+      let periodEndISOString = null
+      const currentPeriodEnd = (subscriptionDetails as any).current_period_end
+      if (currentPeriodEnd && typeof currentPeriodEnd === 'number') {
+        const periodEndDate = new Date(currentPeriodEnd * 1000)
+        if (!isNaN(periodEndDate.getTime())) {
+          periodEndISOString = periodEndDate.toISOString()
+        } else {
+          console.error(' Invalid current_period_end timestamp:', currentPeriodEnd)
+        }
+      }
+      
       subscriptionData = {
         stripe_customer_id: session.customer as string,
         stripe_subscription_id: subscription,
-        subscription_period_end: new Date((subscriptionDetails as any).current_period_end * 1000).toISOString()
+        ...(periodEndISOString && { subscription_period_end: periodEndISOString })
       }
-      console.log(' Subscription period end:', subscriptionData)
+      console.log(' Processed subscription data:', subscriptionData)
     } catch (stripeError) {
       console.error(' Failed to fetch subscription details:', stripeError)
     }
@@ -120,17 +137,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     ...subscriptionData
   }
   
-  const { error: updateError } = await supabaseAdmin
+  console.log(' Updating user with data:', updateData)
+  
+  const { data: updatedUser, error: updateError } = await supabaseAdmin
     .from('users')
     .update(updateData)
     .eq('id', user.id)
+    .select()
   
   if (updateError) {
     console.error(' Update failed:', updateError)
     return
   }
   
-  console.log(' User upgraded to premium:', user.id)
+  console.log(' User successfully upgraded to premium:', user.id)
+  console.log(' Updated user data:', updatedUser)
 }
 
 // Handle subscription updates
@@ -218,7 +239,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 // Handle successful payment
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  console.log('💰 Payment succeeded for subscription:', (invoice as any).subscription)
+  console.log(' Payment succeeded for subscription:', (invoice as any).subscription)
   
   if (!(invoice as any).subscription) return
   
@@ -230,7 +251,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     .single()
   
   if (userError || !user) {
-    console.error('❌ User not found for customer:', invoice.customer)
+    console.error(' User not found for customer:', invoice.customer)
     return
   }
   
@@ -246,16 +267,16 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     .eq('id', user.id)
   
   if (updateError) {
-    console.error('❌ Failed to update payment success:', updateError)
+    console.error(' Failed to update payment success:', updateError)
     return
   }
   
-  console.log('✅ Payment processed for user:', user.id)
+  console.log(' Payment processed for user:', user.id)
 }
 
 // Handle failed payment
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  console.log('❌ Payment failed for subscription:', (invoice as any).subscription)
+  console.log(' Payment failed for subscription:', (invoice as any).subscription)
   
   if (!(invoice as any).subscription) return
   
@@ -267,12 +288,12 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     .single()
   
   if (userError || !user) {
-    console.error('❌ User not found for customer:', invoice.customer)
+    console.error(' User not found for customer:', invoice.customer)
     return
   }
   
   // Could set to past_due or handle retry logic
-  console.log('⚠️ Payment failed for user:', user.id)
+  console.log(' Payment failed for user:', user.id)
 }
 
 export async function GET() {

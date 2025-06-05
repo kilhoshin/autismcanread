@@ -65,7 +65,9 @@ Return ONLY valid JSON format:
   if (activityTypes.includes('sentence-order')) {
     prompt += `,
   "sentenceOrder": [
-    {"scrambled": ["First", "the", "character"], "correct": ["First", "the", "character"]}
+    {"scrambled": ["Third,", "the", "character", "felt", "happy."], "correct": ["Third,", "the", "character", "felt", "happy."]},
+    {"scrambled": ["First,", "something", "important", "happened."], "correct": ["First,", "something", "important", "happened."]},
+    {"scrambled": ["Second,", "the", "character", "took", "action."], "correct": ["Second,", "the", "character", "took", "action."]}
   ]`
   }
 
@@ -461,7 +463,11 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     
     if (activityTypes.includes('sentence-order')) {
       sampleData.sentenceOrder = {
-        sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
+        sentences: [
+          'First, the main character wakes up and gets ready for an adventure.',
+          'Then, the character faces a challenge or meets someone important.',
+          'Finally, the character learns something valuable and the story ends happily.'
+        ],
         correctOrder: [1, 2, 3]
       }
     }
@@ -654,7 +660,11 @@ export async function POST(request: NextRequest) {
           
           if (activities.includes('sentence-order')) {
             parsedActivities.sentenceOrder = {
-              sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
+              sentences: [
+                'First, the main character wakes up and gets ready for an adventure.',
+                'Then, the character faces a challenge or meets someone important.',
+                'Finally, the character learns something valuable and the story ends happily.'
+              ],
               correctOrder: [1, 2, 3]
             }
           }

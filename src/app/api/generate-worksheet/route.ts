@@ -32,70 +32,64 @@ Return in JSON format:
 }
 
 function generateActivityPrompts(topic: string, activityTypes: string[], readingLevel: string, writingLevel: string): string {
-  // 프롬프트 간소화 및 속도 최적화
-  let prompt = `Create educational story content for ${readingLevel} readers with ${writingLevel} writing level about: ${topic}
+  // 더 명확한 프롬프트로 개선
+  let prompt = `Generate educational content about ${topic} for ${readingLevel} reading level.
 
-Story Requirements:
-- 120-200 words maximum
-- Simple sentences
-- Clear beginning, middle, end
-- 1-2 main characters
+Create a SHORT story (100-150 words) AND activities.
 
-Output ONLY valid JSON with this structure:
+Return ONLY valid JSON format:
 {
   "story": "story text here",
   "title": "story title"`
 
-  if (activityTypes.includes('whQuestions')) {
+  if (activityTypes.includes('wh-questions')) {
     prompt += `,
   "whQuestions": [
-    {"question": "Who...", "answer": "..."},
-    {"question": "What...", "answer": "..."},
-    {"question": "Where...", "answer": "..."},
-    {"question": "Why...", "answer": "..."}
+    {"question": "Who is the main character?", "answer": "specific answer"},
+    {"question": "What happens in the story?", "answer": "specific answer"}
   ]`
   }
 
-  if (activityTypes.includes('emotionQuiz')) {
+  if (activityTypes.includes('emotion-quiz')) {
     prompt += `,
   "emotionQuiz": [
-    {"question": "How does [character] feel?", "options": ["happy", "sad", "angry", "excited"], "correct": 0}
+    {"question": "How does the character feel?", "options": ["happy", "sad", "excited"], "correct": 0}
   ]`
   }
 
-  if (activityTypes.includes('bmeStory')) {
+  if (activityTypes.includes('bme-story')) {
     prompt += `,
-  "bmeStory": { "beginning": "...", "middle": "...", "end": "..." }`
+  "bmeStory": {"beginning": "story beginning", "middle": "story middle", "end": "story end"}`
   }
 
-  if (activityTypes.includes('sentenceOrder')) {
+  if (activityTypes.includes('sentence-order')) {
     prompt += `,
   "sentenceOrder": [
-    {"scrambled": ["word1", "word2", "word3"], "correct": ["word1", "word2", "word3"]}
+    {"scrambled": ["First", "the", "character"], "correct": ["First", "the", "character"]}
   ]`
   }
 
-  if (activityTypes.includes('threeLineSummary')) {
+  if (activityTypes.includes('three-line-summary')) {
     prompt += `,
-  "threeLineSummary": { "lines": ["line1", "line2", "line3"] }`
+  "threeLineSummary": {"lines": ["First thing happened", "Then something else", "Finally it ended"]}`
   }
 
-  if (activityTypes.includes('sentenceCompletion')) {
+  if (activityTypes.includes('sentence-completion')) {
     prompt += `,
   "sentenceCompletion": [
-    {"sentence": "The character went to _____ to find.", "answer": "park"}
+    {"sentence": "The character was _____ happy.", "answer": "very"}
   ]`
   }
 
-  if (activityTypes.includes('drawAndTell')) {
+  if (activityTypes.includes('draw-and-tell')) {
     prompt += `,
-  "drawAndTell": { "prompt": "Draw your favorite scene", "questions": ["What did you draw?"] }`
+  "drawAndTell": {"prompt": "Draw the main character", "questions": ["What did you draw?"]}`
   }
 
   prompt += `
 }
 
-Keep it simple and fast. Use exact property names.`
+CRITICAL: Return ONLY the JSON object. No explanations, no markdown, no extra text.`
 
   return prompt
 }
@@ -408,7 +402,7 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     // Try to create better sample data based on story content if available
     const sampleData: Partial<StoryData> = {}
     
-    if (activityTypes.includes('whQuestions')) {
+    if (activityTypes.includes('wh-questions')) {
       console.log('Creating fallback WH Questions...')
       // Try to extract some info from story for better answers
       const storyLines = arguments[0]?.toLowerCase() || ''
@@ -445,7 +439,7 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       console.log('Generated fallback WH Questions:', sampleData.whQuestions)
     }
     
-    if (activityTypes.includes('emotionQuiz')) {
+    if (activityTypes.includes('emotion-quiz')) {
       sampleData.emotionQuiz = [
         { question: 'How does John feel when he scores a goal?', options: ['Happy', 'Sad', 'Angry'], correct: 0 },
         { question: 'How does John feel when he misses a shot?', options: ['Happy', 'Sad', 'Angry'], correct: 1 },
@@ -453,7 +447,7 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       ]
     }
     
-    if (activityTypes.includes('bmeStory')) {
+    if (activityTypes.includes('bme-story')) {
       sampleData.bmeStory = {
         beginning: 'The story begins with John playing soccer.',
         middle: 'John scores a goal and his friends cheer for him.',
@@ -461,22 +455,18 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       }
     }
     
-    if (activityTypes.includes('sentenceOrder')) {
+    if (activityTypes.includes('sentence-order')) {
       sampleData.sentenceOrder = {
         sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
         correctOrder: [1, 2, 3]
       }
     }
     
-    if (activityTypes.includes('threeLineSummary')) {
-      sampleData.threeLineSummary = {
-        line1: 'John plays soccer and scores a goal.',
-        line2: 'His friends cheer for him and he feels happy.',
-        line3: 'John continues to play soccer and feels proud of himself.'
-      }
+    if (activityTypes.includes('three-line-summary')) {
+      sampleData.threeLineSummary = 'This is a three line summary of the story. It includes the main events. The story has a good ending.'
     }
     
-    if (activityTypes.includes('sentenceCompletion')) {
+    if (activityTypes.includes('sentence-completion')) {
       sampleData.sentenceCompletion = [
         { sentence: 'John went to the _____ to play soccer.', answers: ['park'], blanks: ['_____'] },
         { sentence: 'John felt _____ when he scored a goal.', answers: ['happy'], blanks: ['_____'] },
@@ -485,7 +475,7 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       ]
     }
     
-    if (activityTypes.includes('drawAndTell')) {
+    if (activityTypes.includes('draw-and-tell')) {
       sampleData.drawAndTell = {
         prompt: 'Draw a picture of John playing soccer.',
         questions: [
@@ -611,13 +601,20 @@ export async function POST(request: NextRequest) {
           
           const result = await Promise.race([aiPromise, timeoutPromise]) as any
           activityResponse = result.response?.text() || ''
+          
+          console.log('🔍 RAW AI RESPONSE RECEIVED:')
+          console.log('=====================================')
+          console.log('Response length:', activityResponse.length)
+          console.log('First 1000 chars:', activityResponse.substring(0, 1000))
+          console.log('=====================================')
+          
         } catch (error) {
           console.error('AI generation failed or timed out:', error)
           // Use fallback data immediately
           activityResponse = JSON.stringify({
             story: `A simple story about ${topic}. This is a placeholder story that teaches us something important.`,
             title: `Story About ${topic}`,
-            whQuestions: activities.includes('whQuestions') ? [
+            whQuestions: activities.includes('wh-questions') ? [
               { question: 'Who is in the story?', answer: 'The main character' },
               { question: 'What happens?', answer: 'Something interesting' }
             ] : undefined
@@ -638,7 +635,7 @@ export async function POST(request: NextRequest) {
           // Create simple fallback data
           parsedActivities = {} as any
           
-          if (activities.includes('whQuestions')) {
+          if (activities.includes('wh-questions')) {
             parsedActivities.whQuestions = [
               { question: 'Who is in the story?', answer: 'The main character' },
               { question: 'What happens in the story?', answer: 'An adventure takes place' },
@@ -647,20 +644,20 @@ export async function POST(request: NextRequest) {
             ]
           }
           
-          if (activities.includes('sentenceOrder')) {
+          if (activities.includes('sentence-order')) {
             parsedActivities.sentenceOrder = {
               sentences: ['First, something happens.', 'Then, something else occurs.', 'Finally, the story ends.'],
               correctOrder: [1, 2, 3]
             }
           }
           
-          if (activities.includes('emotionQuiz')) {
+          if (activities.includes('emotion-quiz')) {
             parsedActivities.emotionQuiz = [
               { question: 'How does the character feel?', options: ['Happy', 'Sad', 'Excited'], correct: 0 }
             ]
           }
           
-          if (activities.includes('bmeStory')) {
+          if (activities.includes('bme-story')) {
             parsedActivities.bmeStory = {
               beginning: 'The story starts with...',
               middle: 'In the middle...',
@@ -668,17 +665,17 @@ export async function POST(request: NextRequest) {
             }
           }
           
-          if (activities.includes('sentenceCompletion')) {
+          if (activities.includes('sentence-completion')) {
             parsedActivities.sentenceCompletion = [
               { sentence: 'The character is _____.', answers: ['happy', 'excited', 'brave'] }
             ]
           }
           
-          if (activities.includes('threeLineSummary')) {
+          if (activities.includes('three-line-summary')) {
             parsedActivities.threeLineSummary = 'This is a three line summary of the story. It includes the main events. The story has a good ending.'
           }
           
-          if (activities.includes('drawAndTell')) {
+          if (activities.includes('draw-and-tell')) {
             parsedActivities.drawAndTell = 'Draw your favorite part of the story and tell someone about it!'
           }
           

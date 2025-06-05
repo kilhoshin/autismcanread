@@ -117,27 +117,30 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     console.log('🔍 PARSE AI RESPONSE DEBUG START')
     console.log('- Response length:', response?.length || 0)
     console.log('- Activity types requested:', activityTypes)
-    console.log('- Raw AI Response preview:', response?.substring(0, 500) + '...')
+    console.log('Raw AI Response:', response.substring(0, 500) + '...')
     
+    // Extract JSON more robustly
     let cleanResponse = response.trim()
     
-    // Check if response is actually an error message
-    if (cleanResponse.startsWith('Failed') || cleanResponse.startsWith('Error') || cleanResponse.startsWith('Sorry')) {
-      console.error('❌ AI returned error message instead of JSON:', cleanResponse)
-      throw new Error(`AI generation failed: ${cleanResponse}`)
-    }
-    
-    // Remove markdown code blocks
-    if (cleanResponse.startsWith('```json')) {
-      cleanResponse = cleanResponse.replace(/```json\s*/, '').replace(/```\s*$/, '')
-    }
-    if (cleanResponse.startsWith('```')) {
-      cleanResponse = cleanResponse.replace(/```\s*/, '').replace(/```\s*$/, '')
-    }
-    
-    // Remove any extra text before/after JSON
+    // Find the first '{' and last '}' to extract JSON
     const jsonStart = cleanResponse.indexOf('{')
-    const jsonEnd = cleanResponse.lastIndexOf('}')
+    let jsonEnd = -1
+    
+    // Find matching closing brace
+    if (jsonStart !== -1) {
+      let braceCount = 0
+      for (let i = jsonStart; i < cleanResponse.length; i++) {
+        if (cleanResponse[i] === '{') braceCount++
+        if (cleanResponse[i] === '}') {
+          braceCount--
+          if (braceCount === 0) {
+            jsonEnd = i
+            break
+          }
+        }
+      }
+    }
+    
     if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
       console.error('❌ No valid JSON found in response')
       throw new Error(`No valid JSON structure found in AI response: ${cleanResponse.substring(0, 200)}...`)
@@ -145,7 +148,7 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
     
     cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1)
     
-    // Fix common JSON issues
+    // Fix common JSON issues more aggressively
     cleanResponse = cleanResponse
       .replace(/,\s*}/g, '}')  // Remove trailing commas before }
       .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
@@ -153,18 +156,43 @@ function parseAIResponse(response: string, activityTypes: string[]): Partial<Sto
       .replace(/:\s*'([^']*)'/g, ': "$1"') // Replace single quotes with double
       .replace(/\\'/g, "'") // Fix escaped single quotes
       .replace(/\n/g, ' ') // Remove newlines
+      .replace(/\r/g, ' ') // Remove carriage returns
+      .replace(/\t/g, ' ') // Remove tabs
       .replace(/\s+/g, ' ') // Normalize spaces
+      .replace(/"\s*:\s*"([^"]*?)"\s*,?\s*"([^"]*?)"\s*:/g, '": "$1", "$2":') // Fix concatenated strings
     
     console.log('Cleaned Response:', cleanResponse)
     
-    // Validate JSON before parsing
+    // Final validation - try to parse a minimal version first
     if (!cleanResponse.startsWith('{') || !cleanResponse.endsWith('}')) {
-      throw new Error(`Invalid JSON format: ${cleanResponse.substring(0, 100)}...`)
+      throw new Error(`Invalid JSON format after cleaning: ${cleanResponse.substring(0, 100)}...`)
     }
     
     console.log('🔍 About to parse JSON...')
-    const parsed = JSON.parse(cleanResponse)
-    console.log('✅ JSON parsing successful!')
+    
+    let parsed
+    try {
+      parsed = JSON.parse(cleanResponse)
+      console.log('✅ JSON parsing successful!')
+    } catch (parseError) {
+      console.error('❌ JSON parse failed, trying manual fixes...')
+      
+      // Try to fix more JSON issues
+      let fixedResponse = cleanResponse
+        .replace(/([^"])\b(\w+):/g, '$1"$2":')  // Fix unquoted keys more broadly
+        .replace(/:\s*([^",\[\]{}]+)(?=\s*[,}])/g, ': "$1"')  // Quote unquoted values
+        .replace(/"\s*\+\s*"/g, '')  // Remove string concatenation
+        .replace(/,(\s*[}\]])/g, '$1')  // Remove trailing commas
+      
+      try {
+        parsed = JSON.parse(fixedResponse)
+        console.log('✅ JSON parsing successful after manual fixes!')
+      } catch (finalError) {
+        console.error('❌ All JSON parsing attempts failed')
+        throw new Error(`JSON parsing failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`)
+      }
+    }
+    
     console.log('Raw parsed JSON keys:', Object.keys(parsed))
     console.log('Raw parsed JSON:', JSON.stringify(parsed, null, 2))
     
@@ -548,7 +576,7 @@ export async function POST(request: NextRequest) {
         
         // Generate story
         const storyPrompt = generateStoryPrompt(topic, readingLevel)
-        const storyModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' })
+        const storyModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
         const storyResult = await storyModel.generateContent(storyPrompt)
         const storyResponse = storyResult.response.text()
         
@@ -564,21 +592,21 @@ export async function POST(request: NextRequest) {
         const activityPrompt = generateActivityPrompts(topic, activities, String(readingLevel), String(writingLevel))
         console.log('Activity Prompt sent to AI:', activityPrompt)
         
-        // Use faster model and set timeout
+        // Use faster and lighter model
         const activityModel = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash',  // Faster model
+          model: 'gemini-2.0-flash-lite',  // Much lighter and faster model
           generationConfig: {
-            maxOutputTokens: 2048,     // Limit output
-            temperature: 0.3           // Less creative = faster
+            maxOutputTokens: 1024,     // Reduced further for simple tasks
+            temperature: 0.2           // Even less creative = faster
           }
         })
 
         let activityResponse
         try {
-          // Add timeout wrapper
+          // Add timeout wrapper - reduced for lighter model
           const aiPromise = activityModel.generateContent(activityPrompt)
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('AI generation timeout')), 30000) // 30 second timeout
+            setTimeout(() => reject(new Error('AI generation timeout')), 20000) // 20 second timeout for lite model
           )
           
           const result = await Promise.race([aiPromise, timeoutPromise]) as any

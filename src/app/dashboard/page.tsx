@@ -324,7 +324,8 @@ function DashboardContent() {
           count: worksheetCount,
           readingLevel: profile?.reading_level || 3,
           writingLevel: profile?.writing_level || 3,
-          previewOnly: true,  // Request preview data only
+          previewOnly: !isPremium,  // Free Plan: previewOnly, Premium: previewWithPdf
+          previewWithPdf: isPremium,  // Premium users get both JSON and PDF
           userId: user?.id
         }),
       })
@@ -362,40 +363,9 @@ function DashboardContent() {
         return
       }
       
-      // For Premium users, generate PDF for preview using the actual story data
-      const pdfResponse = await fetch('/api/generate-worksheet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topics: finalTopics,
-          activities: selectedActivities,
-          count: worksheetCount,
-          readingLevel: profile?.reading_level || 3,
-          writingLevel: profile?.writing_level || 3,
-          usePreviewData: true,
-          previewStoryData: data.stories,
-          userId: user?.id
-        }),
-      })
-
-      if (!pdfResponse.ok) {
-        const errorData = await pdfResponse.json()
-        
-        // Handle usage limit exceeded errors specifically
-        if (pdfResponse.status === 403 && errorData.upgrade_required) {
-          alert(`${errorData.message}\n\nUpgrade to Premium for unlimited worksheets!`)
-          return
-        }
-        
-        throw new Error(errorData.message || errorData.error || 'Failed to generate worksheet')
-      }
-
-      const blob = await pdfResponse.blob()
-      const pdfBase64 = await blobToBase64(blob)
-
-      setPreviewData({ stories: data.stories, pdfBase64 })
+      // For Premium users, data already includes PDF base64
+      console.log('💎 Premium user - received preview with PDF')
+      setPreviewData({ stories: data.stories, pdfBase64: data.pdfBase64 })
       setShowPreviewModal(true)
       
     } catch (error) {

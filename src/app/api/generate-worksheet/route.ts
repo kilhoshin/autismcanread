@@ -21,6 +21,7 @@ interface WorksheetRequest {
   writingLevel: number
   customTopic?: string
   previewOnly?: boolean
+  previewWithPdf?: boolean
   userId?: string
   usePreviewData?: boolean
   previewStoryData?: StoryData[]
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    if (body.previewOnly) {
+    if (body.previewOnly || body.previewWithPdf) {
       console.log('📋 Returning preview data for', stories.length, 'stories')
       
       // Update usage counter for Free Plan users on preview generation
@@ -147,10 +148,23 @@ export async function POST(request: NextRequest) {
         }
       }
       
-      return NextResponse.json({
-        stories: stories,
-        success: true
-      })
+      if (body.previewWithPdf) {
+        // Generate PDF with all stories (Premium users only reach here)
+        console.log('📄 Generating PDF with', stories.length, 'stories...')
+        const pdfBuffer = await generateWorksheetPDF(stories, body.activities)
+        const pdfBase64 = pdfBuffer.toString('base64')
+        
+        return NextResponse.json({
+          stories: stories,
+          pdfBase64: pdfBase64,
+          success: true
+        })
+      } else {
+        return NextResponse.json({
+          stories: stories,
+          success: true
+        })
+      }
     }
     
     // Generate PDF with all stories (Premium users only reach here)

@@ -512,14 +512,12 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
               {hasActivity('Three Line Summary', story.threeLineSummary) && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Three Line Summary - Sample Answer</Text>
-                  {(story.threeLineSummary as any)?.lines ? (
-                    (story.threeLineSummary as any).lines.map((line: string, index: number) => (
-                      <Text key={index} style={styles.answerText}>{index + 1}. {line}</Text>
-                    ))
-                  ) : (
-                    typeof story.threeLineSummary === 'string' ? (
-                      <Text style={styles.answerText}>{story.threeLineSummary}</Text>
-                    ) : null
+                  {story.threeLineSummary && typeof story.threeLineSummary === 'object' && (
+                    <View>
+                      <Text style={styles.answerText}>1. {(story.threeLineSummary as any).line1}</Text>
+                      <Text style={styles.answerText}>2. {(story.threeLineSummary as any).line2}</Text>
+                      <Text style={styles.answerText}>3. {(story.threeLineSummary as any).line3}</Text>
+                    </View>
                   )}
                 </View>
               )}

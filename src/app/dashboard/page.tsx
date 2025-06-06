@@ -201,8 +201,9 @@ function DashboardContent() {
   // PDF 워크시트 생성 및 다운로드 함수
   const handleGenerateWorksheet = async () => {
     if (!isPremium) {
-      alert('Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads!')
-      router.push('/pricing')
+      // Free Plan users: Show preview instead of blocking
+      console.log('🔄 Free Plan user redirected to preview mode')
+      await handlePreviewWorksheet()
       return
     }
 
@@ -268,13 +269,6 @@ function DashboardContent() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       console.log('📁 Download completed!')
-
-      // 성공 시 usage 증가
-      if (user?.id) {
-        await incrementMonthlyUsage(user.id)
-        const usageInfo = await canGenerateWorksheets(user.id, 0)
-        setMonthlyUsage(usageInfo.currentCount)
-      }
 
       console.log('✅ Worksheet generated and downloaded successfully')
 
@@ -386,9 +380,15 @@ function DashboardContent() {
       setPreviewData({ stories: data.stories, pdfBase64 })
       setShowPreviewModal(true)
       
-      // Increment usage count for preview
-      await incrementMonthlyUsage(user.id)
-      setMonthlyUsage(prev => prev + worksheetCount)
+      // Refresh usage count for Free Plan users
+      if (!isPremium && user?.id) {
+        try {
+          const usageInfo = await canGenerateWorksheets(user.id, 0)
+          setMonthlyUsage(usageInfo.currentCount)
+        } catch (error) {
+          console.error('Error refreshing usage count:', error)
+        }
+      }
       
     } catch (error) {
       console.error('❌ Error generating worksheet:', error)
@@ -401,6 +401,13 @@ function DashboardContent() {
   const handleGenerateWorksheetFinal = async () => {
     if (!previewData) {
       alert('Please preview the worksheet first')
+      return
+    }
+
+    // Block Free Plan users from PDF download
+    if (!isPremium) {
+      alert('Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads!')
+      router.push('/pricing')
       return
     }
 

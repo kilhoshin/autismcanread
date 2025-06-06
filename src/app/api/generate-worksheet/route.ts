@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (body.userId) {
       const { data: user, error } = await supabase
         .from('users')
-        .select('subscription_status, worksheets_generated_this_month')
+        .select('subscription_status, monthly_worksheets_generated')
         .eq('id', body.userId)
         .single()
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
-      console.log('📊 User status:', user.subscription_status, 'Generated:', user.worksheets_generated_this_month)
+      console.log('📊 User status:', user.subscription_status, 'Generated:', user.monthly_worksheets_generated)
 
       // Check subscription status and limitations
       if (user.subscription_status === 'free' || !user.subscription_status) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check preview usage limits for Free Plan users
-        const currentUsage = user.worksheets_generated_this_month || 0
+        const currentUsage = user.monthly_worksheets_generated || 0
         const totalSheetsRequested = body.count
         
         if (currentUsage >= 5) {
@@ -118,17 +118,17 @@ export async function POST(request: NextRequest) {
         try {
           const { data: user } = await supabase
             .from('users')
-            .select('subscription_status, worksheets_generated_this_month')
+            .select('subscription_status, monthly_worksheets_generated')
             .eq('id', body.userId)
             .single()
 
           // Only count usage for Free Plan users
           if (user && (user.subscription_status === 'free' || !user.subscription_status)) {
-            const newUsage = (user.worksheets_generated_this_month || 0) + body.count
+            const newUsage = (user.monthly_worksheets_generated || 0) + body.count
             
             await supabase
               .from('users')
-              .update({ worksheets_generated_this_month: newUsage })
+              .update({ monthly_worksheets_generated: newUsage })
               .eq('id', body.userId)
               
             console.log('📊 Updated preview usage count for Free Plan user:', newUsage)

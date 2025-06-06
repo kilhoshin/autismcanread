@@ -344,7 +344,25 @@ function DashboardContent() {
       const data = await response.json()
       console.log('📋 Received preview data:', data)
       
-      // Generate PDF for preview using the actual story data
+      // For Free Plan users, show preview without PDF
+      if (!isPremium) {
+        console.log('🆓 Free Plan user - showing preview without PDF')
+        setPreviewData({ stories: data.stories, pdfBase64: '' })
+        setShowPreviewModal(true)
+        
+        // Refresh usage count for Free Plan users
+        if (user?.id) {
+          try {
+            const usageInfo = await canGenerateWorksheets(user.id, 0)
+            setMonthlyUsage(usageInfo.currentCount)
+          } catch (error) {
+            console.error('Error refreshing usage count:', error)
+          }
+        }
+        return
+      }
+      
+      // For Premium users, generate PDF for preview using the actual story data
       const pdfResponse = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
@@ -379,16 +397,6 @@ function DashboardContent() {
 
       setPreviewData({ stories: data.stories, pdfBase64 })
       setShowPreviewModal(true)
-      
-      // Refresh usage count for Free Plan users
-      if (!isPremium && user?.id) {
-        try {
-          const usageInfo = await canGenerateWorksheets(user.id, 0)
-          setMonthlyUsage(usageInfo.currentCount)
-        } catch (error) {
-          console.error('Error refreshing usage count:', error)
-        }
-      }
       
     } catch (error) {
       console.error('❌ Error generating worksheet:', error)

@@ -21,6 +21,7 @@ export interface UserProfile {
   monthly_worksheets_generated?: number
   last_generation_month?: number
   last_generation_year?: number
+  is_active?: boolean
 }
 
 export interface WorksheetHistory {

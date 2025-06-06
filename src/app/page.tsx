@@ -1,16 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Book, Users, Download, Star, CheckCircle, ArrowRight, FileText, Printer, User, LogOut } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Book, Users, Download, Star, CheckCircle, ArrowRight, FileText, Printer, User, LogOut, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { signOut } from '@/utils/supabase'
 import { clearAuthAndReload } from '@/utils/clearStorage'
 
 export default function HomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, loading } = useAuth()
+  const [showDeletedMessage, setShowDeletedMessage] = useState(false)
+
+  // Check for deletion confirmation
+  useEffect(() => {
+    if (searchParams.get('deleted') === 'true') {
+      setShowDeletedMessage(true)
+      // Clean URL
+      const url = new URL(window.location.href)
+      url.searchParams.delete('deleted')
+      window.history.replaceState({}, '', url.pathname + url.search)
+    }
+  }, [searchParams])
 
   const handleSignOut = async () => {
     await signOut()
@@ -432,6 +445,35 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Account Deleted Confirmation Modal */}
+      {showDeletedMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Account Successfully Deleted
+              </h3>
+              
+              <p className="text-gray-600 mb-6">
+                Your account has been permanently deleted. Your subscription has been cancelled and all data has been removed from our system. 
+                Payment history is preserved in Stripe for billing purposes.
+              </p>
+              
+              <button
+                onClick={() => setShowDeletedMessage(false)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Continue to Homepage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

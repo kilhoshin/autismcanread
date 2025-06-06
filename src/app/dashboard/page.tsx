@@ -501,6 +501,13 @@ function DashboardContent() {
                   {profile?.full_name || user?.email?.split('@')[0] || 'User'}
                 </span>
               </div>
+              <Link
+                href="/settings"
+                className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="flex items-center px-3 py-2 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 transition-colors"

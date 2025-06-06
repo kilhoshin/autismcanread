@@ -201,6 +201,7 @@ function DashboardContent() {
   // PDF 워크시트 생성 및 다운로드 함수
   const handleGenerateWorksheet = async () => {
     if (!isPremium) {
+      alert('Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads!')
       router.push('/pricing')
       return
     }
@@ -222,7 +223,8 @@ function DashboardContent() {
         readingLevel: profile?.reading_level || 3,
         writingLevel: profile?.writing_level || 3,
         usePreviewData: showPreviewModal && previewData ? true : false,
-        previewStoryData: showPreviewModal && previewData ? previewData.stories : null
+        previewStoryData: showPreviewModal && previewData ? previewData.stories : null,
+        userId: user?.id
       }
 
       console.log('Generating worksheet with:', requestBody)
@@ -237,7 +239,14 @@ function DashboardContent() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate worksheet')
+        
+        // Handle usage limit exceeded errors specifically
+        if (response.status === 403 && errorData.upgrade_required) {
+          alert(`${errorData.message}\n\nUpgrade to Premium for unlimited worksheets!`)
+          return
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Failed to generate worksheet')
       }
 
       console.log('📥 Received response, converting to blob...')
@@ -322,11 +331,20 @@ function DashboardContent() {
           readingLevel: profile?.reading_level || 3,
           writingLevel: profile?.writing_level || 3,
           previewOnly: true,  // Request preview data only
+          userId: user?.id
         }),
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json()
+        
+        // Handle usage limit exceeded errors specifically
+        if (response.status === 403 && errorData.upgrade_required) {
+          alert(`${errorData.message}\n\nUpgrade to Premium for unlimited worksheets!`)
+          return
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Failed to generate worksheet')
       }
 
       const data = await response.json()
@@ -345,12 +363,21 @@ function DashboardContent() {
           readingLevel: profile?.reading_level || 3,
           writingLevel: profile?.writing_level || 3,
           usePreviewData: true,
-          previewStoryData: data.stories
+          previewStoryData: data.stories,
+          userId: user?.id
         }),
       })
 
       if (!pdfResponse.ok) {
-        throw new Error(`PDF generation failed! status: ${pdfResponse.status}`)
+        const errorData = await pdfResponse.json()
+        
+        // Handle usage limit exceeded errors specifically
+        if (pdfResponse.status === 403 && errorData.upgrade_required) {
+          alert(`${errorData.message}\n\nUpgrade to Premium for unlimited worksheets!`)
+          return
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Failed to generate worksheet')
       }
 
       const blob = await pdfResponse.blob()
@@ -399,12 +426,21 @@ function DashboardContent() {
           readingLevel: profile?.reading_level || 3,
           writingLevel: profile?.writing_level || 3,
           usePreviewData: true,
-          previewStoryData: previewData.stories
+          previewStoryData: previewData.stories,
+          userId: user?.id
         }),
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json()
+        
+        // Handle usage limit exceeded errors specifically
+        if (response.status === 403 && errorData.upgrade_required) {
+          alert(`${errorData.message}\n\nUpgrade to Premium for unlimited worksheets!`)
+          return
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Failed to generate worksheet')
       }
 
       const blob = await response.blob()

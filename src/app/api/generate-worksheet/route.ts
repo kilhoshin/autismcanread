@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { createClient } from '@supabase/supabase-js'
 import { renderToBuffer } from '@react-pdf/renderer'
 import * as React from 'react'
 import WorksheetPDF from '../../../utils/pdf-react-renderer'
 import { StoryData } from '@/types/story'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 interface WorksheetRequest {
   topics: string[]
@@ -15,12 +21,61 @@ interface WorksheetRequest {
   writingLevel: number
   customTopic?: string
   previewOnly?: boolean
+  userId?: string
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: WorksheetRequest = await request.json()
     console.log('🚀 Simple workflow started:', body)
+
+    // Check user subscription and usage limits
+    if (body.userId) {
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('subscription_status, worksheets_generated_this_month')
+        .eq('id', body.userId)
+        .single()
+
+      if (error) {
+        console.error('❌ Error fetching user:', error)
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      console.log('📊 User status:', user.subscription_status, 'Generated:', user.worksheets_generated_this_month)
+
+      // Check subscription status and limitations
+      if (user.subscription_status === 'free' || !user.subscription_status) {
+        // Free Plan users: Only previews allowed, NO PDF downloads
+        if (!body.previewOnly) {
+          return NextResponse.json({ 
+            error: 'PDF downloads require Premium',
+            message: 'Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads.',
+            upgrade_required: true
+          }, { status: 403 })
+        }
+
+        // Check preview usage limits for Free Plan users
+        const currentUsage = user.worksheets_generated_this_month || 0
+        const totalSheetsRequested = body.count
+        
+        if (currentUsage >= 5) {
+          return NextResponse.json({ 
+            error: 'Preview limit exceeded',
+            message: `Free Plan allows 5 worksheet previews per month. You have used ${currentUsage}/5 previews.`,
+            upgrade_required: true
+          }, { status: 403 })
+        }
+        
+        if (currentUsage + totalSheetsRequested > 5) {
+          return NextResponse.json({ 
+            error: 'Preview limit would be exceeded',
+            message: `Free Plan allows 5 worksheet previews per month. You have ${currentUsage}/5 used. Requesting ${totalSheetsRequested} more would exceed the limit.`,
+            upgrade_required: true
+          }, { status: 403 })
+        }
+      }
+    }
 
     // Generate multiple stories based on count
     const stories: StoryData[] = []
@@ -57,15 +112,44 @@ export async function POST(request: NextRequest) {
     
     if (body.previewOnly) {
       console.log('📋 Returning preview data for', stories.length, 'stories')
+      
+      // Update usage counter for Free Plan users on preview generation
+      if (body.userId) {
+        try {
+          const { data: user } = await supabase
+            .from('users')
+            .select('subscription_status, worksheets_generated_this_month')
+            .eq('id', body.userId)
+            .single()
+
+          // Only count usage for Free Plan users
+          if (user && (user.subscription_status === 'free' || !user.subscription_status)) {
+            const newUsage = (user.worksheets_generated_this_month || 0) + body.count
+            
+            await supabase
+              .from('users')
+              .update({ worksheets_generated_this_month: newUsage })
+              .eq('id', body.userId)
+              
+            console.log('📊 Updated preview usage count for Free Plan user:', newUsage)
+          }
+        } catch (updateError) {
+          console.error('❌ Error updating usage count:', updateError)
+          // Don't fail the request if usage update fails
+        }
+      }
+      
       return NextResponse.json({
         stories: stories,
         success: true
       })
     }
     
-    // Generate PDF with all stories
+    // Generate PDF with all stories (Premium users only reach here)
     console.log('📄 Generating PDF with', stories.length, 'stories...')
     const pdfBuffer = await generateWorksheetPDF(stories, body.activities)
+    
+    // No usage tracking needed for PDF downloads (Premium users have unlimited)
     
     return new NextResponse(pdfBuffer, {
       headers: {

@@ -105,6 +105,52 @@ function DashboardContent() {
     }
   }, [profile?.subscription_status, user?.id])
 
+  // Handle subscription cancellation success
+  useEffect(() => {
+    const cancelled = searchParams.get('cancelled')
+    if (cancelled === 'true' && user?.id) {
+      console.log('🚫 Subscription cancellation detected, refreshing profile...')
+      
+      const handleCancellationSuccess = async () => {
+        try {
+          setCheckingPremium(true)
+          
+          // Wait a moment for the backend to process
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          // Force refresh profile to get latest subscription_status
+          console.log('🔄 Force refreshing profile after cancellation...')
+          await refreshProfile()
+          
+          // Also refresh premium status
+          const premiumStatus = await canDownloadPDF(user.id)
+          console.log('📊 Updated premium status after cancellation:', premiumStatus)
+          setIsPremium(premiumStatus)
+          
+          const usageInfo = await canGenerateWorksheets(user.id, 0)
+          console.log('📊 Updated monthly usage after cancellation:', usageInfo.currentCount)
+          setMonthlyUsage(usageInfo.currentCount)
+          
+          setSubscriptionError(false)
+          setCheckingPremium(false)
+          
+          console.log('✅ Profile refresh after cancellation complete')
+        } catch (error) {
+          console.error('❌ Error refreshing profile after cancellation:', error)
+          setSubscriptionError(true)
+          setCheckingPremium(false)
+        }
+      }
+      
+      handleCancellationSuccess()
+      
+      // Clean URL by removing cancelled parameter
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('cancelled')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [searchParams, user?.id, refreshProfile])
+
   // Handle payment success
   useEffect(() => {
     const paymentSuccess = searchParams.get('success') || searchParams.get('paymentSuccess')
@@ -155,8 +201,45 @@ function DashboardContent() {
   // Check for reactivated parameter
   useEffect(() => {
     const reactivated = searchParams.get('reactivated')
-    if (reactivated === 'true') {
+    if (reactivated === 'true' && user?.id) {
+      console.log('🔄 Subscription reactivation detected, refreshing profile...')
+      
+      const handleReactivationSuccess = async () => {
+        try {
+          setCheckingPremium(true)
+          
+          // Wait a moment for the backend to process
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          // Force refresh profile to get latest subscription_status
+          console.log('🔄 Force refreshing profile after reactivation...')
+          await refreshProfile()
+          
+          // Also refresh premium status
+          if (user) {
+            const premiumStatus = await canDownloadPDF(user.id)
+            console.log('📊 Updated premium status after reactivation:', premiumStatus)
+            setIsPremium(premiumStatus)
+            
+            const usageInfo = await canGenerateWorksheets(user.id, 0)
+            console.log('📊 Updated monthly usage after reactivation:', usageInfo.currentCount)
+            setMonthlyUsage(usageInfo.currentCount)
+          }
+          
+          setSubscriptionError(false)
+          setCheckingPremium(false)
+          
+          console.log('✅ Profile refresh after reactivation complete')
+        } catch (error) {
+          console.error('❌ Error refreshing profile after reactivation:', error)
+          setSubscriptionError(true)
+          setCheckingPremium(false)
+        }
+      }
+      
+      handleReactivationSuccess()
       setShowReactivatedMessage(true)
+      
       // Clear the parameter from URL
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
@@ -166,7 +249,7 @@ function DashboardContent() {
         setShowReactivatedMessage(false)
       }, 5000)
     }
-  }, [searchParams])
+  }, [searchParams, user?.id, refreshProfile])
 
   // Show loading only while auth is loading
   if (loading) {

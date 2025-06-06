@@ -1,15 +1,15 @@
-import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
-import { NextRequest, NextResponse } from 'next/server';
-import { Stripe as StripeType } from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-05-28.basil',
-})
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import Stripe from 'stripe'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY!,
+  { apiVersion: '2025-05-28.basil' }
 )
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    // Get user data
+    // Get user from Supabase
     const { data: user, error: userError } = await supabaseAdmin
       .from('users')
       .select('*')
@@ -31,25 +31,25 @@ export async function POST(request: NextRequest) {
       .single()
     
     if (userError || !user) {
-      console.error('❌ User not found:', userError)
+      console.error('User not found:', userError)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
-    console.log('👤 Found user:', user.email)
-    console.log('🔑 Stripe subscription ID:', user.stripe_subscription_id)
+    console.log('Found user:', user.email)
+    console.log('Stripe subscription ID:', user.stripe_subscription_id)
     
     // Cancel subscription in Stripe if it exists
     if (user.stripe_subscription_id) {
       try {
-        console.log('🔄 Setting subscription to cancel at period end...')
-        console.log('🎯 Stripe Subscription ID:', user.stripe_subscription_id)
+        console.log('Setting subscription to cancel at period end...')
+        console.log('Stripe Subscription ID:', user.stripe_subscription_id)
         
-        // 🎯 Key Fix: Don't cancel immediately, set to cancel at period end
+        // Key Fix: Don't cancel immediately, set to cancel at period end
         const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
           cancel_at_period_end: true
         })
         
-        console.log('✅ Stripe subscription set to cancel at period end:', {
+        console.log('Stripe subscription set to cancel at period end:', {
           id: updatedSubscription.id,
           status: updatedSubscription.status,
           cancel_at_period_end: updatedSubscription.cancel_at_period_end,
@@ -59,14 +59,14 @@ export async function POST(request: NextRequest) {
         
         // Verify the update was successful
         if (updatedSubscription.cancel_at_period_end) {
-          console.log('🎉 SUCCESS: Stripe subscription will cancel at period end')
+          console.log('SUCCESS: Stripe subscription will cancel at period end')
         } else {
-          console.warn('⚠️ WARNING: cancel_at_period_end was not set properly')
+          console.warn('WARNING: cancel_at_period_end was not set properly')
         }
         
       } catch (stripeError: any) {
-        console.error('❌ Failed to update Stripe subscription:', stripeError.message)
-        console.error('📊 Stripe error details:', {
+        console.error('Failed to update Stripe subscription:', stripeError.message)
+        console.error('Stripe error details:', {
           type: stripeError.type,
           code: stripeError.code,
           message: stripeError.message,
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         // Continue with database update even if Stripe update fails
       }
     } else {
-      console.log('ℹ️ No Stripe subscription ID found for user - skipping Stripe cancellation')
+      console.log('No Stripe subscription ID found for user - skipping Stripe cancellation')
     }
     
     // Update user subscription status to cancelled
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
     
     if (updateError) {
-      console.error('❌ Failed to update user subscription:', updateError)
+      console.error('Failed to update user subscription:', updateError)
       return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 })
     }
     
@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       success: true, 
       message: 'Subscription cancelled successfully',
       subscription_status: 'cancelled',
-      subscription_period_end: currentPeriodEnd
+      subscription_period_end: currentPeriodEnd,
+      redirect_url: `/dashboard?cancelled=true`
     })
     
   } catch (error) {

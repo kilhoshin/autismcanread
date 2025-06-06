@@ -139,7 +139,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Subscription reactivated successfully',
       periodEnd: userData.subscription_period_end,
-      stripeReactivated
+      stripeReactivated,
+      redirect_url: `/dashboard?reactivated=true`
     })
 
   } catch (error) {

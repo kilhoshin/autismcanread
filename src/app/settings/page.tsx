@@ -112,11 +112,12 @@ export default function Settings() {
             <div className="flex items-start">
               <AlertTriangle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
               <div>
-                <h3 className="font-medium text-red-800">Delete Account</h3>
+                <h3 className="font-medium text-red-800">Delete Account (GDPR Compliant)</h3>
                 <p className="text-sm text-red-700 mt-1">
-                  This action will permanently delete your account and all associated data. 
-                  Your subscription will be cancelled immediately, but payment history will be preserved in Stripe.
-                  This action cannot be undone.
+                  This action will permanently and completely delete your account from our system (GDPR compliant). 
+                  Your subscription will be cancelled immediately and you will no longer be able to log in.
+                  Payment history is preserved in Stripe for legal/tax purposes only.
+                  <strong> This action cannot be undone.</strong>
                 </p>
               </div>
             </div>

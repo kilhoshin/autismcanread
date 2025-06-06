@@ -460,12 +460,13 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
               </div>
               
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Account Successfully Deleted
+                Account Successfully Deleted (GDPR Compliant)
               </h3>
               
               <p className="text-gray-600 mb-6">
-                Your account has been permanently deleted. Your subscription has been cancelled and all data has been removed from our system. 
-                Payment history is preserved in Stripe for billing purposes.
+                Your account has been permanently and completely deleted from our system in compliance with GDPR. 
+                You can no longer log in and all personal data has been removed. 
+                Payment history is preserved in Stripe for legal/tax purposes only.
               </p>
               
               <button

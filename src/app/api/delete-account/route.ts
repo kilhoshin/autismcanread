@@ -75,37 +75,40 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ User deactivated in database')
     
-    // Step 4: Disable user in Supabase Auth
+    // Step 4: Delete user from Supabase Auth (GDPR compliance)
+    console.log('🗑️ Deleting user from Supabase Auth...')
     try {
-      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-        user_metadata: { 
-          is_active: false,
-          deactivated_at: new Date().toISOString()
-        },
-        app_metadata: { 
-          is_active: false 
-        }
-      })
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
       
-      if (authError) {
-        console.error('❌ Failed to deactivate user in auth:', authError)
-        // Continue even if auth update fails
+      if (authDeleteError) {
+        console.error('❌ Failed to delete user from auth:', authDeleteError)
+        // This is critical for GDPR compliance, so return error
+        return NextResponse.json(
+          { error: 'Failed to delete user from authentication system' },
+          { status: 500 }
+        )
       } else {
-        console.log('✅ User deactivated in Supabase Auth')
+        console.log('✅ User completely deleted from Supabase Auth (GDPR compliant)')
       }
     } catch (authError) {
-      console.error('❌ Exception deactivating user in auth:', authError)
+      console.error('❌ Exception deleting user from auth:', authError)
+      return NextResponse.json(
+        { error: 'Failed to delete user from authentication system' },
+        { status: 500 }
+      )
     }
     
     console.log('✅ Account deletion completed successfully for user:', userId)
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Account deleted successfully',
+      message: 'Account deleted successfully (GDPR compliant)',
       details: {
         subscription_cancelled: !!user.stripe_subscription_id,
         customer_preserved: !!user.stripe_customer_id,
-        account_deactivated: true
+        account_deleted: true,
+        auth_deleted: true,
+        gdpr_compliant: true
       }
     })
     

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Book, Users, Download, Star, CheckCircle, ArrowRight, FileText, Printer, User, LogOut, X } from 'lucide-react'
@@ -8,9 +8,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { signOut } from '@/utils/supabase'
 import { clearAuthAndReload } from '@/utils/clearStorage'
 
-export default function HomePage() {
-  const router = useRouter()
+function SearchParamsWrapper() {
   const searchParams = useSearchParams()
+  return <SearchParamsContent searchParams={searchParams} />
+}
+
+function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }) {
+  const router = useRouter()
   const { user, loading } = useAuth()
   const [showDeletedMessage, setShowDeletedMessage] = useState(false)
 
@@ -475,5 +479,13 @@ export default function HomePage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchParamsWrapper />
+    </Suspense>
   )
 }

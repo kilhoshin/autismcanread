@@ -92,11 +92,31 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
     
     if (updateError) {
-      console.error('Failed to update user subscription:', updateError)
+      console.error('❌ Failed to update user subscription:', updateError)
+      console.error('❌ Update error details:', JSON.stringify(updateError, null, 2))
       return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 })
     }
     
     console.log('✅ Subscription cancelled successfully for user:', userId)
+    console.log('📊 Updated subscription_status to "cancelled" and period_end to:', currentPeriodEnd)
+    
+    // Verify the update by fetching the user again
+    console.log('🔍 Verifying update by fetching user data...')
+    const { data: updatedUser, error: fetchError } = await supabaseAdmin
+      .from('users')
+      .select('subscription_status, subscription_period_end, updated_at')
+      .eq('id', userId)
+      .single()
+    
+    if (fetchError) {
+      console.error('❌ Error verifying update:', fetchError)
+    } else {
+      console.log('✅ Verified updated user data:', {
+        subscription_status: updatedUser.subscription_status,
+        subscription_period_end: updatedUser.subscription_period_end,
+        updated_at: updatedUser.updated_at
+      })
+    }
     
     return NextResponse.json({ 
       success: true, 

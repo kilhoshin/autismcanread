@@ -43,6 +43,21 @@ const ensureUserRecord = async (user: User): Promise<UserProfile | null> => {
     
     if (existingProfile) {
       console.log('✅ User record exists:', existingProfile.email, 'Subscription:', existingProfile.subscription_status)
+      
+      // Always fetch fresh data to ensure subscription status is current
+      console.log('🔄 Fetching fresh profile data to ensure subscription status is current...')
+      const { data: freshProfile, error: freshError } = await getUserProfile(user.id)
+      
+      if (freshError) {
+        console.error('❌ Error fetching fresh profile:', freshError)
+        return existingProfile // Fallback to existing profile
+      }
+      
+      if (freshProfile) {
+        console.log('✅ Fresh profile data:', freshProfile.email, 'Subscription:', freshProfile.subscription_status)
+        return freshProfile
+      }
+      
       return existingProfile
     }
     

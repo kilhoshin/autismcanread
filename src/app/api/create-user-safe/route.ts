@@ -3,11 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, email, fullName } = await request.json()
+    const { userId, email, fullName, reading_level, writing_level } = await request.json()
     
     console.log('🔄 Safe user creation request:')
     console.log('  - User ID:', userId)
     console.log('  - Email:', email)
+    console.log('  - Reading Level:', reading_level)
+    console.log('  - Writing Level:', writing_level)
 
     if (!userId || !email) {
       return NextResponse.json(
@@ -53,8 +55,8 @@ export async function POST(request: NextRequest) {
         full_name: fullName || '',
         subscription_status: 'free',
         monthly_worksheets_generated: 0,
-        reading_level: 3,
-        writing_level: 3,
+        reading_level: reading_level || 3,
+        writing_level: writing_level || 3,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

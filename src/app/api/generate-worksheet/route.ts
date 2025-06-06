@@ -22,6 +22,8 @@ interface WorksheetRequest {
   customTopic?: string
   previewOnly?: boolean
   userId?: string
+  usePreviewData?: boolean
+  previewStoryData?: StoryData[]
 }
 
 export async function POST(request: NextRequest) {
@@ -77,37 +79,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate multiple stories based on count
-    const stories: StoryData[] = []
-    const finalTopic = body.customTopic || body.topics.join(', ')
-    
-    console.log(`📝 Generating ${body.count} worksheets...`)
-    
-    for (let i = 0; i < body.count; i++) {
-      console.log(`📖 Creating story ${i + 1}/${body.count}...`)
+    let stories: StoryData[] = []
+
+    if (body.usePreviewData && body.previewStoryData) {
+      console.log('📋 Using preview story data')
+      stories = body.previewStoryData
+    } else {
+      // Generate multiple stories based on count
+      const finalTopic = body.customTopic || body.topics.join(', ')
       
-      // Create unique prompt for each story to ensure variety
-      const prompt = createComprehensivePrompt(finalTopic, body.readingLevel, body.writingLevel, i + 1)
+      console.log(`📝 Generating ${body.count} worksheets...`)
       
-      // Single Gemini API call per story
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-      const result = await model.generateContent(prompt)
-      const response = result.response
-      const text = response.text()
-      
-      console.log(`✅ Story ${i + 1} response received, length:`, text.length)
-      
-      // Parse the comprehensive response
-      const storyData: StoryData = parseComprehensiveResponse(text)
-      console.log(`✅ Story ${i + 1} parsed:`, {
-        title: storyData.title,
-        contentLength: storyData.content?.length,
-        activitiesFound: Object.keys(storyData).filter(key => key !== 'title' && key !== 'content')
-      })
-      
-      // Filter activities based on user selection
-      const filteredStory: StoryData = filterSelectedActivities(storyData, body.activities)
-      stories.push(filteredStory)
+      for (let i = 0; i < body.count; i++) {
+        console.log(`📖 Creating story ${i + 1}/${body.count}...`)
+        
+        // Create unique prompt for each story to ensure variety
+        const prompt = createComprehensivePrompt(finalTopic, body.readingLevel, body.writingLevel, i + 1)
+        
+        // Single Gemini API call per story
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+        const result = await model.generateContent(prompt)
+        const response = result.response
+        const text = response.text()
+        
+        console.log(`✅ Story ${i + 1} response received, length:`, text.length)
+        
+        // Parse the comprehensive response
+        const storyData: StoryData = parseComprehensiveResponse(text)
+        console.log(`✅ Story ${i + 1} parsed:`, {
+          title: storyData.title,
+          contentLength: storyData.content?.length,
+          activitiesFound: Object.keys(storyData).filter(key => key !== 'title' && key !== 'content')
+        })
+        
+        // Filter activities based on user selection
+        const filteredStory: StoryData = filterSelectedActivities(storyData, body.activities)
+        stories.push(filteredStory)
+      }
     }
     
     if (body.previewOnly) {

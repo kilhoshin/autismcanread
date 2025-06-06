@@ -22,47 +22,55 @@ export async function POST(request: NextRequest) {
     const body: WorksheetRequest = await request.json()
     console.log('🚀 Simple workflow started:', body)
 
-    // Generate single comprehensive prompt for Gemini
+    // Generate multiple stories based on count
+    const stories: StoryData[] = []
     const finalTopic = body.customTopic || body.topics.join(', ')
-    const prompt = createComprehensivePrompt(finalTopic, body.readingLevel, body.writingLevel)
     
-    console.log('📝 Calling Gemini API with comprehensive prompt...')
+    console.log(`📝 Generating ${body.count} worksheets...`)
     
-    // Single Gemini API call
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-    const result = await model.generateContent(prompt)
-    const response = result.response
-    const text = response.text()
-    
-    console.log('✅ Gemini response received, length:', text.length)
-    
-    // Parse the comprehensive response
-    const storyData: StoryData = parseComprehensiveResponse(text)
-    console.log('✅ Story data parsed:', {
-      title: storyData.title,
-      contentLength: storyData.content?.length,
-      activitiesFound: Object.keys(storyData).filter(key => key !== 'title' && key !== 'content')
-    })
-    
-    // Filter activities based on user selection
-    const filteredStory: StoryData = filterSelectedActivities(storyData, body.activities)
+    for (let i = 0; i < body.count; i++) {
+      console.log(`📖 Creating story ${i + 1}/${body.count}...`)
+      
+      // Create unique prompt for each story to ensure variety
+      const prompt = createComprehensivePrompt(finalTopic, body.readingLevel, body.writingLevel, i + 1)
+      
+      // Single Gemini API call per story
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+      const result = await model.generateContent(prompt)
+      const response = result.response
+      const text = response.text()
+      
+      console.log(`✅ Story ${i + 1} response received, length:`, text.length)
+      
+      // Parse the comprehensive response
+      const storyData: StoryData = parseComprehensiveResponse(text)
+      console.log(`✅ Story ${i + 1} parsed:`, {
+        title: storyData.title,
+        contentLength: storyData.content?.length,
+        activitiesFound: Object.keys(storyData).filter(key => key !== 'title' && key !== 'content')
+      })
+      
+      // Filter activities based on user selection
+      const filteredStory: StoryData = filterSelectedActivities(storyData, body.activities)
+      stories.push(filteredStory)
+    }
     
     if (body.previewOnly) {
-      console.log('📋 Returning preview data only')
+      console.log('📋 Returning preview data for', stories.length, 'stories')
       return NextResponse.json({
-        stories: [filteredStory],
+        stories: stories,
         success: true
       })
     }
     
-    // Generate PDF
-    console.log('📄 Generating PDF...')
-    const pdfBuffer = await generateWorksheetPDF([filteredStory], body.activities)
+    // Generate PDF with all stories
+    console.log('📄 Generating PDF with', stories.length, 'stories...')
+    const pdfBuffer = await generateWorksheetPDF(stories, body.activities)
     
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="worksheet-${Date.now()}.pdf"`
+        'Content-Disposition': `attachment; filename="worksheet-${stories.length}-stories-${Date.now()}.pdf"`
       }
     })
     
@@ -75,14 +83,46 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function createComprehensivePrompt(topic: string, readingLevel: number, writingLevel: number): string {
+function createComprehensivePrompt(topic: string, readingLevel: number, writingLevel: number, storyNumber: number): string {
+  // Add variety elements for different stories
+  const varietyElements = [
+    {
+      characters: ['Emma', 'Leo', 'Maya', 'Sam', 'Alex'],
+      settings: ['in the morning', 'on a sunny afternoon', 'during the weekend', 'after school'],
+      moods: ['excited', 'curious', 'determined', 'cheerful']
+    },
+    {
+      characters: ['Zoe', 'Ben', 'Luna', 'River', 'Sky'],
+      settings: ['at the park', 'in the garden', 'at home', 'in the neighborhood'],
+      moods: ['happy', 'focused', 'creative', 'thoughtful']
+    },
+    {
+      characters: ['Sage', 'Robin', 'Phoenix', 'Ocean', 'Star'],
+      settings: ['in the kitchen', 'in the backyard', 'at the library', 'in the living room'],
+      moods: ['patient', 'enthusiastic', 'gentle', 'proud']
+    }
+  ]
+  
+  const variety = varietyElements[(storyNumber - 1) % varietyElements.length]
+  const suggestedCharacter = variety.characters[Math.floor(Math.random() * variety.characters.length)]
+  const suggestedSetting = variety.settings[Math.floor(Math.random() * variety.settings.length)]
+  const suggestedMood = variety.moods[Math.floor(Math.random() * variety.moods.length)]
+
   return `Create a complete reading comprehension worksheet for children with autism spectrum and ADHD.
 
 TOPIC: ${topic}
 READING LEVEL: Grade ${readingLevel}
 WRITING LEVEL: Grade ${writingLevel}
+STORY NUMBER: ${storyNumber}
 
-Create a story (150-300 words) with simple, clear language and positive content.
+Create a UNIQUE story (150-300 words) with simple, clear language and positive content.
+Use different characters and scenarios for variety.
+
+SUGGESTIONS for Story ${storyNumber}:
+- Main character could be: ${suggestedCharacter}
+- Setting could be: ${suggestedSetting} 
+- Character could feel: ${suggestedMood}
+
 Then create ALL 7 activity types based on the EXACT story content.
 
 Return ONLY valid JSON in this exact format:

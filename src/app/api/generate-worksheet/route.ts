@@ -583,10 +583,26 @@ export async function POST(request: NextRequest) {
         
         let storyData: any
         try {
-          const cleanStoryResponse = storyResponse.trim().replace(/```json\s*/, '').replace(/```\s*$/, '')
-          storyData = JSON.parse(cleanStoryResponse)
+          console.log('🧹 Raw story response received:', storyResponse.substring(0, 300) + '...')
+          
+          // Use the same robust parsing logic as activities
+          const parsedStory = parseAIResponse(storyResponse, [])
+          
+          // Extract story data - parseAIResponse returns an object with story structure
+          if (parsedStory && typeof parsedStory === 'object') {
+            // If parseAIResponse handled it correctly, extract title and content
+            storyData = {
+              title: parsedStory.title || `Story about ${topic}`,
+              content: parsedStory.content || parsedStory.story || 'Story content not available'
+            }
+          } else {
+            throw new Error('Invalid story structure returned from parsing')
+          }
+          
+          console.log('✅ Story parsing successful:', { title: storyData.title, contentLength: storyData.content?.length })
         } catch (error) {
           console.error('❌ Story generation failed:', error)
+          console.error('📄 Raw AI response:', storyResponse.substring(0, 500) + '...')
           return NextResponse.json({ 
             error: 'Story generation failed. Please try again in a moment.',
             details: 'AI service is temporarily unavailable. Your usage count has not been incremented.'

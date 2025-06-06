@@ -568,10 +568,17 @@ export async function POST(request: NextRequest) {
       for (let i = 0; i < count; i++) {
         const topic = topics[Math.floor(Math.random() * topics.length)]
         
-        // Generate story
+        // Generate story with timeout
         const storyPrompt = generateStoryPrompt(topic, readingLevel)
         const storyModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })  // Updated to latest model
-        const storyResult = await storyModel.generateContent(storyPrompt)
+        
+        // Add timeout wrapper for story generation
+        const storyAiPromise = storyModel.generateContent(storyPrompt)
+        const storyTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Story generation timeout after 45 seconds')), 45000)
+        )
+        
+        const storyResult = await Promise.race([storyAiPromise, storyTimeoutPromise]) as any
         const storyResponse = storyResult.response.text()
         
         let storyData: any
@@ -579,10 +586,11 @@ export async function POST(request: NextRequest) {
           const cleanStoryResponse = storyResponse.trim().replace(/```json\s*/, '').replace(/```\s*$/, '')
           storyData = JSON.parse(cleanStoryResponse)
         } catch (error) {
-          storyData = { 
-            title: `Story about ${topic}`,
-            content: 'This is a sample story about ' + topic 
-          }
+          console.error('❌ Story generation failed:', error)
+          return NextResponse.json({ 
+            error: 'Story generation failed. Please try again in a moment.',
+            details: 'AI service is temporarily unavailable. Your usage count has not been incremented.'
+          }, { status: 503 }) // Service Unavailable
         }
 
         // Generate activities with faster model and timeout
@@ -613,7 +621,7 @@ export async function POST(request: NextRequest) {
           // Add timeout wrapper - reduced for lighter model
           const aiPromise = activityModel.generateContent(activityPrompt)
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('AI generation timeout after 30 seconds')), 30000) // Increased timeout
+            setTimeout(() => reject(new Error('AI generation timeout after 45 seconds')), 45000) // Increased timeout for better reliability
           )
           
           const result = await Promise.race([aiPromise, timeoutPromise]) as any

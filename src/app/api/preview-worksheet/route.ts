@@ -589,7 +589,7 @@ export async function POST(request: NextRequest) {
       // 1. Generate complete worksheet with one AI call
       const worksheetPrompt = generateCompleteWorksheetPrompt(randomTopic, readingLevel, activities)
       const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash-preview-05-20',
+        model: 'gemini-2.0-flash',
         generationConfig: {
           temperature: 0.7, // Higher temperature for more story variety
           topP: 0.9,

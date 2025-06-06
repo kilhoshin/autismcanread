@@ -377,43 +377,70 @@ function DashboardContent() {
   }
 
   const handleGenerateWorksheetFinal = async () => {
-    if (!previewData) {
-      alert('Please preview the worksheet first')
-      return
-    }
-
-    // Block Free Plan users from PDF download
-    if (!isPremium) {
-      alert('Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads!')
-      router.push('/pricing')
-      return
-    }
+    if (isGenerating) return
+    setIsGenerating(true)
 
     try {
-      setIsGenerating(true)
-      
-      // Generate final PDF with actual data
-      const finalTopics = customTopic.trim() 
+      // For Premium users with existing PDF base64, skip API call and download directly
+      if (isPremium && previewData?.pdfBase64) {
+        console.log('💎 Premium user - using existing PDF base64 for download')
+        
+        // Convert base64 to blob
+        const byteCharacters = atob(previewData.pdfBase64)
+        const byteNumbers = new Array(byteCharacters.length)
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i)
+        }
+        const byteArray = new Uint8Array(byteNumbers)
+        const blob = new Blob([byteArray], { type: 'application/pdf' })
+        
+        console.log('📄 Blob created from base64, size:', blob.size)
+        
+        if (blob.size === 0) {
+          throw new Error('PDF data is empty')
+        }
+        
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = `autism-can-read-worksheet-${new Date().toISOString().split('T')[0]}.pdf`
+        document.body.appendChild(a)
+        console.log('🔗 Download link created, triggering download...')
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        console.log('📁 Download completed!')
+        
+        console.log('✅ Worksheet downloaded successfully using existing PDF')
+        return
+      }
+
+      // Original API call logic for Free Plan users or when no preview data exists
+      const finalTopics = customTopic?.trim() 
         ? [customTopic.trim()] 
         : selectedTopics.length > 0 
-          ? selectedTopics 
-          : ['Reading comprehension story']
+          ? selectedTopics
+          : selectedTopics
+      const requestBody = {
+        topics: finalTopics,
+        activities: selectedActivities,
+        count: worksheetCount,
+        readingLevel: profile?.reading_level || 3,
+        writingLevel: profile?.writing_level || 3,
+        usePreviewData: showPreviewModal && previewData ? true : false,
+        previewStoryData: showPreviewModal && previewData ? previewData.stories : null,
+        userId: user?.id
+      }
+
+      console.log('Generating worksheet with:', requestBody)
 
       const response = await fetch('/api/generate-worksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          topics: finalTopics,
-          activities: selectedActivities,
-          count: worksheetCount,
-          readingLevel: profile?.reading_level || 3,
-          writingLevel: profile?.writing_level || 3,
-          usePreviewData: true,
-          previewStoryData: previewData.stories,
-          userId: user?.id
-        }),
+        body: JSON.stringify(requestBody)
       })
 
       if (!response.ok) {
@@ -429,19 +456,26 @@ function DashboardContent() {
       }
 
       const blob = await response.blob()
+      console.log('📄 Blob created, size:', blob.size, 'type:', blob.type)
+      
+      if (blob.size === 0) {
+        throw new Error('Received empty PDF file')
+      }
+      
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `worksheet-${Date.now()}.pdf`
+      a.download = `autism-can-read-worksheet-${new Date().toISOString().split('T')[0]}.pdf`
       document.body.appendChild(a)
+      console.log('🔗 Download link created, triggering download...')
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      
-      setShowPreviewModal(false)
-      alert('Worksheet downloaded successfully!')
-      
+      console.log('📁 Download completed!')
+
+      console.log('✅ Worksheet generated and downloaded successfully')
+
     } catch (error) {
       console.error('❌ Error downloading worksheet:', error)
       alert('Failed to download worksheet. Please try again.')

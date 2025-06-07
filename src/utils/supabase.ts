@@ -112,11 +112,25 @@ export const createUserProfile = async (userId: string, profileData: Partial<Use
 }
 
 export const getUserProfile = async (userId: string) => {
+  // Add timestamp to prevent any potential caching
+  const timestamp = Date.now()
+  console.log(`🔄 Getting user profile for ${userId} at ${timestamp}`)
+  
   const { data, error } = await supabase
     .from('users')
     .select('*')
     .eq('id', userId)
     .maybeSingle()
+  
+  if (data) {
+    console.log(`✅ Profile data retrieved:`, {
+      email: data.email,
+      subscription_status: data.subscription_status,
+      cancel_at_period_end: data.cancel_at_period_end,
+      subscription_period_end: data.subscription_period_end,
+      updated_at: data.updated_at
+    })
+  }
   
   return { data, error }
 }

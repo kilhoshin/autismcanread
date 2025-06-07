@@ -85,12 +85,33 @@ export default function Settings() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700">Account Status</label>
-              <p className="text-gray-900">
-                {profile?.subscription_status === 'premium' && profile?.cancel_at_period_end ? '🟡 Premium (Cancelled)' :
-                 profile?.subscription_status === 'premium' ? '🟢 Premium Member' : 
-                 profile?.subscription_status === 'cancelled' ? '🟡 Premium (Cancelled)' : 
-                 '🔵 Free Member'}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-gray-900">
+                  {profile?.subscription_status === 'premium' && profile?.cancel_at_period_end ? '🟡 Premium (Cancelled)' :
+                   profile?.subscription_status === 'premium' ? '🟢 Premium Member' : 
+                   profile?.subscription_status === 'cancelled' ? '🟡 Premium (Cancelled)' : 
+                   '🔵 Free Member'}
+                </p>
+                <button
+                  onClick={async () => {
+                    console.log('🔄 Manual profile refresh triggered')
+                    const { refreshProfile } = require('@/contexts/AuthContext')
+                    if (refreshProfile) {
+                      await refreshProfile()
+                    }
+                    window.location.reload() // Force reload to see changes
+                  }}
+                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                >
+                  Refresh
+                </button>
+              </div>
+              {profile?.cancel_at_period_end && (
+                <p className="text-sm text-amber-600 mt-1">
+                  ⚠️ Subscription will end on: {profile?.subscription_period_end ? 
+                    new Date(profile.subscription_period_end).toLocaleDateString() : 'Unknown'}
+                </p>
+              )}
             </div>
             
             <div>

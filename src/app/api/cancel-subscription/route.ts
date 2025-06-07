@@ -13,11 +13,11 @@ const stripe = new Stripe(
 )
 
 export async function POST(request: NextRequest) {
-  console.log('🚫 CANCEL SUBSCRIPTION API CALLED')
+  console.log(' CANCEL SUBSCRIPTION API CALLED')
   
   try {
     const { userId } = await request.json()
-    console.log('👤 User ID:', userId)
+    console.log(' User ID:', userId)
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
@@ -38,51 +38,12 @@ export async function POST(request: NextRequest) {
     console.log('Found user:', user.email)
     console.log('Stripe subscription ID:', user.stripe_subscription_id)
     
-    // Cancel subscription in Stripe if it exists
-    if (user.stripe_subscription_id) {
-      try {
-        console.log('Setting subscription to cancel at period end...')
-        console.log('Stripe Subscription ID:', user.stripe_subscription_id)
-        
-        // Key Fix: Don't cancel immediately, set to cancel at period end
-        const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
-          cancel_at_period_end: true
-        })
-        
-        console.log('Stripe subscription set to cancel at period end:', {
-          id: updatedSubscription.id,
-          status: updatedSubscription.status,
-          cancel_at_period_end: updatedSubscription.cancel_at_period_end,
-          current_period_end: new Date((updatedSubscription as any).current_period_end * 1000).toISOString(),
-          cancel_at: updatedSubscription.cancel_at ? new Date(updatedSubscription.cancel_at * 1000).toISOString() : null
-        })
-        
-        // Verify the update was successful
-        if (updatedSubscription.cancel_at_period_end) {
-          console.log('SUCCESS: Stripe subscription will cancel at period end')
-        } else {
-          console.warn('WARNING: cancel_at_period_end was not set properly')
-        }
-        
-      } catch (stripeError: any) {
-        console.error('Failed to update Stripe subscription:', stripeError.message)
-        console.error('Stripe error details:', {
-          type: stripeError.type,
-          code: stripeError.code,
-          message: stripeError.message,
-          subscription_id: user.stripe_subscription_id
-        })
-        // Continue with database update even if Stripe update fails
-      }
-    } else {
-      console.log('No Stripe subscription ID found for user - skipping Stripe cancellation')
-    }
-    
-    // Update user subscription status to cancelled
-    // Keep the current period end so user retains access until billing period expires
+    // First, update Supabase database regardless of Stripe status
+    // This ensures consistency even if Stripe API fails
+    console.log(' Updating Supabase database first...')
     const currentPeriodEnd = user.subscription_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     
-    const { error: updateError } = await supabaseAdmin
+    const { data: updateResult, error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
         subscription_status: 'cancelled',
@@ -90,34 +51,71 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
+      .select('subscription_status, subscription_period_end, updated_at')
     
     if (updateError) {
-      console.error('❌ Failed to update user subscription:', updateError)
-      console.error('❌ Update error details:', JSON.stringify(updateError, null, 2))
-      return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 })
+      console.error(' CRITICAL: Failed to update user subscription in Supabase:', updateError)
+      console.error(' Update error details:', JSON.stringify(updateError, null, 2))
+      return NextResponse.json({ error: 'Failed to cancel subscription in database' }, { status: 500 })
     }
     
-    console.log('✅ Subscription cancelled successfully for user:', userId)
-    console.log('📊 Updated subscription_status to "cancelled" and period_end to:', currentPeriodEnd)
+    console.log(' SUPABASE UPDATE SUCCESS:', updateResult)
     
     // Verify the update by fetching the user again
-    console.log('🔍 Verifying update by fetching user data...')
-    const { data: updatedUser, error: fetchError } = await supabaseAdmin
+    console.log(' Double-checking Supabase update...')
+    const { data: verifiedUser, error: fetchError } = await supabaseAdmin
       .from('users')
       .select('subscription_status, subscription_period_end, updated_at')
       .eq('id', userId)
       .single()
     
     if (fetchError) {
-      console.error('❌ Error verifying update:', fetchError)
+      console.error(' Error verifying Supabase update:', fetchError)
     } else {
-      console.log('✅ Verified updated user data:', {
-        subscription_status: updatedUser.subscription_status,
-        subscription_period_end: updatedUser.subscription_period_end,
-        updated_at: updatedUser.updated_at
-      })
+      console.log(' VERIFIED Supabase data:', verifiedUser)
+      if (verifiedUser.subscription_status !== 'cancelled') {
+        console.error(' CRITICAL: Supabase update failed - status is still:', verifiedUser.subscription_status)
+        return NextResponse.json({ error: 'Database update verification failed' }, { status: 500 })
+      }
     }
+
+    // Now try to update Stripe (but don't fail if this errors)
+    console.log(' Attempting Stripe update...')
+    let stripeUpdateSuccess = false
     
+    try {
+      if (user.stripe_subscription_id) {
+        console.log('Stripe Subscription ID:', user.stripe_subscription_id)
+        console.log('Setting subscription to cancel at period end...')
+        
+        const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
+          cancel_at_period_end: true
+        })
+        
+        console.log(' Stripe subscription set to cancel at period end:', {
+          id: updatedSubscription.id,
+          status: updatedSubscription.status,
+          cancel_at_period_end: updatedSubscription.cancel_at_period_end,
+          current_period_end: new Date((updatedSubscription as any).current_period_end * 1000).toISOString()
+        })
+        
+        stripeUpdateSuccess = true
+      }
+    } catch (stripeError: any) {
+      console.error(' Stripe update failed, but continuing with database update:', stripeError.message)
+      console.error('Stripe error details:', {
+        type: stripeError.type,
+        code: stripeError.code,
+        message: stripeError.message,
+        subscription_id: user.stripe_subscription_id
+      })
+      // Don't return error - database update succeeded
+    }
+
+    console.log(' Subscription cancellation complete!')
+    console.log(' Database updated: ')
+    console.log(' Stripe updated:', stripeUpdateSuccess ? ' ' : '')
+
     return NextResponse.json({ 
       success: true, 
       message: 'Subscription cancelled successfully',
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
     })
     
   } catch (error) {
-    console.error('❌ Cancel subscription error:', error)
+    console.error(' Cancel subscription error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

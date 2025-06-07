@@ -830,14 +830,14 @@ function DashboardContent() {
             <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <Crown className={`w-6 h-6 mr-3 ${profile?.subscription_status === 'cancelled' ? 'text-orange-500' : 'text-green-600'}`} />
+                  <Crown className={`w-6 h-6 mr-3 ${(profile?.cancel_at_period_end) ? 'text-orange-500' : 'text-green-600'}`} />
                   <div>
-                    <h3 className={`text-lg font-semibold ${profile?.subscription_status === 'cancelled' ? 'text-orange-800' : 'text-green-800'}`}>
-                      {profile?.subscription_status === 'cancelled' ? 'Premium Active (Cancelled)' : 'Premium Active'}
+                    <h3 className={`text-lg font-semibold ${(profile?.cancel_at_period_end) ? 'text-orange-800' : 'text-green-800'}`}>
+                      {(profile?.cancel_at_period_end) ? 'Premium Active (Cancelled)' : 'Premium Active'}
                     </h3>
-                    <p className={`text-sm ${profile?.subscription_status === 'cancelled' ? 'text-orange-700' : 'text-green-700'}`}>
-                      {profile?.subscription_status === 'cancelled' 
-                        ? 'Your subscription is cancelled but you still have access to Premium features until your current billing period ends.'
+                    <p className={`text-sm ${(profile?.cancel_at_period_end) ? 'text-orange-700' : 'text-green-700'}`}>
+                      {(profile?.cancel_at_period_end)
+                        ? `Your subscription is cancelled but you still have access to Premium features until ${profile?.subscription_period_end ? new Date(profile.subscription_period_end).toLocaleDateString() : 'your current billing period ends'}.`
                         : `You have access to all features including unlimited PDF downloads.${monthlyUsage > 0 ? ` You've generated ${monthlyUsage} worksheets this month.` : ''}`
                       }
                     </p>

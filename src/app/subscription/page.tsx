@@ -31,6 +31,7 @@ export default function SubscriptionPage() {
     // For now, using profile data
     setSubscriptionData({
       status: profile?.subscription_status || 'free',
+      cancel_at_period_end: profile?.cancel_at_period_end || false,
       created_at: profile?.created_at,
       // Use actual subscription_period_end from database
       next_billing_date: profile?.subscription_period_end || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -125,10 +126,10 @@ export default function SubscriptionPage() {
   }
 
   const isPremium = subscriptionData.status === 'premium'
-  const isCancelled = subscriptionData.status === 'cancelled'
-  const hasActiveAccess = isPremium || isCancelled // Both premium and cancelled users have access until period ends
+  const isCancelled = subscriptionData.status === 'cancelled' || subscriptionData.cancel_at_period_end
+  const hasActiveAccess = isPremium && !subscriptionData.cancel_at_period_end // Only non-cancelled premium has full access
   const nextBillingDate = new Date(subscriptionData.next_billing_date).toLocaleDateString('en-US')
-  const isExpired = isCancelled && new Date(subscriptionData.next_billing_date) < new Date()
+  const isExpired = new Date(subscriptionData.next_billing_date) < new Date()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,38 +150,44 @@ export default function SubscriptionPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
-              <Crown className={`w-6 h-6 mr-3 ${hasActiveAccess ? 'text-yellow-500' : 'text-gray-400'}`} />
+              <Crown className={`w-6 h-6 mr-3 ${isPremium ? (isCancelled ? 'text-orange-500' : 'text-yellow-500') : 'text-gray-400'}`} />
               <div>
                 <h2 className="text-xl font-semibold">
-                  {hasActiveAccess ? (isCancelled ? 'Premium Plan (Cancelled)' : 'Premium Plan') : 'Free Plan'}
+                  {isPremium ? (isCancelled ? 'Premium Plan (Cancelled)' : 'Premium Plan') : 'Free Plan'}
                 </h2>
                 <p className="text-gray-600">
-                  {hasActiveAccess ? 'Unlimited worksheet creation and PDF downloads' : 'Limited to 3 worksheets per month'}
+                  {isPremium ? 'Unlimited worksheet creation and PDF downloads' : 'Limited to 3 worksheets per month'}
                 </p>
-                {isCancelled && (
+                {isCancelled && isPremium && (
                   <p className="text-orange-600 text-sm mt-1">
-                    Your subscription has been cancelled, but you can continue using Premium features until {nextBillingDate}.
+                    Your subscription is cancelled but you still have Premium access until {nextBillingDate}.
                   </p>
                 )}
               </div>
             </div>
             <div className="text-right">
-              {hasActiveAccess && (
+              {isPremium && !isCancelled && (
                 <>
                   <p className="text-2xl font-bold text-green-600">${subscriptionData.amount}</p>
                   <p className="text-sm text-gray-500">Monthly subscription</p>
                 </>
               )}
+              {isCancelled && (
+                <>
+                  <p className="text-xl font-bold text-orange-600">No billing</p>
+                  <p className="text-sm text-gray-500">Subscription cancelled</p>
+                </>
+              )}
             </div>
           </div>
 
-          {hasActiveAccess && (
+          {isPremium && (
             <div className="border-t pt-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="flex items-center">
                   <Calendar className="w-5 h-5 text-blue-500 mr-3" />
                   <div>
-                    <p className="font-medium">{isCancelled ? 'Service End Date' : 'Next Billing Date'}</p>
+                    <p className="font-medium">{isCancelled ? 'Access End Date' : 'Next Billing Date'}</p>
                     <p className="text-sm text-gray-600">{nextBillingDate}</p>
                   </div>
                 </div>
@@ -199,7 +206,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Subscription Actions */}
-        {isPremium ? (
+        {isPremium && !isCancelled ? (
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Subscription Management</h3>
             
@@ -225,16 +232,16 @@ export default function SubscriptionPage() {
           </div>
         ) : isCancelled ? (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Cancelled Subscription</h3>
+            <h3 className="text-lg font-semibold mb-4">Subscription Management</h3>
             
             {/* Cancelled Subscription Notice */}
-            <div className="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
               <div className="flex">
-                <AlertTriangle className="w-5 h-5 text-orange-400 mr-3 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-green-400 mr-3 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-orange-800">Subscription Cancelled</h4>
-                  <p className="text-orange-700 text-sm mt-1">
-                    Your subscription has been cancelled. You can continue using Premium features until {nextBillingDate}, after which you will be downgraded to the Free plan.
+                  <h4 className="font-medium text-green-800">Reactivation Available</h4>
+                  <p className="text-green-700 text-sm mt-1">
+                    Your subscription is cancelled but you can reactivate it at any time before {nextBillingDate} to continue enjoying Premium features without interruption.
                   </p>
                 </div>
               </div>
@@ -257,12 +264,12 @@ export default function SubscriptionPage() {
                 <button
                   onClick={handleReactivateSubscription}
                   disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block mr-4"
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors inline-block mr-4"
                 >
                   {loading ? 'Processing...' : 'Reactivate Subscription'}
                 </button>
                 <p className="text-sm text-gray-600">
-                  You can reactivate your subscription at any time to regain access to Premium features.
+                  Reactivating will resume your monthly billing cycle and restore unlimited access to all Premium features.
                 </p>
               </div>
             )}

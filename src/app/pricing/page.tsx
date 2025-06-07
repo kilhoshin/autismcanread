@@ -12,7 +12,8 @@ export default function Pricing() {
   const [isLoading, setIsLoading] = useState('')
 
   // Check if user has cancelled subscription with remaining period
-  const canReactivate = profile?.subscription_status === 'cancelled' && 
+  const canReactivate = profile?.cancel_at_period_end && 
+    profile?.subscription_status === 'premium' &&
     profile?.subscription_period_end && 
     new Date(profile.subscription_period_end) > new Date()
 

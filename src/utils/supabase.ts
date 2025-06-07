@@ -16,6 +16,8 @@ export interface UserProfile {
   subscription_status: 'free' | 'premium' | 'cancelled'
   subscription_expires_at?: string
   subscription_period_end?: string
+  cancel_at_period_end?: boolean
+  stripe_subscription_id?: string
   created_at: string
   updated_at: string
   monthly_worksheets_generated?: number
@@ -189,7 +191,7 @@ export const isPremiumUser = async (userId: string): Promise<boolean> => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('subscription_status, subscription_period_end')
+      .select('subscription_status, subscription_period_end, cancel_at_period_end')
       .eq('id', userId)
       .single()
     
@@ -200,13 +202,24 @@ export const isPremiumUser = async (userId: string): Promise<boolean> => {
     
     const status = data.subscription_status
     const periodEnd = data.subscription_period_end
+    const cancelAtPeriodEnd = data.cancel_at_period_end
     
-    // If subscription is premium, user has access
-    if (status === 'premium') {
+    // If subscription is premium and not cancelled, user has access
+    if (status === 'premium' && !cancelAtPeriodEnd) {
       return true
     }
     
-    // If subscription is cancelled, check if still within paid period
+    // If subscription is premium but cancelled, check if still within paid period
+    if (status === 'premium' && cancelAtPeriodEnd && periodEnd) {
+      const now = new Date()
+      const endDate = new Date(periodEnd)
+      const hasAccess = now <= endDate
+      
+      console.log(`🔄 Premium subscription cancelled - Period ends: ${periodEnd}, Has access: ${hasAccess}`)
+      return hasAccess
+    }
+    
+    // If subscription is cancelled (old logic), check if still within paid period
     if (status === 'cancelled' && periodEnd) {
       const now = new Date()
       const endDate = new Date(periodEnd)

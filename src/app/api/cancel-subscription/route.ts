@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
     const { data: updateResult, error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
-        subscription_status: 'cancelled',
+        cancel_at_period_end: true,
         subscription_period_end: currentPeriodEnd,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)
-      .select('subscription_status, subscription_period_end, updated_at')
+      .select('subscription_status, cancel_at_period_end, subscription_period_end, updated_at')
     
     if (updateError) {
       console.error(' CRITICAL: Failed to update user subscription in Supabase:', updateError)
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     console.log(' Double-checking Supabase update...')
     const { data: verifiedUser, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('subscription_status, subscription_period_end, updated_at')
+      .select('subscription_status, cancel_at_period_end, subscription_period_end, updated_at')
       .eq('id', userId)
       .single()
     
@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
       console.error(' Error verifying Supabase update:', fetchError)
     } else {
       console.log(' VERIFIED Supabase data:', verifiedUser)
-      if (verifiedUser.subscription_status !== 'cancelled') {
-        console.error(' CRITICAL: Supabase update failed - status is still:', verifiedUser.subscription_status)
+      if (!verifiedUser.cancel_at_period_end) {
+        console.error(' CRITICAL: Supabase update failed - cancel_at_period_end is still:', verifiedUser.cancel_at_period_end)
         return NextResponse.json({ error: 'Database update verification failed' }, { status: 500 })
       }
     }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: 'Subscription cancelled successfully',
-      subscription_status: 'cancelled',
+      subscription_status: 'active',
       subscription_period_end: currentPeriodEnd,
       redirect_url: `/dashboard?cancelled=true`
     })

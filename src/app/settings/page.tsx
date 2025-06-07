@@ -86,7 +86,8 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Account Status</label>
               <p className="text-gray-900">
-                {profile?.subscription_status === 'premium' ? '🟢 Premium Member' : 
+                {profile?.subscription_status === 'premium' && profile?.cancel_at_period_end ? '🟡 Premium (Cancelled)' :
+                 profile?.subscription_status === 'premium' ? '🟢 Premium Member' : 
                  profile?.subscription_status === 'cancelled' ? '🟡 Premium (Cancelled)' : 
                  '🔵 Free Member'}
               </p>

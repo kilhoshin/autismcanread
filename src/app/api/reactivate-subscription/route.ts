@@ -113,12 +113,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Reactivate subscription by changing status back to 'premium'
-    // Keep the existing subscription_period_end to maintain the original billing cycle
+    // Update user subscription status to active (premium)
     const { error: updateError } = await supabaseAdmin
       .from('users')
       .update({ 
         subscription_status: 'premium',
+        cancel_at_period_end: false,
         updated_at: new Date().toISOString()
       })
       .eq('id', userId)

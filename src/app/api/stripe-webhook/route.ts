@@ -14,21 +14,39 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(request: NextRequest) {
-  console.log(' STRIPE WEBHOOK CALLED')
+  console.log('🔔 STRIPE WEBHOOK CALLED')
   
   try {
     const body = await request.text()
-    console.log(' Body length:', body.length)
+    const sig = request.headers.get('stripe-signature')
     
-    // Parse the event
+    console.log('📝 Body length:', body.length)
+    console.log('🔐 Signature present:', !!sig)
+    
+    // Verify webhook signature for security
     let event: StripeType.Event
-    try {
-      event = JSON.parse(body)
-      console.log(' Event type:', event.type)
-    } catch (error) {
-      console.error(' Invalid JSON:', error)
-      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    
+    if (process.env.STRIPE_WEBHOOK_SECRET && sig) {
+      try {
+        event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET)
+        console.log('✅ Webhook signature verified')
+      } catch (err) {
+        console.error('❌ Webhook signature verification failed:', err)
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+      }
+    } else {
+      // Fallback for development (not recommended for production)
+      try {
+        event = JSON.parse(body)
+        console.log('⚠️ No signature verification (development mode)')
+      } catch (error) {
+        console.error('❌ Invalid JSON:', error)
+        return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+      }
     }
+    
+    console.log('📋 Event type:', event.type)
+    console.log('🆔 Event ID:', event.id)
     
     // Handle different subscription events
     switch (event.type) {

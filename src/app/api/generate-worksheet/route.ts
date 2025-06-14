@@ -62,18 +62,18 @@ export async function POST(request: NextRequest) {
         const currentUsage = user.monthly_worksheets_generated || 0
         const totalSheetsRequested = body.count
         
-        if (currentUsage >= 5) {
+        if (currentUsage >= 30) {
           return NextResponse.json({ 
             error: 'Preview limit exceeded',
-            message: `Free Plan allows 5 worksheet previews per month. You have used ${currentUsage}/5 previews.`,
+            message: `Free Plan allows 30 worksheet previews per month. You have used ${currentUsage}/30 previews.`,
             upgrade_required: true
           }, { status: 403 })
         }
         
-        if (currentUsage + totalSheetsRequested > 5) {
+        if (currentUsage + totalSheetsRequested > 30) {
           return NextResponse.json({ 
             error: 'Preview limit would be exceeded',
-            message: `Free Plan allows 5 worksheet previews per month. You have ${currentUsage}/5 used. Requesting ${totalSheetsRequested} more would exceed the limit.`,
+            message: `Free Plan allows 30 worksheet previews per month. You have ${currentUsage}/30 used. Requesting ${totalSheetsRequested} more would exceed the limit.`,
             upgrade_required: true
           }, { status: 403 })
         }

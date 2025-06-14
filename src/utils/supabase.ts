@@ -350,8 +350,8 @@ export const canGenerateWorksheets = async (userId: string, requestedCount: numb
     
     // Check monthly usage for free users
     const { monthlyGenerated, lastMonth, lastYear } = await checkMonthlyUsage(userId)
-    const remainingCount = Math.max(0, 5 - monthlyGenerated)
-    const canGenerateRequested = monthlyGenerated + requestedCount <= 5
+    const remainingCount = Math.max(0, 30 - monthlyGenerated)
+    const canGenerateRequested = monthlyGenerated + requestedCount <= 30
     
     return { 
       canGenerate: canGenerateRequested, 
@@ -361,6 +361,6 @@ export const canGenerateWorksheets = async (userId: string, requestedCount: numb
   } catch (error) {
     console.error('Exception in canGenerateWorksheets:', error)
     // Default to allowing generation for free users if there's an error
-    return { canGenerate: true, currentCount: 0, remainingCount: 5 }
+    return { canGenerate: true, currentCount: 0, remainingCount: 30 }
   }
 }

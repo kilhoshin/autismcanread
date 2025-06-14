@@ -814,7 +814,7 @@ function DashboardContent() {
                   <div>
                     <h3 className="text-lg font-semibold text-yellow-800">Free Plan - Limited Usage</h3>
                     <p className="text-yellow-700 text-sm">
-                      You've used {Math.min(monthlyUsage, 5)}/5 worksheets this month. PDF downloads require premium.
+                      You've used {Math.min(monthlyUsage, 30)}/30 worksheets this month. PDF downloads require premium.
                     </p>
                   </div>
                 </div>
@@ -1041,7 +1041,7 @@ function DashboardContent() {
                 {!isPremium && (
                   <div className="text-center mb-4">
                     <p className="text-sm text-gray-600">
-                      ✅ Preview completed! This counts as {worksheetCount} of your 5 monthly worksheets.
+                      ✅ Preview completed! This counts as {worksheetCount} of your 30 monthly worksheets.
                     </p>
                     <p className="text-sm text-orange-600 font-medium">
                       💎 Upgrade to Premium for PDF downloads and unlimited worksheets

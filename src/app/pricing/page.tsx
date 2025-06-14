@@ -97,7 +97,7 @@ export default function Pricing() {
       period: 'forever',
       priceId: 'free',
       features: [
-        'Generate up to 5 worksheets per month',
+        'Generate up to 30 worksheets per month',
         'Preview all worksheets',
         'Basic reading activities',
         'Community support',
@@ -167,7 +167,7 @@ export default function Pricing() {
                 <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                 </svg>
-                Generate up to 5 worksheets per month
+                Generate up to 30 worksheets per month
               </li>
               <li className="flex items-center">
                 <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
@@ -314,7 +314,7 @@ export default function Pricing() {
                 Is there a free trial?
               </h3>
               <p className="text-gray-600">
-                Yes! The free plan allows you to generate and preview up to 5 worksheets per month to try our service.
+                Yes! The free plan allows you to generate and preview up to 30 worksheets per month to try our service.
               </p>
             </div>
             <div className="bg-white rounded-xl p-6 shadow-lg">

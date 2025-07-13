@@ -406,14 +406,14 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
           <div className="grid md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
-                  <Book className="w-6 h-6 text-white" />
+                <div className="bg-white p-2 rounded-lg">
+                  <img src="/logo.png" alt="ReadersOnTheSpectrum Logo" className="w-6 h-6" />
                 </div>
                 <span className="text-xl font-bold">ReadersOnTheSpectrum</span>
-                <p className="text-gray-400 mt-2">
+              </div>
+              <p className="text-gray-400 mb-6">
                 AI-Powered Reading Comprehension Worksheets for children on the spectrum
               </p>
-              </div>
               <h3 className="text-lg font-semibold mb-4">🎯 Core Features</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>• AI-Powered Worksheet Generation</li>
@@ -443,7 +443,7 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 ReadersOnTheSpectrum. All rights reserved. | AI-Powered Reading Comprehension Worksheets for children on the spectrum</p>
+            <p>&copy; 2025 ReadersOnTheSpectrum. All rights reserved. | AI-Powered Reading Comprehension Worksheets for children on the spectrum</p>
           </div>
         </div>
       </footer>

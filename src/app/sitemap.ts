@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.autismcanread.com'
+  const baseUrl = 'https://www.readersonthespectrum.com'
   
   return [
     {

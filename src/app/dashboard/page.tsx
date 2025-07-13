@@ -628,8 +628,8 @@ function DashboardContent() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
-                <Book className="w-8 h-8 text-blue-600 mr-3" />
-                <span className="text-xl font-bold text-gray-900">AutismCanRead</span>
+                <img src="/logo.png" alt="ReadersOnTheSpectrum Logo" className="w-8 h-8 mr-3" />
+                <span className="text-xl font-bold text-gray-900">ReadersOnTheSpectrum</span>
               </Link>
             </div>
             <div className="flex items-center space-x-4">

@@ -7,7 +7,7 @@ export function generateWorksheetHTML(stories: StoryData[]): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Autism Can Read - Worksheet</title>
+  <title>Readers On The Spectrum - Worksheet</title>
   <style>
     @page {
       size: letter;

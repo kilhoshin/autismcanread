@@ -664,7 +664,7 @@ Thank you for your patience as we continue to expand our resource library!
             </div>
             <div className="flex items-center">
               <User className="w-4 h-4 mr-2" />
-              AutismCanRead Team
+              ReadersOnTheSpectrum Team
             </div>
           </div>
         </div>

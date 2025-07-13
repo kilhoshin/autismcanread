@@ -17,27 +17,27 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | AutismCanRead',
-    default: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets for Children with Autism & ADHD'
+    template: '%s | ReadersOnTheSpectrum',
+    default: 'ReadersOnTheSpectrum - AI-Powered Reading Comprehension Worksheets for Children on the Spectrum & ADHD'
   },
-  description: "Transform your child's reading journey with AI-powered, personalized worksheets designed specifically for children with autism and ADHD. Create engaging reading comprehension activities instantly with our 7 specialized learning tools.",
+  description: "Transform your child's reading journey with AI-powered, personalized worksheets designed specifically for children on the spectrum and ADHD. Create engaging reading comprehension activities instantly with our 7 specialized learning tools.",
   keywords: [
-    "autism worksheets",
+    "spectrum worksheets",
     "ADHD reading comprehension", 
-    "AI-powered education",
-    "special needs learning",
-    "personalized worksheets",
-    "reading comprehension activities",
-    "autism spectrum disorder",
+    "reading comprehension worksheets",
+    "special needs education",
+    "AI worksheets",
+    "personalized learning",
+    "spectrum disorder",
     "educational technology",
     "learning disabilities support",
     "individualized education",
     "adaptive learning tools",
     "inclusive education resources"
   ],
-  authors: [{ name: "AutismCanRead Team", url: "https://www.autismcanread.com" }],
-  creator: "AutismCanRead",
-  publisher: "AutismCanRead",
+  authors: [{ name: "ReadersOnTheSpectrum Team", url: "https://www.readersonthespectrum.com" }],
+  creator: "ReadersOnTheSpectrum",
+  publisher: "ReadersOnTheSpectrum",
   robots: {
     index: true,
     follow: true,
@@ -52,28 +52,28 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://www.autismcanread.com/',
-    siteName: 'AutismCanRead',
-    title: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets',
-    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets for children with autism and ADHD.',
+    url: 'https://www.readersonthespectrum.com/',
+    siteName: 'ReadersOnTheSpectrum',
+    title: 'ReadersOnTheSpectrum - AI-Powered Reading Comprehension Worksheets',
+    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets for children on the spectrum and ADHD.',
     images: [
       {
-        url: 'https://www.autismcanread.com/og-image.png',
+        url: 'https://www.readersonthespectrum.com/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets',
+        alt: 'ReadersOnTheSpectrum - AI-Powered Reading Comprehension Worksheets',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets',
-    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets for children with autism and ADHD.',
-    images: ['https://www.autismcanread.com/og-image.png'],
-    creator: '@autismcanread',
+    title: 'ReadersOnTheSpectrum - AI-Powered Reading Comprehension Worksheets',
+    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets for children on the spectrum and ADHD.',
+    images: ['https://www.readersonthespectrum.com/og-image.png'],
+    creator: '@readersonthespectrum',
   },
   alternates: {
-    canonical: 'https://www.autismcanread.com/',
+    canonical: 'https://www.readersonthespectrum.com/',
   },
   category: 'Education',
   verification: {
@@ -106,9 +106,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebApplication",
-              "name": "AutismCanRead",
-              "description": "AI-powered reading comprehension worksheets for children with autism and ADHD",
-              "url": "https://www.autismcanread.com/",
+              "name": "ReadersOnTheSpectrum",
+              "description": "AI-powered reading comprehension worksheets for children on the spectrum and ADHD",
+              "url": "https://www.readersonthespectrum.com/",
               "applicationCategory": "EducationalApplication",
               "operatingSystem": "Web Browser",
               "offers": {
@@ -122,8 +122,8 @@ export default function RootLayout({
               },
               "creator": {
                 "@type": "Organization",
-                "name": "AutismCanRead",
-                "url": "https://www.autismcanread.com/"
+                "name": "ReadersOnTheSpectrum",
+                "url": "https://www.readersonthespectrum.com/"
               },
               "featureList": [
                 "AI-powered worksheet generation",

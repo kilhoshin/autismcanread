@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Reading Tips & Resources | AutismCanRead Blog',
+  title: 'Reading Tips & Resources | ReadersOnTheSpectrum Blog',
   description: 'Expert tips, research-backed strategies, and resources for supporting children with autism and ADHD in their reading journey. Learn from educators and specialists.',
   keywords: 'autism reading tips, ADHD learning strategies, reading comprehension help, special education resources, inclusive learning',
 }

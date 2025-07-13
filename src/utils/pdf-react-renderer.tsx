@@ -264,7 +264,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
               
               {/* Footer */}
               <View style={styles.footer}>
-                <Text>autismcanread.com</Text>
+                <Text>readersonthespectrum.com</Text>
               </View>
             </Page>
 
@@ -335,7 +335,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                 
                 {/* Footer */}
                 <View style={styles.footer}>
-                  <Text>autismcanread.com</Text>
+                  <Text>readersonthespectrum.com</Text>
                 </View>
               </Page>
             )}
@@ -413,7 +413,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                 
                 {/* Footer */}
                 <View style={styles.footer}>
-                  <Text>autismcanread.com</Text>
+                  <Text>readersonthespectrum.com</Text>
                 </View>
               </Page>
             )}
@@ -558,7 +558,7 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
               
               {/* Footer */}
               <View style={styles.footer}>
-                <Text>autismcanread.com</Text>
+                <Text>readersonthespectrum.com</Text>
               </View>
             </Page>
           </React.Fragment>

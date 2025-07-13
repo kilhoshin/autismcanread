@@ -37,11 +37,11 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: 'AutismCanRead - AI-Powered Reading Comprehension Worksheets',
-    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets designed specifically for children with autism and ADHD.',
+    name: 'ReadersOnTheSpectrum - AI-Powered Reading Comprehension Worksheets',
+    description: 'Transform your child\'s reading journey with AI-powered, personalized worksheets designed specifically for children on the spectrum and ADHD.',
     brand: {
       '@type': 'Brand',
-      name: 'AutismCanRead'
+      name: 'ReadersOnTheSpectrum'
     },
     offers: {
       '@type': 'Offer',
@@ -66,7 +66,7 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
       'Personalized learning content',
       'Instant PDF downloads',
       'Progress tracking',
-      'Autism and ADHD focused',
+      'Spectrum and ADHD focused',
       'Reading comprehension improvement'
     ]
   }
@@ -77,10 +77,10 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'How does AutismCanRead help children with autism and ADHD?',
+        name: 'How does ReadersOnTheSpectrum help children on the spectrum and ADHD?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'AutismCanRead uses AI technology to create personalized reading comprehension worksheets tailored to each child\'s reading level and interests, making learning more engaging and effective for children with autism and ADHD.'
+          text: 'ReadersOnTheSpectrum uses AI technology to create personalized reading comprehension worksheets tailored to each child\'s reading level and interests, making learning more engaging and effective for children on the spectrum and ADHD.'
         }
       },
       {
@@ -93,10 +93,10 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
       },
       {
         '@type': 'Question',
-        name: 'How much does AutismCanRead cost?',
+        name: 'How much does ReadersOnTheSpectrum cost?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'AutismCanRead costs $5 per month and includes unlimited worksheet creation, access to all 7 activities, AI-powered story generation, and high-quality PDF downloads.'
+          text: 'ReadersOnTheSpectrum costs $5 per month and includes unlimited worksheet creation, access to all 7 activities, AI-powered story generation, and high-quality PDF downloads.'
         }
       }
     ]
@@ -129,11 +129,11 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-4">
-              <div className="bg-blue-500 p-3 rounded-xl shadow-lg">
-                <Book className="w-8 h-8 text-white" />
+              <div className="bg-white p-2 rounded-xl shadow-lg mr-4">
+                <img src="/logo.png" alt="ReadersOnTheSpectrum Logo" className="w-10 h-10" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">AutismCanRead</h1>
+                <h1 className="text-2xl font-bold text-gray-900">ReadersOnTheSpectrum</h1>
                 <p className="text-sm text-gray-600">AI-Powered Reading Comprehension Worksheets</p>
               </div>
             </div>
@@ -409,13 +409,11 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
                 <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
                   <Book className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-xl font-bold">AutismCanRead</span>
-              </div>
-              <p className="text-gray-400 leading-relaxed">
-                AI-Powered Reading Comprehension Worksheets for children with autism
+                <span className="text-xl font-bold">ReadersOnTheSpectrum</span>
+                <p className="text-gray-400 mt-2">
+                AI-Powered Reading Comprehension Worksheets for children on the spectrum
               </p>
-            </div>
-            <div>
+              </div>
               <h3 className="text-lg font-semibold mb-4">🎯 Core Features</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>• AI-Powered Worksheet Generation</li>
@@ -428,7 +426,7 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
             <div>
               <h3 className="text-lg font-semibold mb-4">📞 Customer Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>• Email: autismcanread@gmail.com</li>
+                <li>• Email: readersonthespectrum@gmail.com</li>
                 <li>• User Guide</li>
                 <li>• FAQ</li>
                 <li>• Technical Support</li>
@@ -445,7 +443,7 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 AutismCanRead. All rights reserved. | AI-Powered Reading Comprehension Worksheets for children with autism</p>
+            <p>&copy; 2024 ReadersOnTheSpectrum. All rights reserved. | AI-Powered Reading Comprehension Worksheets for children on the spectrum</p>
           </div>
         </div>
       </footer>

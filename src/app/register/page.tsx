@@ -111,7 +111,7 @@ export default function Register() {
               <Book className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join AutismCanRead</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Join ReadersOnTheSpectrum</h1>
           <p className="text-gray-600">Create your account to start generating worksheets</p>
         </div>
 

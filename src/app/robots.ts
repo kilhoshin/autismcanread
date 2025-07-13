@@ -22,6 +22,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       },
     ],
-    sitemap: 'https://www.autismcanread.com/sitemap.xml',
+    sitemap: 'https://www.readersonthespectrum.com/sitemap.xml',
   }
 }

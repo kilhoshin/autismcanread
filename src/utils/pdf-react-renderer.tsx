@@ -65,6 +65,17 @@ const styles = StyleSheet.create({
     height: 20,
     marginBottom: 5
   },
+  footer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 40,
+    right: 40,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#6B7280',
+    borderTop: '1 solid #E5E7EB',
+    paddingTop: 10
+  },
   activitySection: {
     marginBottom: 20
   },
@@ -250,6 +261,11 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                   ))}
                 </View>
               )}
+              
+              {/* Footer */}
+              <View style={styles.footer}>
+                <Text>autismcanread.com</Text>
+              </View>
             </Page>
 
             {/* Page 2 - Only render if there are activities for this page */}
@@ -316,6 +332,11 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                     </View>
                   </View>
                 )}
+                
+                {/* Footer */}
+                <View style={styles.footer}>
+                  <Text>autismcanread.com</Text>
+                </View>
               </Page>
             )}
 
@@ -388,6 +409,11 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                 {/* Encouragement */}
                 <View style={styles.encouragement}>
                   <Text> Great job! Keep practicing your reading skills! </Text>
+                </View>
+                
+                {/* Footer */}
+                <View style={styles.footer}>
+                  <Text>autismcanread.com</Text>
                 </View>
               </Page>
             )}
@@ -529,6 +555,11 @@ const WorksheetPDF: React.FC<WorksheetPDFProps> = ({ stories, activities }) => {
                   <Text style={styles.answerText}>This is a creative activity - encourage personal expression!</Text>
                 </View>
               )}
+              
+              {/* Footer */}
+              <View style={styles.footer}>
+                <Text>autismcanread.com</Text>
+              </View>
             </Page>
           </React.Fragment>
         )

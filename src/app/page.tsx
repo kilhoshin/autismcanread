@@ -428,7 +428,7 @@ function SearchParamsContent({ searchParams }: { searchParams: URLSearchParams }
             <div>
               <h3 className="text-lg font-semibold mb-4">📞 Customer Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>• Email: kylo.sheen@gmail.com</li>
+                <li>• Email: autismcanread@gmail.com</li>
                 <li>• User Guide</li>
                 <li>• FAQ</li>
                 <li>• Technical Support</li>

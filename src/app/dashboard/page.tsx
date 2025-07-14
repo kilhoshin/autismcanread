@@ -29,14 +29,19 @@ function DashboardContent() {
   // Check premium status and monthly usage on mount
   useEffect(() => {
     const checkUserStatus = async () => {
-      if (user?.id) {
+      if (user?.id && profile) {
         console.log('🔍 Checking user status for:', user.email)
         setCheckingPremium(true)
         
         try {
-          console.log('📊 Checking premium status...')
-          const premiumStatus = await isPremiumUser(user.id)
-          console.log('📊 Premium status:', premiumStatus)
+          // Use profile data for consistent premium status check
+          console.log('📊 Checking premium status from profile...')
+          console.log('📊 Profile subscription_status:', profile.subscription_status)
+          console.log('📊 Profile cancel_at_period_end:', profile.cancel_at_period_end)
+          
+          // User is premium if subscription_status is 'premium' and not cancelled
+          const premiumStatus = profile.subscription_status === 'premium' && !profile.cancel_at_period_end
+          console.log('📊 Final premium status:', premiumStatus)
           setIsPremium(premiumStatus)
           
           // Always check monthly usage (for both free and premium users)
@@ -73,37 +78,21 @@ function DashboardContent() {
     }
     
     // Add a small delay to ensure user data is available
-    if (user?.id) {
+    if (user?.id && profile) {
       checkUserStatus()
     } else if (user === null) {
       // User explicitly null (not logged in)
       setCheckingPremium(false)
+      setIsPremium(false)
+      setMonthlyUsage(0)
+    } else if (user?.id && !profile) {
+      // User exists but profile not loaded yet
+      console.log('⏳ User exists but profile not loaded yet, waiting...')
     }
     // If user is undefined, keep checking
-  }, [user?.id])
+  }, [user?.id, profile?.subscription_status, profile?.cancel_at_period_end])
 
-  // Refresh status when profile changes (subscription updated)
-  useEffect(() => {
-    if (profile?.subscription_status && user?.id) {
-      console.log('🔄 Profile subscription changed:', profile.subscription_status)
-      const checkUserStatus = async () => {
-        try {
-          const premiumStatus = await canDownloadPDF(user.id)
-          setIsPremium(premiumStatus)
-          
-          const usageInfo = await canGenerateWorksheets(user.id, 0)
-          setMonthlyUsage(usageInfo.currentCount)
-          
-          // Clear error state on successful load
-          setSubscriptionError(false)
-        } catch (error) {
-          console.error('Error refreshing user status:', error)
-          setSubscriptionError(true)
-        }
-      }
-      checkUserStatus()
-    }
-  }, [profile?.subscription_status, user?.id])
+  // Removed duplicate profile status check - now handled in main useEffect above
 
   // Handle subscription cancellation success
   useEffect(() => {

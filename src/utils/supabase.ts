@@ -252,12 +252,8 @@ export const isPremiumUser = async (userId: string): Promise<boolean> => {
 }
 
 export const canDownloadPDF = async (userId: string): Promise<boolean> => {
-  try {
-    return await isPremiumUser(userId)
-  } catch (error) {
-    console.error('Error checking PDF download permission:', error)
-    return false
-  }
+  // All users can now download PDFs - only count limits apply
+  return true
 }
 
 // Monthly Worksheet Generation Tracking

@@ -49,31 +49,22 @@ export async function POST(request: NextRequest) {
 
       // Check subscription status and limitations
       if (user.subscription_status === 'free' || !user.subscription_status) {
-        // Free Plan users: Only previews allowed, NO PDF downloads
-        if (!body.previewOnly) {
-          return NextResponse.json({ 
-            error: 'PDF downloads require Premium',
-            message: 'Free Plan allows worksheet previews only. Upgrade to Premium for PDF downloads.',
-            upgrade_required: true
-          }, { status: 403 })
-        }
-
-        // Check preview usage limits for Free Plan users
+        // Free Plan users: 30 worksheets per month limit (including PDF downloads)
         const currentUsage = user.monthly_worksheets_generated || 0
         const totalSheetsRequested = body.count
         
         if (currentUsage >= 30) {
           return NextResponse.json({ 
-            error: 'Preview limit exceeded',
-            message: `Free Plan allows 30 worksheet previews per month. You have used ${currentUsage}/30 previews.`,
+            error: 'Monthly limit exceeded',
+            message: `Free Plan allows 30 worksheets per month. You have used ${currentUsage}/30 worksheets.`,
             upgrade_required: true
           }, { status: 403 })
         }
         
         if (currentUsage + totalSheetsRequested > 30) {
           return NextResponse.json({ 
-            error: 'Preview limit would be exceeded',
-            message: `Free Plan allows 30 worksheet previews per month. You have ${currentUsage}/30 used. Requesting ${totalSheetsRequested} more would exceed the limit.`,
+            error: 'Monthly limit would be exceeded',
+            message: `Free Plan allows 30 worksheets per month. You have ${currentUsage}/30 used. Requesting ${totalSheetsRequested} more would exceed the limit.`,
             upgrade_required: true
           }, { status: 403 })
         }
@@ -119,37 +110,37 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Update usage counter for Free Plan users on worksheet generation
+    if (body.userId) {
+      try {
+        const { data: user } = await supabase
+          .from('users')
+          .select('subscription_status, monthly_worksheets_generated')
+          .eq('id', body.userId)
+          .single()
+
+        // Only count usage for Free Plan users
+        if (user && (user.subscription_status === 'free' || !user.subscription_status)) {
+          const newUsage = (user.monthly_worksheets_generated || 0) + body.count
+          
+          await supabase
+            .from('users')
+            .update({ monthly_worksheets_generated: newUsage })
+            .eq('id', body.userId)
+            
+          console.log('📊 Updated worksheet usage count for Free Plan user:', newUsage)
+        }
+      } catch (updateError) {
+        console.error('❌ Error updating usage count:', updateError)
+        // Don't fail the request if usage update fails
+      }
+    }
+    
     if (body.previewOnly || body.previewWithPdf) {
       console.log('📋 Returning preview data for', stories.length, 'stories')
       
-      // Update usage counter for Free Plan users on preview generation
-      if (body.userId) {
-        try {
-          const { data: user } = await supabase
-            .from('users')
-            .select('subscription_status, monthly_worksheets_generated')
-            .eq('id', body.userId)
-            .single()
-
-          // Only count usage for Free Plan users
-          if (user && (user.subscription_status === 'free' || !user.subscription_status)) {
-            const newUsage = (user.monthly_worksheets_generated || 0) + body.count
-            
-            await supabase
-              .from('users')
-              .update({ monthly_worksheets_generated: newUsage })
-              .eq('id', body.userId)
-              
-            console.log('📊 Updated preview usage count for Free Plan user:', newUsage)
-          }
-        } catch (updateError) {
-          console.error('❌ Error updating usage count:', updateError)
-          // Don't fail the request if usage update fails
-        }
-      }
-      
       if (body.previewWithPdf) {
-        // Generate PDF with all stories (Premium users only reach here)
+        // Generate PDF with all stories for preview with PDF
         console.log('📄 Generating PDF with', stories.length, 'stories...')
         const pdfBuffer = await generateWorksheetPDF(stories, body.activities)
         const pdfBase64 = pdfBuffer.toString('base64')
@@ -167,11 +158,11 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Generate PDF with all stories (Premium users only reach here)
+    // Generate PDF with all stories for direct download
     console.log('📄 Generating PDF with', stories.length, 'stories...')
     const pdfBuffer = await generateWorksheetPDF(stories, body.activities)
     
-    // No usage tracking needed for PDF downloads (Premium users have unlimited)
+    // Usage tracking already handled above for Free Plan users
     
     return new NextResponse(pdfBuffer, {
       headers: {

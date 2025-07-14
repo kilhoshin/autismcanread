@@ -812,9 +812,9 @@ function DashboardContent() {
                 <div className="flex items-center">
                   <Crown className="w-6 h-6 text-yellow-600 mr-3" />
                   <div>
-                    <h3 className="text-lg font-semibold text-yellow-800">Free Plan - Limited Usage</h3>
+                    <h3 className="text-lg font-semibold text-yellow-800">Free Plan - Monthly Limit</h3>
                     <p className="text-yellow-700 text-sm">
-                      You've used {Math.min(monthlyUsage, 30)}/30 worksheets this month. PDF downloads require premium.
+                      You've used {Math.min(monthlyUsage, 30)}/30 worksheets this month. PDF downloads included!
                     </p>
                   </div>
                 </div>
@@ -1049,20 +1049,12 @@ function DashboardContent() {
                   </div>
                 )}
                 <button
-                  onClick={() => {
-                    if (isPremium) {
-                      handleGenerateWorksheetFinal()
-                    } else {
-                      router.push('/pricing')
-                    }
-                  }}
+                  onClick={handleGenerateWorksheetFinal}
                   disabled={isGenerating || checkingPremium}
                   className={`px-6 py-2 rounded-lg transition-colors flex items-center gap-2 ${
                     isGenerating || checkingPremium
                       ? 'bg-gray-400 cursor-not-allowed' 
-                      : isPremium
-                      ? 'bg-blue-500 hover:bg-blue-600'
-                      : 'bg-yellow-500 hover:bg-yellow-600'
+                      : 'bg-blue-500 hover:bg-blue-600'
                   } text-white`}
                 >
                   {isGenerating ? (
@@ -1075,12 +1067,10 @@ function DashboardContent() {
                     </>
                   ) : checkingPremium ? (
                     'Checking subscription...'
-                  ) : isPremium ? (
-                    `Download Complete Worksheet (${worksheetCount} worksheets + answer keys)`
                   ) : (
                     <>
-                      <Crown className="w-5 h-5" />
-                      Upgrade to Premium for PDF Downloads
+                      <Download className="w-5 h-5" />
+                      Download Complete Worksheet ({worksheetCount} worksheets + answer keys)
                     </>
                   )}
                 </button>

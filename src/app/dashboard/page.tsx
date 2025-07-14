@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Book, Download, History, Settings, LogOut, Plus, FileText, Eye, X, User, Crown } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { canDownloadPDF, canGenerateWorksheets, incrementMonthlyUsage } from '@/utils/supabase'
+import { canDownloadPDF, canGenerateWorksheets, incrementMonthlyUsage, isPremiumUser } from '@/utils/supabase'
 
 function DashboardContent() {
   const { user, profile, signOut, loading, refreshProfile } = useAuth()
@@ -35,7 +35,7 @@ function DashboardContent() {
         
         try {
           console.log('📊 Checking premium status...')
-          const premiumStatus = await canDownloadPDF(user.id)
+          const premiumStatus = await isPremiumUser(user.id)
           console.log('📊 Premium status:', premiumStatus)
           setIsPremium(premiumStatus)
           
@@ -812,9 +812,9 @@ function DashboardContent() {
                 <div className="flex items-center">
                   <Crown className="w-6 h-6 text-yellow-600 mr-3" />
                   <div>
-                    <h3 className="text-lg font-semibold text-yellow-800">Free Plan - Monthly Limit</h3>
+                    <h3 className="text-lg font-semibold text-yellow-800">Free Plan ({Math.min(monthlyUsage, 30)}/30)</h3>
                     <p className="text-yellow-700 text-sm">
-                      You've used {Math.min(monthlyUsage, 30)}/30 worksheets this month. PDF downloads included!
+                      {30 - Math.min(monthlyUsage, 30)} worksheets remaining this month. PDF downloads included!
                     </p>
                   </div>
                 </div>

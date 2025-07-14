@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // First check if user has a cancelled subscription with remaining period
     const { data: userData, error: fetchError } = await supabaseAdmin
       .from('users')
-      .select('subscription_status, subscription_period_end, stripe_customer_id, stripe_subscription_id, email')
+      .select('subscription_status, subscription_period_end, stripe_customer_id, stripe_subscription_id, email, cancel_at_period_end')
       .eq('id', userId)
       .single()
 
@@ -70,17 +70,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(' User data:', {
+    console.log('🔄 User data:', {
       email: userData.email,
       subscription_status: userData.subscription_status,
+      cancel_at_period_end: userData.cancel_at_period_end,
       stripe_subscription_id: userData.stripe_subscription_id
     })
 
-    // Check if subscription is cancelled and has remaining period
-    if (userData.subscription_status !== 'cancelled') {
+    // Check if subscription can be reactivated
+    // Allow reactivation if: cancelled OR premium with cancel_at_period_end=true
+    const canReactivate = userData.subscription_status === 'cancelled' || 
+                          (userData.subscription_status === 'premium' && userData.cancel_at_period_end === true)
+    
+    if (!canReactivate) {
+      console.error('❌ Subscription cannot be reactivated. Status:', userData.subscription_status, 'Cancel at period end:', userData.cancel_at_period_end)
       return NextResponse.json(
-        { error: 'Subscription is not in cancelled state' },
-        { status: 400 }
+        { 
+          error: 'Subscription is not eligible for reactivation',
+          message: 'Your subscription is currently active and not scheduled for cancellation.'
+        },
+        { 
+          status: 400,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        }
       )
     }
 

@@ -17,13 +17,21 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json()
 
     if (!userId) {
+      console.error('❌ Missing userId in request')
       return NextResponse.json(
         { error: 'User ID is required' },
-        { status: 400 }
+        { 
+          status: 400,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        }
       )
     }
 
-    console.log(' Reactivating subscription for user:', userId)
+    console.log('🔄 Reactivating subscription for user:', userId)
 
     // First check if user has a cancelled subscription with remaining period
     const { data: userData, error: fetchError } = await supabaseAdmin
@@ -33,17 +41,32 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError) {
-      console.error(' Failed to fetch user data:', fetchError)
+      console.error('❌ Failed to fetch user data:', fetchError)
       return NextResponse.json(
-        { error: 'Failed to fetch user data' },
-        { status: 500 }
+        { error: 'Failed to fetch user data', details: fetchError.message },
+        { 
+          status: 500,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        }
       )
     }
 
     if (!userData) {
+      console.error('❌ User not found for ID:', userId)
       return NextResponse.json(
         { error: 'User not found' },
-        { status: 404 }
+        { 
+          status: 404,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        }
       )
     }
 
@@ -141,13 +164,42 @@ export async function POST(request: NextRequest) {
       periodEnd: userData.subscription_period_end,
       stripeReactivated,
       redirect_url: `/dashboard?reactivated=true`
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
     })
 
   } catch (error) {
-    console.error(' Reactivate subscription error:', error)
+    console.error('❌ Reactivate subscription error:', error)
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { 
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      },
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      }
     )
   }
+}
+
+// Handle preflight requests
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
 }

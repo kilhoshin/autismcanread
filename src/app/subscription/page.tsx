@@ -83,13 +83,17 @@ export default function SubscriptionPage() {
   const handleReactivateSubscription = async () => {
     setLoading(true)
     try {
+      console.log('🔄 Starting subscription reactivation for user:', user?.id)
+      
       const response = await fetch('/api/reactivate-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id })
       })
 
+      console.log('📡 Reactivation response status:', response.status)
       const data = await response.json()
+      console.log('📄 Reactivation response data:', data)
 
       if (response.ok) {
         setSuccessMessage(`Your subscription has been reactivated! You can use Premium features until ${new Date(data.periodEnd).toLocaleDateString('en-US')}.`)
@@ -99,20 +103,23 @@ export default function SubscriptionPage() {
         
         // Refresh user profile context to update subscription status immediately
         if (refreshProfile) {
-          console.log('Refreshing profile context after subscription reactivation')
+          console.log('🔄 Refreshing profile context after subscription reactivation')
           await refreshProfile()
         }
       } else {
-        if (data.error.includes('expired')) {
+        console.error('❌ Reactivation failed:', data)
+        if (data.error && data.error.includes('expired')) {
           alert('Your subscription period has expired. Please purchase a new subscription.')
           router.push('/pricing')
         } else {
-          throw new Error(data.error || 'Failed to reactivate subscription.')
+          const errorMessage = data.message || data.error || 'Failed to reactivate subscription.'
+          throw new Error(errorMessage)
         }
       }
     } catch (error) {
-      console.error('Reactivate subscription error:', error)
-      alert('An error occurred while reactivating your subscription. Please try again later.')
+      console.error('❌ Reactivate subscription error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`An error occurred while reactivating your subscription: ${errorMessage}\n\nPlease try again later or contact support if the problem persists.`)
     }
     setLoading(false)
   }
